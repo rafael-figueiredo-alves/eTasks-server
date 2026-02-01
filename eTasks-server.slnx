@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="eTasks-server/eTasks-server.Client/eTasks-server.Client.csproj" />
+  <Project Path="eTasks-server/eTasks-server/eTasks-server.csproj" />
+</Solution>
