@@ -1,4 +1,6 @@
-﻿namespace eTasks_server.Endpoints
+﻿using eTasks_server.Core.BusinessLayers;
+
+namespace eTasks_server.Endpoints
 {
     public static class VersionEndpoint
     {
@@ -6,7 +8,7 @@
         {
             public void MapVersionEndpoint()
             {
-                app.MapGet("/version", () => Results.Ok("eTasks-server version 2.0.0-beta-1"))
+                app.MapGet("/version", () => Results.Ok(VersionBLL.GetVersion()))
                    .WithTags("Version")
                    .WithName("GetVersion");
             }
