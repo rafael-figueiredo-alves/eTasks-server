@@ -10,7 +10,21 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddCors(options =>
+{
+       options.AddPolicy("WASMAppPolicy",
+        policy =>
+        {
+            policy.WithOrigins("https://rafael-figueiredo-alves.github.io")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
 var app = builder.Build();
+
+app.UseCors("WASMAppPolicy");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
