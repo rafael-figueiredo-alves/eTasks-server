@@ -15,12 +15,15 @@ builder.Services.AddCors(options =>
        options.AddPolicy("WASMAppPolicy",
         policy =>
         {
-            policy.WithOrigins("https://rafael-figueiredo-alves.github.io")
+            policy
+                  .WithOrigins("https://rafael-figueiredo-alves.github.io")
                   .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+                  .AllowAnyMethod();
+                  //.AllowCredentials();
         });
 });
+
+
 
 var app = builder.Build();
 

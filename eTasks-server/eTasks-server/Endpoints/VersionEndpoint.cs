@@ -6,7 +6,7 @@ namespace eTasks_server.Endpoints
     {
         extension(IEndpointRouteBuilder app)
         {
-            public void MapVersionEndpoint()
+            public void MapVersionEndpoints()
             {
                 app.MapGet("/version", () => Results.Ok(VersionBLL.GetVersion()))
                    .WithTags("Version")
