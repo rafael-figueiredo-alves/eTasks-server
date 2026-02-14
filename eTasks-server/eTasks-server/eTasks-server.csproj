@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\eTasks-server.Core\eTasks-server.Core.csproj" />
     <ProjectReference Include="..\eTasks-server.Client\eTasks-server.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
+    <PackageReference Include="MudBlazor" Version="8.15.0" />
   </ItemGroup>
 
 </Project>

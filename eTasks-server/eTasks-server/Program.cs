@@ -1,6 +1,7 @@
 using eTasks_server.Client.Pages;
 using eTasks_server.Components;
 using eTasks_server.Endpoints;
+using MudBlazor.Services;
 using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +24,16 @@ builder.Services.AddCors(options =>
         });
 });
 
-
+builder.Services.AddMudServices(options =>
+{
+    options.SnackbarConfiguration.PositionClass = MudBlazor.Defaults.Classes.Position.BottomRight;
+    options.SnackbarConfiguration.PreventDuplicates = true;
+    options.SnackbarConfiguration.NewestOnTop = true;
+    options.SnackbarConfiguration.ShowCloseIcon = true;
+    options.SnackbarConfiguration.VisibleStateDuration = 10000;
+    options.SnackbarConfiguration.HideTransitionDuration = 500;
+    options.SnackbarConfiguration.ShowTransitionDuration = 500;   
+});
 
 var app = builder.Build();
 
