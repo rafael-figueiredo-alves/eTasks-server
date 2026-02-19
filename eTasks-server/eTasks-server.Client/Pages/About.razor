@@ -1,0 +1,18 @@
+﻿@page "/about"
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" Class="mb-4">eTasks Server</MudText>
+    <MudText Typo="Typo.h6" Class="mb-4">Versão: 1.0.0</MudText>
+    <MudTextField Label="Detalhes da Versão"
+                  Value="@VersionDetails"
+                  ReadOnly="true"
+                  Variant="Variant.Outlined"
+                  Lines="10" />
+</MudContainer>
+@code {
+    private string VersionDetails = @"Esta é a versão inicial da aplicação eTasks Server.
+
+Recursos implementados: Gerenciamento básico de tarefas.
+Correções: Nenhuma pendente.
+Notas: Em desenvolvimento futuro, os detalhes serão lidos de um arquivo TXT.";
+}

@@ -1,4 +1,5 @@
 ﻿@rendermode InteractiveAuto
+@inject NavigationManager Navigation
 
 <MudAppBar Elevation="3">
     <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -12,9 +13,8 @@
 
     <MudButton Variant="Variant.Text"
                Color="Color.Inherit"
-               Href="https://learn.microsoft.com/aspnet/core/"
-               Target="_blank">
-        About
+               OnClick="@(() => NavigateTo("/about"))">
+        Sobre
     </MudButton>
 </MudAppBar>
 
@@ -22,7 +22,7 @@
 <MudDrawer @bind-Open="_drawerOpen"
            Elevation="1"
            Variant="DrawerVariant.Temporary"
-           Overlay="true" Height="100vh">
+           Overlay="true" Height="100vh" Width="350px">
 
     <MudNavMenu>
 
@@ -42,7 +42,7 @@
 
         <MudNavLink Href="/version"
                     Icon="@Icons.Material.Filled.Info">
-            Versão
+            Gerenciar versionamento do App
         </MudNavLink>
 
     </MudNavMenu>
@@ -56,5 +56,10 @@
     {
         _drawerOpen = !_drawerOpen;
         Console.WriteLine($"Drawer is now {(_drawerOpen ? "open" : "closed")}");
+    }
+
+    private void NavigateTo(string url)
+    {
+        Navigation.NavigateTo(url);
     }
 }

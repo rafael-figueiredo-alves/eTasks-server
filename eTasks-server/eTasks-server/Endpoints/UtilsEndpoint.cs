@@ -6,7 +6,7 @@
         {
             public void MapUtilsEndpoints()
             {
-                app.MapGet("/checkconnection", () => Results.NoContent());
+                app.MapGet("/online", () => Results.NoContent());
             }
 
             public void MapDirectoriesEndpoint(IWebHostEnvironment env)
