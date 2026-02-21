@@ -1,10 +1,20 @@
 using eTasks_server.Client.Pages;
 using eTasks_server.Components;
+using eTasks_server.Core.Data;
 using eTasks_server.Endpoints;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure()  // Opcional: retry em falhas
+    )
+);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

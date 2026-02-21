@@ -1,4 +1,5 @@
 ﻿using eTasks_server.Core.BusinessLayers;
+using eTasks_server.Core.Data;
 
 namespace eTasks_server.Endpoints
 {
@@ -8,7 +9,7 @@ namespace eTasks_server.Endpoints
         {
             public void MapVersionEndpoints()
             {
-                app.MapGet("/version", () => Results.Ok(VersionBLL.GetVersion()))
+                app.MapGet("/version", async (AppDbContext dbContext) => Results.Ok(await VersionBLL.GetVersion(dbContext)))
                    .WithTags("Version")
                    .WithName("GetVersion");
             }
