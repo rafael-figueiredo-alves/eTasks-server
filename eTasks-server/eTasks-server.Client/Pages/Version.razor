@@ -1,0 +1,34 @@
+﻿@page "/version"
+@rendermode InteractiveAuto
+@using eTasks_server.Core.Models
+
+<MudContainer MaxWidth="MaxWidth.Large">
+<MudToolBar Dense="true" Elevation="1" Class="mb-4">
+<MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
+<MudSpacer />
+<MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
+</MudToolBar>
+    <MudContainer MaxWidth="MaxWidth.Medium">
+        <MudText Typo="Typo.h4" Class="mb-4">Informações da Versão do Aplicativo</MudText>
+        <MudForm Model="_model">
+            <MudTextField @bind-Value="_model.AppVersion" Label="Versão do Aplicativo" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+            <MudTextField @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+            <MudTextField @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+            <MudTextField @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+        </MudForm>
+    </MudContainer>
+</MudContainer>
+
+@code {
+private eTasksVersion _model = new eTasksVersion();
+[Inject] private NavigationManager Navigation { get; set; }
+private void GoToEdit()
+{
+Navigation.NavigateTo("/version/edit");
+}
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

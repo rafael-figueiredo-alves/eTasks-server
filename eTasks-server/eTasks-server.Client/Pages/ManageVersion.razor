@@ -1,0 +1,45 @@
+﻿@page "/version/edit"
+@rendermode InteractiveAuto
+@using eTasks_server.Core.Models
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudToolBar Dense="true" Elevation="1" Class="mb-4">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" EndIcon="@Icons.Material.Filled.SaveAs" OnClick="Save">Salvar</MudButton>
+    </MudToolBar>
+    <MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" Class="mb-4">Editando Informações da Versão do Aplicativo</MudText>
+    <MudForm @ref="_form" Model="_model">
+        <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="Versão do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
+        <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" />
+        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" />
+        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" />
+    </MudForm>
+    </MudContainer>
+</MudContainer>
+
+@code {
+    private eTasksVersion _model = new eTasksVersion();
+    private MudForm _form;
+    [Inject] private NavigationManager Navigation { get; set; }
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (_form.IsValid)
+        {
+            // Para agora, apenas log ou simule salvar
+            Console.WriteLine("Dados salvos:");
+            Console.WriteLine($"AppVersion: {_model.AppVersion}");
+            Console.WriteLine($"DisplayVersion: {_model.DisplayVersion}");
+            Console.WriteLine($"URL_APK: {_model.URL_APK}");
+            Console.WriteLine($"URL_WIN: {_model.URL_Win}");
+            // No futuro, salve em arquivo TXT ou similar
+            Navigation.NavigateTo("/version");
+        }
+    }
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/version");
+    }
+}
