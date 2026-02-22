@@ -1,7 +1,8 @@
-﻿namespace eTasks_server.Core.Models
+﻿namespace eTasks_server.Models.Version
 {    
     public class eTasksVersion
-    {
+    {    
+        public int Id { get; set; } = 1;
         public int AppVersion { get; set; } = 1;
         public string DisplayVersion { get; set; } = "2.0.0";
         public string URL_APK { get; set; } = "https://github.com/rafael-figueiredo-alves/eTasks/releases/download/v1.1/eTasks.apk";

@@ -1,8 +1,5 @@
-﻿using eTasks_server.Core.Models;
+﻿using eTasks_server.Models.Version;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace eTasks_server.Core.Data
 {
@@ -19,7 +16,7 @@ namespace eTasks_server.Core.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<eTasksVersion>().ToTable("version").HasNoKey();
+            modelBuilder.Entity<eTasksVersion>().ToTable("version").HasKey(x => x.Id);
 
             base.OnModelCreating(modelBuilder);
             // Configure your entity relationships and constraints here

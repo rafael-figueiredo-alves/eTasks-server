@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\eTasks-server.Core\eTasks-server.Core.csproj" />
+    <ProjectReference Include="..\..\eTasks-server.Models\eTasks-server.Models.csproj" />
     <ProjectReference Include="..\eTasks-server.Client\eTasks-server.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />

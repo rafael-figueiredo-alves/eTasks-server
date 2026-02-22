@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\eTasks-server.Core\eTasks-server.Core.csproj" />
+    <ProjectReference Include="..\..\eTasks-server.Models\eTasks-server.Models.csproj" />
   </ItemGroup>
 
 </Project>

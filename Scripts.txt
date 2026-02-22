@@ -19,3 +19,9 @@ VALUES
 '2.0.0',
 'https://github.com/rafael-figueiredo-alves/eTasks/releases/download/v1.1/eTasks.apk',
 'https://github.com/rafael-figueiredo-alves/eTasks/releases/download/v1.1/eTasks.exe');
+
+ALTER TABLE `version` 
+ADD COLUMN `Id` INT NOT NULL DEFAULT 1 FIRST,
+ADD PRIMARY KEY (`Id`),
+ADD UNIQUE INDEX `Id_UNIQUE` (`Id` ASC) VISIBLE;
+;

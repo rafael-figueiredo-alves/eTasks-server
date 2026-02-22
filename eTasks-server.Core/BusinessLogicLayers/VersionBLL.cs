@@ -1,5 +1,5 @@
 ﻿using eTasks_server.Core.Data;
-using eTasks_server.Core.Models;
+using eTasks_server.Models.Version;
 using Microsoft.EntityFrameworkCore;
 
 namespace eTasks_server.Core.BusinessLayers
@@ -8,9 +8,7 @@ namespace eTasks_server.Core.BusinessLayers
     {
         public static async Task<eTasksVersion> GetVersionAsync(AppDbContext dbContext)
         {
-            //return eTasksVersion.GetCurrentVersion();
-
-            return await dbContext.DbVersion.FirstOrDefaultAsync();
+            return await dbContext.DbVersion.FirstAsync();
         }
 
         public static async Task<bool> SaveNewVersionAsync(AppDbContext dbContext, eTasksVersion version)

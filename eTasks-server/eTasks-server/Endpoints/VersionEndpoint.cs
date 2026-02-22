@@ -1,6 +1,6 @@
 ﻿using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.Data;
-using eTasks_server.Core.Models;
+using eTasks_server.Models.Version;
 
 namespace eTasks_server.Endpoints
 {
@@ -14,10 +14,11 @@ namespace eTasks_server.Endpoints
                    .WithTags("Version")
                    .WithName("GetVersion");
 
-                app.MapPost("/version", async (AppDbContext dbContext, eTasksVersion version) => {
+                app.MapPut("/version", async (AppDbContext dbContext, eTasksVersion version) => {
                     if (await VersionBLL.SaveNewVersionAsync(dbContext, version))
-                        Results.Ok(version);
-                    else Results.BadRequest("Não foi possível salvar edições da versão");
+                        return Results.Ok(version);                    
+                    else 
+                        return Results.BadRequest("Não foi possível salvar edições da versão");
                 })
                    .WithTags("Version")
                    .WithName("SaveNewVersion");
