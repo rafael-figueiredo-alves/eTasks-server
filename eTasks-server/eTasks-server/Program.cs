@@ -1,9 +1,12 @@
 using eTasks_server.Client.Pages;
+using eTasks_server.Client.Services;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Components;
 using eTasks_server.Core.Data;
 using eTasks_server.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using System.Buffers.Text;
 using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,10 +43,15 @@ builder.Services.AddMudServices(options =>
     options.SnackbarConfiguration.PreventDuplicates = true;
     options.SnackbarConfiguration.NewestOnTop = true;
     options.SnackbarConfiguration.ShowCloseIcon = true;
-    options.SnackbarConfiguration.VisibleStateDuration = 10000;
+    options.SnackbarConfiguration.VisibleStateDuration = 1000;
     options.SnackbarConfiguration.HideTransitionDuration = 500;
     options.SnackbarConfiguration.ShowTransitionDuration = 500;   
 });
+
+builder.Services.AddScoped(sp =>
+    new HttpClient { BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]!) });
+
+builder.Services.AddScoped<IVersionService, VersionService>();
 
 var app = builder.Build();
 

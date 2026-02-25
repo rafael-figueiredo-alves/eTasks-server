@@ -8,7 +8,7 @@
 <MudDialogProvider />
 
 @* Needed for snackbars *@
-<MudSnackbarProvider />
+<MudSnackbarProvider @rendermode="InteractiveAuto" />
 
 <MudLayout>
 
@@ -16,7 +16,7 @@
 
     <!-- Conteúdo principal -->
     <MudMainContent Class="pa-4">
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-16">
             @Body
         </MudContainer>
     </MudMainContent>

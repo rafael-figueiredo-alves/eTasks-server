@@ -1,3 +1,5 @@
+using eTasks_server.Client.Services;
+using eTasks_server.Client.Services.Interfaces;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
 
@@ -9,7 +11,7 @@ builder.Services.AddMudServices(options =>
     options.SnackbarConfiguration.PreventDuplicates = true;
     options.SnackbarConfiguration.NewestOnTop = true;
     options.SnackbarConfiguration.ShowCloseIcon = true;
-    options.SnackbarConfiguration.VisibleStateDuration = 10000;
+    options.SnackbarConfiguration.VisibleStateDuration = 1000;
     options.SnackbarConfiguration.HideTransitionDuration = 500;
     options.SnackbarConfiguration.ShowTransitionDuration = 500;
 });

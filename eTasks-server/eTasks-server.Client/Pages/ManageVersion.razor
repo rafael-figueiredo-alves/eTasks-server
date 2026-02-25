@@ -1,4 +1,5 @@
 ﻿@page "/version/edit"
+@using eTasks_server.Client.Services.Interfaces
 @rendermode InteractiveAuto
 
 <MudContainer MaxWidth="MaxWidth.Large">
@@ -10,31 +11,64 @@
     <MudContainer MaxWidth="MaxWidth.Medium">
     <MudText Typo="Typo.h4" Class="mb-4">Editando Informações da Versão do Aplicativo</MudText>
     <MudForm @ref="_form" Model="_model">
-        <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="Versão do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
-        <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" />
-        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" />
-        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" />
-    </MudForm>
+            @if (isLoading)
+            {
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" />
+            }
+            else
+            {
+                <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="Versão do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
+                <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" />
+                <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" />
+                <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" />
+            }
+        </MudForm>
     </MudContainer>
 </MudContainer>
 
 @code {
     private eTasksVersion _model = new eTasksVersion();
+    private bool isLoading = true;
     private MudForm _form;
     [Inject] private NavigationManager Navigation { get; set; }
+    [Inject] private IVersionService VersionService { get; set; }
+
+    [Inject] protected ISnackbar Snackbar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _model = await VersionService.GetVersionAsync();
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            // Trate o erro, por exemplo, exibindo uma mensagem de erro para o usuário
+            Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
+            // Você pode usar um Snackbar ou outro componente para mostrar a mensagem de erro
+        }
+    }
     private async Task Save()
     {
         await _form.Validate();
         if (_form.IsValid)
         {
             // Para agora, apenas log ou simule salvar
-            Console.WriteLine("Dados salvos:");
-            Console.WriteLine($"AppVersion: {_model.AppVersion}");
-            Console.WriteLine($"DisplayVersion: {_model.DisplayVersion}");
-            Console.WriteLine($"URL_APK: {_model.URL_APK}");
-            Console.WriteLine($"URL_WIN: {_model.URL_Win}");
+            if (await VersionService.SaveVersionAsync(_model))
+            {
+                Snackbar.Add("Versão salva com sucesso!", Severity.Success);
+                Navigation.NavigateTo("/version");
+            }
+            else
+            {
+                Snackbar.Add("Erro ao salvar a versão. Tente novamente.", Severity.Error);
+            }
             // No futuro, salve em arquivo TXT ou similar
-            Navigation.NavigateTo("/version");
+            
         }
     }
     private void GoBack()
