@@ -10,7 +10,18 @@ namespace eTasks_server.Endpoints
         {
             public async Task MapVersionEndpoints()
             {
-                app.MapGet("/version", async (AppDbContext dbContext) => Results.Ok(await VersionBLL.GetVersionAsync(dbContext)))
+                app.MapGet("/version", async (AppDbContext dbContext) =>
+                {
+                    try
+                    {
+                        var version = await VersionBLL.GetVersionAsync(dbContext);
+                        Results.Ok(await VersionBLL.GetVersionAsync(dbContext));
+                    }
+                    catch (Exception ex)
+                    {
+                        Results.Problem($"Ocorreu um erro ao obter a versão: {ex.Message}");
+                    }
+                })
                    .WithTags("Version")
                    .WithName("GetVersion");
 

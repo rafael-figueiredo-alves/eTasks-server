@@ -32,8 +32,8 @@ builder.Services.AddCors(options =>
             policy
                   .WithOrigins("https://rafael-figueiredo-alves.github.io")
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
-                  //.AllowCredentials();
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 
@@ -73,7 +73,7 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-app.AddEndpoints();
+await app.AddEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
