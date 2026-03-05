@@ -18,10 +18,14 @@
     <ProjectReference Include="..\..\eTasks-server.Core\eTasks-server.Core.csproj" />
     <ProjectReference Include="..\..\eTasks-server.Models\eTasks-server.Models.csproj" />
     <ProjectReference Include="..\eTasks-server.Client\eTasks-server.Client.csproj" />
+    <PackageReference Include="AspNetCore.HealthChecks.MySql" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-    <PackageReference Include="MudBlazor" Version="8.15.0" />
+    <PackageReference Include="MudBlazor" Version="9.1.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

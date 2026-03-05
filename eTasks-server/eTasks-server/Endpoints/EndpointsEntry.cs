@@ -4,7 +4,7 @@
     {
         extension(WebApplication app)
         {
-            public async Task AddEndpoints()
+            public async Task AddAPIEndpoints()
             {
                 var API_V2 = app.MapGroup("/api")
                                     .MapGroup("/v2");
