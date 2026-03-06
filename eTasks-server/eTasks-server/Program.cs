@@ -3,7 +3,7 @@ using eTasks_server.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddServicesPayload(builder.Configuration);
+builder.RegisterServices();
 
 var app = builder.Build();
 

@@ -1,8 +1,12 @@
-﻿using eTasks_server.Core.BusinessLayers;
+﻿using eTasks_server.Client.Services;
+using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.Data;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using Serilog;
+using Serilog.Events;
 
 namespace eTasks_server.Extensions
 {
@@ -95,6 +99,37 @@ namespace eTasks_server.Extensions
             private void ServerAppServices()
             {
                 services.AddScoped<VersionBLL>();
+                services.AddScoped<IVersionService, VersionService>();
+            }
+        }
+
+        extension(WebApplicationBuilder builder)
+        {
+            public void RegisterServices()
+            {
+                builder.SetupSerilog(builder.Environment);
+
+                builder.Services.AddServicesPayload(builder.Configuration);
+            }
+
+            private void SetupSerilog(IWebHostEnvironment env)
+            {
+                // Configuração do Serilog
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                    .Enrich.FromLogContext()
+                    .Enrich.WithMachineName()
+                    .Enrich.WithThreadId()
+                    .WriteTo.Console()
+                    .WriteTo.File(
+                        Directory.GetParent(env.ContentRootPath)?.FullName + Path.DirectorySeparatorChar +
+                        "logs/log-.txt",
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 10)
+                    .CreateLogger();
+
+                builder.Host.UseSerilog();
             }
         }
     }
