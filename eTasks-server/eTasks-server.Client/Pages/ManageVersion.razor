@@ -36,7 +36,7 @@
     [Inject] private NavigationManager Navigation { get; set; }
     [Inject] private IVersionService VersionService { get; set; }
     [Inject] private IDialogService DialogService { get; set; }
-    [Inject] private ILogger Log { get; set; }
+    //[Inject] private ILogger Log { get; set; }
 
     [Inject] protected ISnackbar Snackbar { get; set; }
 
@@ -51,7 +51,7 @@
         {
             // Trate o erro, por exemplo, exibindo uma mensagem de erro para o usuário
             Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-            Log.LogError(ex, "Erro ao carregar a versão");
+            //Log.LogError(ex, "Erro ao carregar a versão");
             await DialogService.ShowMessageBoxAsync("Oops! Ocorreu um erro", $"Erro ao carregar a versão: {ex.Message}", yesText: "OK");
             isLoading = false;
             // Você pode usar um Snackbar ou outro componente para mostrar a mensagem de erro

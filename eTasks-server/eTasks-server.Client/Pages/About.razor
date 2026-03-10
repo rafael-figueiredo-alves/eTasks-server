@@ -1,4 +1,6 @@
-﻿@page "/about"
+﻿@rendermode InteractiveAuto
+@page "/about"
+@inherits AboutBase
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudText Typo="Typo.h4" Class="mb-4">eTasks Server</MudText>
@@ -9,10 +11,4 @@
                   Variant="Variant.Outlined"
                   Lines="10" />
 </MudContainer>
-@code {
-    private string VersionDetails = @"Esta é a versão inicial da aplicação eTasks Server.
 
-Recursos implementados: Gerenciamento básico de tarefas.
-Correções: Nenhuma pendente.
-Notas: Em desenvolvimento futuro, os detalhes serão lidos de um arquivo TXT.";
-}

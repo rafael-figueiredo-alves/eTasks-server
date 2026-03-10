@@ -14,12 +14,11 @@ namespace eTasks_server.Endpoints
                 {
                     try
                     {
-                        var version = await VersionBLL.GetVersionAsync(dbContext);
-                        Results.Ok(await VersionBLL.GetVersionAsync(dbContext));
+                        return Results.Ok(await VersionBLL.GetVersionAsync(dbContext));
                     }
                     catch (Exception ex)
                     {
-                        Results.Problem($"Ocorreu um erro ao obter a versão: {ex.Message}");
+                        return Results.Problem($"Ocorreu um erro ao obter a versão: {ex.Message}");
                     }
                 })
                    .WithTags("Version")

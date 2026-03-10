@@ -1,17 +1,21 @@
-﻿@page "/version"
-@using eTasks_server.Client.Services.Interfaces
-@rendermode InteractiveAuto
+﻿@rendermode InteractiveAuto
+@page "/version"
+@inherits VersionBase
 
 <MudContainer MaxWidth="MaxWidth.Large">
-<MudToolBar Dense="true" Elevation="1" Class="mb-4">
-<MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
-<MudSpacer />
-<MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
-</MudToolBar>
+
+    <MudToolBar Dense="true" Elevation="1" Class="mb-4">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
+    </MudToolBar>
+
     <MudContainer MaxWidth="MaxWidth.Medium">
+
         <MudText Typo="Typo.h4" Class="mb-4">Informações da Versão do Aplicativo</MudText>
+
         <MudForm Model="_model">
-            @if(isLoading)
+            @if (isLoading)
             {
                 <MudSkeleton Height="40px" Class="mb-2" />
                 <MudSkeleton Height="40px" Class="mb-2" />
@@ -24,47 +28,9 @@
                 <MudTextField @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
                 <MudTextField @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
                 <MudTextField @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
-            }            
+            }
         </MudForm>
+
     </MudContainer>
+
 </MudContainer>
-
-@code {
-    private eTasksVersion _model = new eTasksVersion();
-    private bool isLoading = true;
-    [Inject] private NavigationManager Navigation { get; set; }
-    [Inject] private IVersionService VersionService { get; set; }
-    private void GoToEdit()
-    {
-        Navigation.NavigateTo("/version/edit");
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _model = await VersionService.GetVersionAsync();
-            isLoading = false;
-        }
-        catch (Exception ex)
-        {
-            // Trate o erro, por exemplo, exibindo uma mensagem de erro para o usuário
-            Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-            // Você pode usar um Snackbar ou outro componente para mostrar a mensagem de erro
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        // if (firstRender)
-        // {
-        //     _model = await VersionService.GetVersionAsync();
-        //     StateHasChanged();
-        // }
-    }
-
-    private void GoBack()
-    {
-        Navigation.NavigateTo("/");
-    }
-}
