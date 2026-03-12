@@ -4,10 +4,22 @@ namespace eTasks_server.Client.Pages
 {
     public class AboutBase : ComponentBase
     {
-        protected string VersionDetails = @"Esta é a versão inicial da aplicação eTasks Server.
+        #region Serviços Injetados
+        [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+        #endregion
 
-                                            Recursos implementados: Gerenciamento básico de tarefas.
-                                            Correções: Nenhuma pendente.
-                                            Notas: Em desenvolvimento futuro, os detalhes serão lidos de um arquivo TXT.";
+        #region Variáveis
+        protected string? VersionDetails { get; private set; }
+        private HttpClient? Http;
+        #endregion
+
+        #region Métodos
+        protected override async Task OnInitializedAsync()
+        {
+            Http = new HttpClient() { BaseAddress = new Uri(NavigationManager.BaseUri) };
+
+            VersionDetails = await Http.GetStringAsync("About.txt");
+        }
+        #endregion
     }
 }

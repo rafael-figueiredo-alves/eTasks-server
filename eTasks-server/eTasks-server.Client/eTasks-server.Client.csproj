@@ -27,4 +27,8 @@
     <ProjectReference Include="..\..\eTasks-server.Models\eTasks-server.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

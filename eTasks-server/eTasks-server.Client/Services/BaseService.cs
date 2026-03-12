@@ -1,4 +1,5 @@
 ﻿using eTasks_server.Models.Exceptions;
+using MudBlazor;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -7,11 +8,13 @@ namespace eTasks_server.Client.Services
 {
     public abstract class BaseService
     {
-        protected readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient;
+        private readonly IDialogService _dialogService;
 
-        protected BaseService(HttpClient httpClient)
+        protected BaseService(HttpClient httpClient, IDialogService dialogService)
         {
-            _httpClient = httpClient;
+            _httpClient    = httpClient;
+            _dialogService = dialogService;
         }
 
         protected async Task<T?> HandleResponseAsync<T>(HttpResponseMessage response)

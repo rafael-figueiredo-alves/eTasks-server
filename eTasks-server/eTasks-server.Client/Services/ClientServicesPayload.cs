@@ -11,6 +11,13 @@ namespace eTasks_server.Client.Services
         {
             public void AddClientServices()
             {
+                builder.SetupMudBlazorServices()
+                       .SetupHttpClient()
+                       .SetupAPIServices();
+            }
+
+            private WebAssemblyHostBuilder SetupMudBlazorServices()
+            {
                 builder.Services.AddMudServices(options =>
                 {
                     options.SnackbarConfiguration.PositionClass = MudBlazor.Defaults.Classes.Position.BottomRight;
@@ -22,10 +29,25 @@ namespace eTasks_server.Client.Services
                     options.SnackbarConfiguration.ShowTransitionDuration = 500;
                 });
 
+                return builder;
+            }
+
+            private WebAssemblyHostBuilder SetupHttpClient()
+            {
                 builder.Services.AddScoped(sp =>
-                    new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress + "api/v2/") });
+                    new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress + Constants.URLClientServicesAPISegment) });
+
+                return builder;
+            }
+
+            private WebAssemblyHostBuilder SetupAPIServices()
+            {
+                // Here you can add other API services, for example:
+                // builder.Services.AddScoped<IUserService, UserService>();
 
                 builder.Services.AddScoped<IVersionService, VersionService>();
+
+                return builder;
             }
         }
     }

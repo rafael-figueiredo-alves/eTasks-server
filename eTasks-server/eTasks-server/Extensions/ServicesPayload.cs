@@ -16,22 +16,17 @@ namespace eTasks_server.Extensions
         {
             public void AddServicesPayload(ConfigurationManager configuration)
             {
-                services.SetupDatabase(configuration);
-
-                services.SetupRazorComponents();
-
-                services.SetupCors();
-
-                services.SetupMudServices();
-
-                services.SetupHttpClient(configuration);
-
-                services.SetupHealthChecks(configuration);
-
-                services.ServerAppServices();
+                services.SetupDatabase(configuration)
+                        .SetupRazorComponents()
+                        .SetupCors()
+                        .SetupMudServices()
+                        .SetupHttpClient(configuration)
+                        .SetupHealthChecks(configuration)
+                        .ServerAppServices();
             }
 
-            private void SetupHealthChecks(ConfigurationManager configuration)
+            #region Private Methods
+            private IServiceCollection SetupHealthChecks(ConfigurationManager configuration)
             {
                 services.AddHealthChecks()
                     .AddMySql(
@@ -40,9 +35,11 @@ namespace eTasks_server.Extensions
                         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
                         timeout: TimeSpan.FromSeconds(5)
                     );
+
+                return services;
             }
 
-            private void SetupMudServices()
+            private IServiceCollection SetupMudServices()
             {
                 services.AddMudServices(options =>
                 {
@@ -54,22 +51,28 @@ namespace eTasks_server.Extensions
                     options.SnackbarConfiguration.HideTransitionDuration = 500;
                     options.SnackbarConfiguration.ShowTransitionDuration = 500;
                 });
+
+                return services;
             }
 
-            private void SetupHttpClient(ConfigurationManager configuration)
+            private IServiceCollection SetupHttpClient(ConfigurationManager configuration)
             {
                 services.AddScoped(sp =>
                     new HttpClient { BaseAddress = new Uri(configuration[Constants.ApiBaseUrl]!) });
+
+                return services;
             }
 
-            private void SetupRazorComponents()
+            private IServiceCollection SetupRazorComponents()
             {
                 services.AddRazorComponents()
                     .AddInteractiveServerComponents()
                     .AddInteractiveWebAssemblyComponents();
+
+                return services;
             }
 
-            private void SetupCors()
+            private IServiceCollection SetupCors()
             {
                 services.AddCors(options =>
                 {
@@ -83,9 +86,11 @@ namespace eTasks_server.Extensions
                                .AllowCredentials();
                      });
                 });
+
+                return services;
             }
 
-            private void SetupDatabase(ConfigurationManager configuration)
+            private IServiceCollection SetupDatabase(ConfigurationManager configuration)
             {
                 services.AddDbContext<AppDbContext>(options =>
                                                         options.UseMySql(
@@ -94,25 +99,30 @@ namespace eTasks_server.Extensions
                                                         mySqlOptions => mySqlOptions.EnableRetryOnFailure()  // Opcional: retry em falhas
                                                         )
                                                     );
+
+                return services;
             }
 
-            private void ServerAppServices()
+            private IServiceCollection ServerAppServices()
             {
                 services.AddScoped<VersionBLL>();
                 services.AddScoped<IVersionService, VersionService>();
+
+                return services;
             }
+            #endregion
         }
 
         extension(WebApplicationBuilder builder)
         {
             public void RegisterServices()
             {
-                builder.SetupSerilog(builder.Environment);
-
-                builder.Services.AddServicesPayload(builder.Configuration);
+                builder.SetupSerilog(builder.Environment)
+                       .AddServicesPayload(builder.Configuration);
             }
 
-            private void SetupSerilog(IWebHostEnvironment env)
+            #region Private Methods
+            private IServiceCollection SetupSerilog(IWebHostEnvironment env)
             {
                 // Configuração do Serilog
                 Log.Logger = new LoggerConfiguration()
@@ -130,7 +140,10 @@ namespace eTasks_server.Extensions
                     .CreateLogger();
 
                 builder.Host.UseSerilog();
+
+                return builder.Services;
             }
+            #endregion
         }
     }
 }

@@ -1,0 +1,2 @@
+Versão 0.0.1 - 2026-06-01 (Alpha)
+=> Release da versão Alpha do servidor do eTasks.
