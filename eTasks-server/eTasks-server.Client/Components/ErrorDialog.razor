@@ -1,0 +1,17 @@
+﻿@rendermode InteractiveAuto
+@inherits ErrorDialogBase
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" />
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudText>@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Close">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
