@@ -1,0 +1,25 @@
+﻿.info-dialog .mud-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.info-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background-color: rgba(33, 150, 243, 0.12);
+    animation: pulse-info 2s ease-in-out infinite;
+}
+
+@keyframes pulse-info {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.25);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+    }
+}

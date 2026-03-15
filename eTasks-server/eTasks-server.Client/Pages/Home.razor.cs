@@ -1,4 +1,5 @@
 ﻿using eTasks_server.Client.Components;
+using eTasks_server.Client.Services.Extensions;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -9,20 +10,15 @@ namespace eTasks_server.Client.Pages
         [Inject] protected IDialogService DialogService { get; set; } = default!;
         protected async Task Teste()
         {
-            var options = new DialogOptions
+            await DialogService.ShowConfirm("Esse é um teste da função para exibir uma confirmação.", "Mensagem de confirmação", OnConfirm: EventCallback.Factory.Create(this, async () =>
             {
-                CloseButton = true,
-                MaxWidth = MaxWidth.Small,
-                FullWidth = true
-            };
-
-            var parameters = new DialogParameters
+                await DialogService.ShowError("Você confirmou a ação!", "Confirmação");
+            }), OnCancel: EventCallback.Factory.Create(this, async () =>
             {
-                ["Title"] = "Erro Teste",
-                ["Message"] = "Mensagem de erro teste"
-            };
+                await DialogService.ShowError("Você cancelou a ação!", "Cancelamento");
+            }));
 
-            await DialogService.ShowAsync<ErrorDialog>("Erro Teste", parameters, options);
+            await DialogService.ShowError("Esse é um teste da função para exibir um erro.", "Mensagem de erro");
         }
     }
 }

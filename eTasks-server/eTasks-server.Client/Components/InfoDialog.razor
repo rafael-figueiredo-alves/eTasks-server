@@ -1,12 +1,12 @@
 ﻿@rendermode InteractiveAuto
-@inherits ErrorDialogBase
+@inherits InfoDialogBase
 
-<MudDialog Class="error-dialog">
+<MudDialog Class="info-dialog">
     <TitleContent>
-        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="dialog-header pt-4 pb-2">
-            <div class="error-icon-wrapper">
-                <MudIcon Icon="@Icons.Material.Filled.Error"
-                         Color="Color.Error"
+        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pt-4 pb-2">
+            <div class="info-icon-wrapper">
+                <MudIcon Icon="@Icons.Material.Filled.Info"
+                         Color="Color.Info"
                          Style="font-size: 3.5rem;" />
             </div>
             <MudText Typo="Typo.h5" Align="Align.Center" Style="font-weight: 700;">
@@ -21,12 +21,12 @@
     </DialogContent>
     <DialogActions>
         <MudStack AlignItems="AlignItems.Center" Class="w-100 pb-3">
-            <MudButton Color="Color.Error"
+            <MudButton Color="Color.Info"
                        Variant="Variant.Filled"
                        Size="Size.Large"
                        Style="min-width: 140px; border-radius: 8px;"
                        OnClick="Close">
-                Fechar
+                Entendido
             </MudButton>
         </MudStack>
     </DialogActions>
