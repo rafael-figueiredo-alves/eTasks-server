@@ -8,33 +8,40 @@ namespace eTasks_server.Client.Services.Extensions
     {
         extension(IDialogService dialogService)
         {
-            public async Task ShowError(string message, string title = "Error")
+            private static DialogOptions GetDefaultOptions()
             {
-                var options = new DialogOptions
+                return new DialogOptions
                 {
                     CloseButton = true,
                     MaxWidth = MaxWidth.Small,
                     FullWidth = true
                 };
+            }
 
+            public async Task ShowError(string message, string title = "Error")
+            {
                 var parameters = new DialogParameters
                 {
                     ["Title"] = title,
                     ["Message"] = message,
                 };
 
-                await dialogService.ShowAsync<ErrorDialog>(title, parameters, options);
+                await dialogService.ShowAsync<ErrorDialog>(title, parameters, IDialogService.GetDefaultOptions());
+            }
+
+            public async Task ShowInfo(string message, string title = "Error")
+            {
+                var parameters = new DialogParameters
+                {
+                    ["Title"] = title,
+                    ["Message"] = message,
+                };
+
+                await dialogService.ShowAsync<InfoDialog>(title, parameters, IDialogService.GetDefaultOptions());
             }
 
             public async Task ShowConfirm(string message, string title = "Error", EventCallback? OnConfirm = null, EventCallback? OnCancel = null)
-            {
-                var options = new DialogOptions
-                {
-                    CloseButton = true,
-                    MaxWidth = MaxWidth.Small,
-                    FullWidth = true
-                };
-
+            {                
                 var parameters = new DialogParameters
                 {
                     ["Title"] = title,
@@ -43,7 +50,7 @@ namespace eTasks_server.Client.Services.Extensions
                     ["OnCancel"] = OnCancel
                 };
 
-                await dialogService.ShowAsync<ConfirmDialog>(title, parameters, options);
+                await dialogService.ShowAsync<ConfirmDialog>(title, parameters, IDialogService.GetDefaultOptions());
             }
         }
     }
