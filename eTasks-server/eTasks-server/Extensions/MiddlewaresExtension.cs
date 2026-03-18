@@ -1,6 +1,7 @@
-﻿using eTasks_server.Models.Utils;
+using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Diagnostics;
 using MySqlConnector;
+using Scalar.AspNetCore;
 
 namespace eTasks_server.Extensions
 {
@@ -12,35 +13,13 @@ namespace eTasks_server.Extensions
             {
                 webApplication.UseCors(Constants.CorsPolicyName);
 
-                webApplication.UseExceptionHandler(errorApp =>
-                {
-                    errorApp.Run(async context =>
-                    {
-                        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-                        var exception = exceptionHandlerPathFeature?.Error;
-                        context.Response.ContentType = "application/json";
-                        if (exception is MySqlException)
-                        {
-                            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-                            await context.Response.WriteAsJsonAsync(new
-                            {
-                                message = "Banco de dados indisponível. Tente novamente mais tarde."
-                            });
-                        }
-                        else
-                        {
-                            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                            await context.Response.WriteAsJsonAsync(new
-                            {
-                                message = "Erro interno inesperado."
-                            });
-                        }
-                    });
-                });
+                webApplication.UseExceptionHandler();
 
                 if (webApplication.Environment.IsDevelopment())
                 {
                     webApplication.UseWebAssemblyDebugging();
+                    webApplication.MapOpenApi();
+                    webApplication.MapScalarApiReference();
                 }
                 else
                 {
@@ -49,7 +28,28 @@ namespace eTasks_server.Extensions
                     webApplication.UseHsts();
                 }
 
-                webApplication.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+                webApplication.UseStatusCodePages(async statusCodeContext =>
+                {
+                    var response = statusCodeContext.HttpContext.Response;
+                    if (response.StatusCode == 401 || response.StatusCode == 403 || response.StatusCode == 404)
+                    {
+                        response.ContentType = "application/json";
+                        var message = response.StatusCode switch
+                        {
+                            401 => "Acesso não autorizado. Autenticação é necessária.",
+                            403 => "Acesso negado. Você não tem permissão para acessar este recurso.",
+                            404 => "Recurso não encontrado.",
+                            _ => "Ocorreu um erro no processamento da requisição."
+                        };
+                        
+                        var errorResponse = new eTasks_server.Models.Exceptions.ErrorResponse { StatusCode = response.StatusCode, Message = message };
+                        await response.WriteAsJsonAsync(errorResponse);
+                    }
+                });
+                
+                webApplication.UseAuthentication();
+                webApplication.UseAuthorization();
+                
                 webApplication.UseHttpsRedirection();
                 webApplication.UseAntiforgery();
             }

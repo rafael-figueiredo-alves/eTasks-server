@@ -1,12 +1,16 @@
-﻿using eTasks_server.Client.Services;
+using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.Data;
 using eTasks_server.Models.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
+using System.Text;
+using eTasks_server.Middlewares;
 
 namespace eTasks_server.Extensions
 {
@@ -22,6 +26,9 @@ namespace eTasks_server.Extensions
                         .SetupMudServices()
                         .SetupHttpClient(configuration)
                         .SetupHealthChecks(configuration)
+                        .SetupGlobalExceptionHandler()
+                        .SetupOpenApi()
+                        .SetupSecurity(configuration)
                         .ServerAppServices();
             }
 
@@ -107,6 +114,41 @@ namespace eTasks_server.Extensions
             {
                 services.AddScoped<VersionBLL>();
                 services.AddScoped<IVersionService, VersionService>();
+
+                return services;
+            }
+
+            private IServiceCollection SetupOpenApi()
+            {
+                services.AddOpenApi();
+                return services;
+            }
+
+            private IServiceCollection SetupGlobalExceptionHandler()
+            {
+                services.AddProblemDetails();
+                services.AddExceptionHandler<GlobalExceptionHandler>();
+                return services;
+            }
+
+            private IServiceCollection SetupSecurity(ConfigurationManager configuration)
+            {
+                services.AddAuthorization();
+                services.AddAuthentication("Bearer")
+                    .AddJwtBearer(options =>
+                    {
+                        var jwtKey = configuration["Jwt:Key"] ?? "defaultSecretKey_1234567890_min32chars!";
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = configuration["Jwt:Issuer"] ?? "eTasksServer",
+                            ValidAudience = configuration["Jwt:Audience"] ?? "eTasksClient",
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                        };
+                    });
 
                 return services;
             }
