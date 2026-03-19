@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `password_reset_codes` (
   CONSTRAINT `fk_password_reset_users` FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE login_logs (
+CREATE TABLE IF NOT EXISTS login_logs (
     Id CHAR(36) NOT NULL,
     UserUid CHAR(36),
     Status VARCHAR(20) NOT NULL,
