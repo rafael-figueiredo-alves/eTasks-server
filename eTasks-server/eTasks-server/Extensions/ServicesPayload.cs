@@ -120,7 +120,16 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupOpenApi()
             {
-                services.AddOpenApi();
+                services.AddOpenApi(Constants.ApiVersion, options =>
+                {
+                    options.AddDocumentTransformer((document, context, cancellationToken) =>
+                    {
+                        document.Info.Title = Constants.AppTitle;
+                        document.Info.Description = Constants.ApiDescription;
+                        document.Info.Version = Constants.ApiVersion;
+                        return Task.CompletedTask;
+                    });
+                });
                 return services;
             }
 
@@ -134,18 +143,24 @@ namespace eTasks_server.Extensions
             private IServiceCollection SetupSecurity(ConfigurationManager configuration)
             {
                 services.AddAuthorization();
+                services.AddControllers();
+
+                // Dependency Injection mapping
+                services.AddScoped<eTasks_server.Core.Services.Interfaces.IEmailService, eTasks_server.Core.Services.EmailService>();
+                services.AddScoped<eTasks_server.Core.BusinessLogicLayers.Interfaces.IAuthBLL, eTasks_server.Core.BusinessLogicLayers.AuthBLL>();
+
                 services.AddAuthentication("Bearer")
                     .AddJwtBearer(options =>
                     {
-                        var jwtKey = configuration["Jwt:Key"] ?? "defaultSecretKey_1234567890_min32chars!";
+                        var jwtKey = configuration[Constants.JwtKeyConfig] ?? "defaultSecretKey_1234567890_min32chars!";
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuer = true,
                             ValidateAudience = true,
                             ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
-                            ValidIssuer = configuration["Jwt:Issuer"] ?? "eTasksServer",
-                            ValidAudience = configuration["Jwt:Audience"] ?? "eTasksClient",
+                            ValidIssuer = configuration[Constants.JwtIssuerConfig] ?? "eTasksServer",
+                            ValidAudience = configuration[Constants.JwtAudienceConfig] ?? "eTasksClient",
                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                         };
                     });

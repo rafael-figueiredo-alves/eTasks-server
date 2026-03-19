@@ -1,4 +1,4 @@
-﻿using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Version;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -37,10 +37,12 @@ namespace eTasks_server.Client.Pages
         }
         protected async Task Save()
         {
-            await _form.ValidateAsync();
-            if (_form.IsValid)
+            if (_form is not null)
             {
-                // Para agora, apenas log ou simule salvar
+                await _form.ValidateAsync();
+                if (_form.IsValid)
+                {
+                    // Para agora, apenas log ou simule salvar
                 if (await VersionService.SaveVersionAsync(_model))
                 {
                     Snackbar.Add("Versão salva com sucesso!", Severity.Success);
@@ -52,6 +54,7 @@ namespace eTasks_server.Client.Pages
                 }
                 // No futuro, salve em arquivo TXT ou similar
 
+                }
             }
         }
         protected void GoBack() => Navigation.NavigateTo("/version");
