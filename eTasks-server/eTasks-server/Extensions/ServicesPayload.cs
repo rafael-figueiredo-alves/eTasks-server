@@ -11,6 +11,10 @@ using Serilog;
 using Serilog.Events;
 using System.Text;
 using eTasks_server.Middlewares;
+using eTasks_server.Core.Services.Interfaces;
+using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Core.Services;
+using eTasks_server.Core.BusinessLogicLayers;
 
 namespace eTasks_server.Extensions
 {
@@ -113,7 +117,9 @@ namespace eTasks_server.Extensions
             private IServiceCollection ServerAppServices()
             {
                 services.AddScoped<VersionBLL>();
+                services.AddScoped<IUserAdminBLL, UserAdminBLL>();
                 services.AddScoped<IVersionService, VersionService>();
+                services.AddScoped<IUserAdminService, UserAdminService>();
 
                 return services;
             }
@@ -142,12 +148,15 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupSecurity(ConfigurationManager configuration)
             {
-                services.AddAuthorization();
+                services.AddAuthorization(options =>
+                {
+                    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+                });
                 services.AddControllers();
 
                 // Dependency Injection mapping
-                services.AddScoped<eTasks_server.Core.Services.Interfaces.IEmailService, eTasks_server.Core.Services.EmailService>();
-                services.AddScoped<eTasks_server.Core.BusinessLogicLayers.Interfaces.IAuthBLL, eTasks_server.Core.BusinessLogicLayers.AuthBLL>();
+                services.AddScoped<IEmailService, EmailService>();
+                services.AddScoped<IAuthBLL, AuthBLL>();              
 
                 services.AddAuthentication("Bearer")
                     .AddJwtBearer(options =>

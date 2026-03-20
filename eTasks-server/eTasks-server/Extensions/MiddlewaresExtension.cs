@@ -42,13 +42,18 @@ namespace eTasks_server.Extensions
                         response.ContentType = "application/json";
                         var message = response.StatusCode switch
                         {
-                            401 => "Acesso não autorizado. Autenticação é necessária.",
-                            403 => "Acesso negado. Você não tem permissão para acessar este recurso.",
-                            404 => "Recurso não encontrado.",
+                            401 => "Acesso não autorizado. Faça login para continuar.",
+                            403 => "Você não tem permissão para acessar este recurso.",
+                            404 => "O recurso solicitado não foi encontrado.",
                             _ => "Ocorreu um erro no processamento da requisição."
                         };
-                        
-                        var errorResponse = new eTasks_server.Models.Exceptions.ErrorResponse { StatusCode = response.StatusCode, Message = message };
+
+                        var errorResponse = new eTasks_server.Models.Exceptions.ErrorResponse
+                        {
+                            TraceId = Guid.NewGuid().ToString(),
+                            Message = message,
+                            Details = string.Empty
+                        };
                         await response.WriteAsJsonAsync(errorResponse);
                     }
                 });
@@ -58,8 +63,6 @@ namespace eTasks_server.Extensions
                 
                 webApplication.UseHttpsRedirection();
                 webApplication.UseAntiforgery();
-                
-                webApplication.MapAuthEndpoints();
             }
         }
     }

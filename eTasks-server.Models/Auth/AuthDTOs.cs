@@ -11,12 +11,10 @@ namespace eTasks_server.Models.Auth
 
     public class LoginResponse
     {
-        public bool Success { get; set; }
         public string Token { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
         public DateTime? TokenExpiresAt { get; set; }
         public DateTime? RefreshTokenExpiresAt { get; set; }
-        public string ErrorMessage { get; set; } = string.Empty;
     }
 
     public class RegisterRequest

@@ -1,6 +1,5 @@
 using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 
 namespace eTasks_server.Middlewares
@@ -19,42 +18,43 @@ namespace eTasks_server.Middlewares
             Exception exception,
             CancellationToken cancellationToken)
         {
-            _logger.LogError(exception, "Exception occurred: {Message}", exception.Message);
+            var traceId = Guid.NewGuid().ToString();
+
+            _logger.LogError(exception, "[{TraceId}] Exceção capturada: {Message}", traceId, exception.Message);
 
             var statusCode = StatusCodes.Status500InternalServerError;
-            string message = "Erro interno inesperado.";
+            var message = "Ocorreu um erro inesperado. Tente novamente ou entre em contato com o suporte.";
+            var details = string.Empty;
 
             if (exception is ValidationException validationExc)
             {
-                var errors = validationExc.Errors
-                    .SelectMany(kvp => kvp.Value.Select(err => new ErrorDetail { Campo = kvp.Key, Erro = err }))
-                    .ToList();
+                statusCode = StatusCodes.Status400BadRequest;
+                message = "Verifique os campos e tente novamente.";
 
-                var validationResponse = new ErrorResponse
-                {
-                    StatusCode = 400,
-                    Message = "Um ou mais campos falharam na validação",
-                    Errors = errors
-                };
-
-                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await httpContext.Response.WriteAsJsonAsync(validationResponse, cancellationToken);
-                return true;
+                // Concatena os erros de validação em "details" de forma legível
+                details = string.Join("; ", validationExc.Errors
+                    .SelectMany(kvp => kvp.Value.Select(err => $"{kvp.Key}: {err}")));
+            }
+            else if (exception is ApiException apiExc)
+            {
+                statusCode = (int)apiExc.StatusCode;
+                message = apiExc.UserMessage ?? apiExc.Message;
             }
             else if (exception is MySqlException)
             {
                 statusCode = StatusCodes.Status503ServiceUnavailable;
-                message = "Banco de dados indisponível. Tente novamente mais tarde.";
+                message = "Serviço temporariamente indisponível. Tente novamente em instantes.";
             }
 
-            var genericResponse = new ErrorResponse
+            var errorResponse = new ErrorResponse
             {
-                StatusCode = statusCode,
-                Message = message
+                TraceId = traceId,
+                Message = message,
+                Details = details
             };
 
             httpContext.Response.StatusCode = statusCode;
-            await httpContext.Response.WriteAsJsonAsync(genericResponse, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(errorResponse, cancellationToken);
 
             return true;
         }

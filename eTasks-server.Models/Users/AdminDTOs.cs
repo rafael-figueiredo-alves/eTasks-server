@@ -22,4 +22,10 @@ namespace eTasks_server.Models.Users
         public string? UserAgent { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    public class AdminSetPasswordRequest
+    {
+        public string NewPassword { get; set; } = string.Empty;
+    }
 }
+

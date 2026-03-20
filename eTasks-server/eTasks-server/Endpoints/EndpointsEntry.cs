@@ -1,4 +1,4 @@
-﻿namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints
 {
     public static class EndpointsEntry
     {
@@ -13,6 +13,8 @@
                 API_V2.MapUtilsEndpoints();
                 API_V2.MapDirectoriesEndpoint(app.Environment);
                 API_V2.MapUpDirectoriesEndpoint(app.Environment);
+                API_V2.MapAuthEndpoints();
+                API_V2.MapUserAdminEndpoints();
 
             }
         }

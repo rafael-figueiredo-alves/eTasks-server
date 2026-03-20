@@ -112,18 +112,24 @@ namespace eTasks_server.Core.BusinessLogicLayers
             _logger.LogInformation("Iniciando tentativa de login para o usuário: {Email}", request.Email);
 
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException("Geral", "Forneça as credenciais de acesso.");
+                throw new ValidationException("Geral", "Forneça o e-mail e a senha para continuar.");
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                _logger.LogWarning("Falha de autenticação. Credenciais inválidas para o e-mail: {Email}", request.Email);
-                
-                // Grava log de falha (se existir e-mail mas senha errada, atrela ao Uid)
-                await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user?.Uid, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
-                await _context.SaveChangesAsync();
 
-                return new LoginResponse { Success = false, ErrorMessage = "Credenciais inválidas." };
+            if (user == null)
+            {
+                _logger.LogWarning("Falha de autenticação. E-mail não encontrado: {Email}", request.Email);
+                await _context.LoginLogs.AddAsync(new LoginLog { UserUid = null, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Não encontramos uma conta com esse e-mail.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            {
+                _logger.LogWarning("Falha de autenticação. Senha incorreta para o usuário: {Uid}", user.Uid);
+                await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Senha incorreta. Verifique e tente novamente.");
             }
 
             if (user.IsBlocked)
@@ -131,7 +137,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 _logger.LogWarning("Usuário {Uid} ({Email}) tentou logar, mas encontra-se bloqueado.", user.Uid, user.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Blocked", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
-                return new LoginResponse { Success = false, ErrorMessage = "Sua conta foi suspensa temporariamente por um Administrador." };
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi suspensa temporariamente. Entre em contato com o suporte.");
             }
 
             _logger.LogInformation("Usuário {Uid} autenticado com sucesso.", user.Uid);
@@ -152,13 +158,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && !r.IsRevoked);
 
             if (tokenRecord == null)
-                return new LoginResponse { Success = false, ErrorMessage = "Refresh Token inválido ou revogado." };
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sessão inválida. Faça login novamente.");
 
             if (tokenRecord.ExpiresAt <= DateTime.UtcNow)
             {
                 tokenRecord.IsRevoked = true;
                 await _context.SaveChangesAsync();
-                return new LoginResponse { Success = false, ErrorMessage = "Sessão expirada. Faça login novamente." };
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sua sessão expirou. Faça login novamente.");
             }
 
             // Revogar o antigo e gerar novo (Refresh Token Rotation)
@@ -334,7 +340,6 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
             return new LoginResponse
             {
-                Success = true,
                 Token = jwtToken,
                 TokenExpiresAt = jwtExpiration,
                 RefreshToken = refreshTokenString,

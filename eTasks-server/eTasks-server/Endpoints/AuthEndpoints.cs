@@ -1,10 +1,6 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
-
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.Auth;
+using Microsoft.AspNetCore.Mvc;
 
 namespace eTasks_server.Endpoints
 {
@@ -12,13 +8,13 @@ namespace eTasks_server.Endpoints
     {
         public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/api/v2/auth").WithTags("Authentication");
+            var group = app.MapGroup("/auth").WithTags("Authentication");
 
             group.MapPost("/login", async (HttpContext context, [FromBody] LoginRequest request, IAuthBLL authBLL) =>
             {
                 var ip = context.Connection.RemoteIpAddress?.ToString();
                 var response = await authBLL.LoginAsync(request, ip);
-                return response.Success ? Results.Ok(response) : Results.BadRequest(response);
+                return Results.Ok(response);
             })
             .WithName("UserLogin")
             .WithSummary("Realiza o login de um usuário retornando JWT e Refresh Token.");
@@ -26,7 +22,7 @@ namespace eTasks_server.Endpoints
             group.MapPost("/register", async ([FromBody] RegisterRequest request, IAuthBLL authBLL) =>
             {
                 var response = await authBLL.RegisterAsync(request);
-                return response.Success ? Results.Ok(response) : Results.BadRequest(response);
+                return Results.Ok(response);
             })
             .WithName("UserRegister")
             .WithSummary("Registra um novo usuário no sistema.");
@@ -34,7 +30,7 @@ namespace eTasks_server.Endpoints
             group.MapPost("/refresh", async ([FromBody] RefreshTokenRequest request, IAuthBLL authBLL) =>
             {
                 var response = await authBLL.RefreshTokenAsync(request);
-                return response.Success ? Results.Ok(response) : Results.BadRequest(response);
+                return Results.Ok(response);
             })
             .WithName("RefreshToken")
             .WithSummary("Troca um Refresh Token válido e não expirado por um novo Token JWT.");

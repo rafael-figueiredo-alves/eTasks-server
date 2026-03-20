@@ -1,4 +1,4 @@
-﻿using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -46,6 +46,8 @@ namespace eTasks_server.Client.Services
                 // builder.Services.AddScoped<IUserService, UserService>();
 
                 builder.Services.AddScoped<IVersionService, VersionService>();
+                builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+
 
                 return builder;
             }
