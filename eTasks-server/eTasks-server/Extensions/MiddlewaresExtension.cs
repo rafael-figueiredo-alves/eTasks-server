@@ -36,7 +36,13 @@ namespace eTasks_server.Extensions
 
                 webApplication.UseStatusCodePages(async statusCodeContext =>
                 {
+                    var request = statusCodeContext.HttpContext.Request;
                     var response = statusCodeContext.HttpContext.Response;
+
+                    // Só aplica para rotas da API
+                    if (!request.Path.StartsWithSegments("/api"))
+                        return;
+                    
                     if (response.StatusCode == 401 || response.StatusCode == 403 || response.StatusCode == 404)
                     {
                         response.ContentType = "application/json";
