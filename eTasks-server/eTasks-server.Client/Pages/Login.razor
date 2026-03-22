@@ -1,8 +1,11 @@
-﻿@page "/login"
+﻿@using eTasks_server.Models.Utils
+@using MudBlazor
+
+@page "/login"
+
 @rendermode InteractiveAuto
 @layout EmptyLayout
-@using MudBlazor
-@using eTasks_server.Models.Utils
+@inherits LoginBase
 
 <PageTitle>Login</PageTitle>
 
@@ -55,13 +58,6 @@
                     Class="login-field"
                     FullWidth="true"
                     Placeholder="••••••••">
-                    <AdornmentEnd>
-                        <MudIconButton Icon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
-                                       Color="Color.Default"
-                                       OnClick="TogglePassword"
-                                       Size="Size.Small"
-                                       Class="toggle-password" />
-                    </AdornmentEnd>
                 </MudTextField>
 
                 <div class="form-options">
@@ -109,25 +105,6 @@
     </div>
 </div>
 
-@code {
-    private string _email = string.Empty;
-    private string _password = string.Empty;
-    private bool _rememberMe = false;
-    private bool _showPassword = false;
-    private bool _isLoading = false;
-
-    private void TogglePassword() => _showPassword = !_showPassword;
-
-    private async Task HandleLogin()
-    {
-        _isLoading = true;
-        // Simula chamada à API — substitua pela sua lógica de autenticação
-        await Task.Delay(1500);
-        _isLoading = false;
-        // NavigationManager.NavigateTo("/dashboard");
-    }
-}
-
 <style>
     /* ───── Reset & base ───── */
     .login-wrapper {
@@ -171,21 +148,29 @@
     .bg-grid {
         position: absolute;
         inset: 0;
-        background-image:
-            linear-gradient(rgba(91, 124, 250, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(91, 124, 250, 0.04) 1px, transparent 1px);
+        background-image: linear-gradient(rgba(91, 124, 250, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(91, 124, 250, 0.04) 1px, transparent 1px);
         background-size: 40px 40px;
         pointer-events: none;
     }
 
     @@keyframes float1 {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(30px, 20px) scale(1.05); }
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: translate(30px, 20px) scale(1.05);
+        }
     }
 
     @@keyframes float2 {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(-20px, -30px) scale(1.08); }
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: translate(-20px, -30px) scale(1.08);
+        }
     }
 
     /* ───── Container central ───── */
@@ -199,8 +184,15 @@
     }
 
     @@keyframes fadeUp {
-        from { opacity: 0; transform: translateY(28px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(28px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* ───── Card ───── */
@@ -210,10 +202,7 @@
         border-radius: 20px !important;
         padding: 40px 36px 32px !important;
         backdrop-filter: blur(24px);
-        box-shadow:
-            0 0 0 1px rgba(255,255,255,0.04),
-            0 24px 64px rgba(0,0,0,0.55),
-            0 0 40px rgba(91,124,250,0.08) !important;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.55), 0 0 40px rgba(91,124,250,0.08) !important;
     }
 
     /* ───── Logo ───── */
@@ -285,25 +274,25 @@
         margin-bottom: 16px !important;
     }
 
-    /* Sobrescreve estilos MudBlazor para tema escuro */
-    .login-field .mud-input-outlined .mud-input-outlined-border {
-        border-color: rgba(91, 124, 250, 0.25) !important;
-        border-radius: 10px !important;
-    }
+        /* Sobrescreve estilos MudBlazor para tema escuro */
+        .login-field .mud-input-outlined .mud-input-outlined-border {
+            border-color: rgba(91, 124, 250, 0.25) !important;
+            border-radius: 10px !important;
+        }
 
-    .login-field .mud-input-outlined:hover .mud-input-outlined-border {
-        border-color: rgba(91, 124, 250, 0.55) !important;
-    }
+        .login-field .mud-input-outlined:hover .mud-input-outlined-border {
+            border-color: rgba(91, 124, 250, 0.55) !important;
+        }
 
-    .login-field .mud-input-outlined.mud-input-focused .mud-input-outlined-border {
-        border-color: #5b7cfa !important;
-    }
+        .login-field .mud-input-outlined.mud-input-focused .mud-input-outlined-border {
+            border-color: #5b7cfa !important;
+        }
 
-    .login-field label,
-    .login-field input,
-    .login-field .mud-input-adornment {
-        color: #a5b4d4 !important;
-    }
+        .login-field label,
+        .login-field input,
+        .login-field .mud-input-adornment {
+            color: #a5b4d4 !important;
+        }
 
     .toggle-password {
         color: #6875a0 !important;
@@ -329,9 +318,9 @@
         transition: color 0.2s;
     }
 
-    .forgot-link:hover {
-        color: #a5b8ff !important;
-    }
+        .forgot-link:hover {
+            color: #a5b8ff !important;
+        }
 
     /* ───── Botão principal ───── */
     .login-button {
@@ -346,14 +335,14 @@
         transition: box-shadow 0.25s, transform 0.2s !important;
     }
 
-    .login-button:hover:not(:disabled) {
-        box-shadow: 0 6px 28px rgba(91, 124, 250, 0.55) !important;
-        transform: translateY(-1px);
-    }
+        .login-button:hover:not(:disabled) {
+            box-shadow: 0 6px 28px rgba(91, 124, 250, 0.55) !important;
+            transform: translateY(-1px);
+        }
 
-    .login-button:active:not(:disabled) {
-        transform: translateY(0);
-    }
+        .login-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
 
     /* ───── Cadastro ───── */
     .signup-row {
@@ -372,9 +361,9 @@
         margin-left: 4px;
     }
 
-    .signup-link:hover {
-        color: #a5b8ff !important;
-    }
+        .signup-link:hover {
+            color: #a5b8ff !important;
+        }
 
     /* ───── Rodapé ───── */
     .login-footer {
