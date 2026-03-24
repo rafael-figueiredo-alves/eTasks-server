@@ -14,6 +14,7 @@ namespace eTasks_server.Client.Pages
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private IVersionService VersionService { get; set; } = default!;
+        [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
@@ -22,19 +23,18 @@ namespace eTasks_server.Client.Pages
 
         private async Task LoadDataAsync()
         {
+            isLoading = true;
             try
-            {
-                isLoading = true;
+            {                
                 _model = await VersionService.GetVersionAsync();
             }
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
                 Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-                await DialogService.ShowMessageBoxAsync(
-                    "Oops! Ocorreu um erro",
-                    $"Erro ao carregar a versão: {ex.Message}",
-                    yesText: "OK");
+                Snackbar.Add(
+                    $"Oops! Ocorreu um erro Erro ao carregar a versão: {ex.Message}",
+                    Severity.Error);
             }
             finally
             {

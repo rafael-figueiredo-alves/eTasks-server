@@ -17,7 +17,8 @@ namespace eTasks_server.Endpoints
                 return Results.Ok(response);
             })
             .WithName("UserLogin")
-            .WithSummary("Realiza o login de um usuário retornando JWT e Refresh Token.");
+            .WithSummary("Realiza o login de um usuário retornando JWT e Refresh Token.")
+            .Produces<LoginResponse>(StatusCodes.Status200OK);
 
             group.MapPost("/register", async ([FromBody] RegisterRequest request, IAuthBLL authBLL) =>
             {

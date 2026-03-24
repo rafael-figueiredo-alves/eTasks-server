@@ -22,7 +22,10 @@ namespace eTasks_server.Endpoints
                     }
                 })
                    .WithTags("Version")
-                   .WithName("GetVersion");
+                   .WithName("GetVersion")
+                   .WithDescription("Retorna a versão atual do aplicativo, incluindo informações como número da versão, URL para download, etc.")
+                   .WithSummary("Obtém a versão atual do aplicativo")
+                   .Produces(StatusCodes.Status200OK, typeof(eTasksVersion));
 
                 app.MapPut("/version", async (AppDbContext dbContext, eTasksVersion version) => {
                     if (await VersionBLL.SaveNewVersionAsync(dbContext, version))

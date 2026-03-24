@@ -53,7 +53,7 @@
                 </CellTemplate>
             </TemplateColumn>
             <PropertyColumn Property="x => x.CreatedAt" Title="Criado em" Format="dd/MM/yyyy HH:mm" />
-            <TemplateColumn Sortable="false" Class="d-flex justify-end">
+            <TemplateColumn Sortable="false" Class="d-flex justify-end" HeaderStyle="padding-bottom: 42px;">
                 <CellTemplate>
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
                         <MudMenuItem OnClick="@(() => ToggleBlock(context.Item))" 
@@ -90,7 +90,7 @@
     </MudDataGrid>
 </MudContainer>
 
-<MudDrawer @bind-Open="@IsDrawerOpen" Anchor="Anchor.Right" Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px">
+@* <MudDrawer @bind-Open="@IsDrawerOpen" Anchor="Anchor.Right" Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px">
     <MudDrawerHeader>
         <MudText Typo="Typo.h6">Log de Logins - @SelectedUser?.Name</MudText>
     </MudDrawerHeader>
@@ -121,4 +121,4 @@
             <MudText>Nenhum log encontrado para este usuário.</MudText>
         }
     </div>
-</MudDrawer>
+</MudDrawer> *@

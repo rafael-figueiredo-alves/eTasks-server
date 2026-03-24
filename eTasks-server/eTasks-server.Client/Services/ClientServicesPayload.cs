@@ -1,5 +1,6 @@
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Utils;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
 
@@ -42,12 +43,14 @@ namespace eTasks_server.Client.Services
 
             private WebAssemblyHostBuilder SetupAPIServices()
             {
-                // Here you can add other API services, for example:
-                // builder.Services.AddScoped<IUserService, UserService>();
+                builder.Services.AddAuthorizationCore();
+                builder.Services.AddScoped<CustomAuthStateProvider>();
+                builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 
+                builder.Services.AddScoped<IAuthService, AuthService>();
                 builder.Services.AddScoped<IVersionService, VersionService>();
                 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
-
+                builder.Services.AddScoped<UserLogsDrawerService>();
 
                 return builder;
             }

@@ -3,6 +3,8 @@ using eTasks_server.Client.Components;
 using eTasks_server.Models.Users;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using eTasks_server.Client.Layout;
+using eTasks_server.Client.Services;
 
 namespace eTasks_server.Client.Pages
 {
@@ -11,6 +13,7 @@ namespace eTasks_server.Client.Pages
         [Inject] protected IUserAdminService UserAdminService { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService DialogService { get; set; } = default!;
+        [Inject] private UserLogsDrawerService LogsDrawerService { get; set; } = default!;
 
         protected List<AdminUserDTO> Users = new();
         protected List<UserLoginLogDTO> SelectedUserLogs = new();
@@ -120,9 +123,11 @@ namespace eTasks_server.Client.Pages
 
         protected async Task ViewLogs(AdminUserDTO user)
         {
-            SelectedUser = user;
-            SelectedUserLogs = await UserAdminService.GetLoginLogsAsync(user.Uid);
-            IsDrawerOpen = true;
+            LogsDrawerService.Open(user, await UserAdminService.GetLoginLogsAsync(user.Uid));
+
+            //SelectedUser = user;
+            //SelectedUserLogs = await UserAdminService.GetLoginLogsAsync(user.Uid);
+            //IsDrawerOpen = true;
         }
 
         protected void CloseDrawer()

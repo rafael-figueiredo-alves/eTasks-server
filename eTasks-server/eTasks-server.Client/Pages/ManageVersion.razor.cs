@@ -20,21 +20,27 @@ namespace eTasks_server.Client.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            await LoadVersion();
+        }
+
+        private async Task LoadVersion()
+        {
+            isLoading = true;
             try
             {
                 _model = await VersionService.GetVersionAsync();
-                isLoading = false;
             }
             catch (Exception ex)
             {
-                // Trate o erro, por exemplo, exibindo uma mensagem de erro para o usuário
                 Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-                //Log.LogError(ex, "Erro ao carregar a versão");
-                await DialogService.ShowMessageBoxAsync("Oops! Ocorreu um erro", $"Erro ao carregar a versão: {ex.Message}", yesText: "OK");
+                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versão: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
                 isLoading = false;
-                // Você pode usar um Snackbar ou outro componente para mostrar a mensagem de erro
             }
         }
+
         protected async Task Save()
         {
             if (_form is not null)
