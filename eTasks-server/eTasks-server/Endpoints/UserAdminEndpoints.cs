@@ -9,8 +9,8 @@ namespace eTasks_server.Endpoints
         public static IEndpointRouteBuilder MapUserAdminEndpoints(this IEndpointRouteBuilder app)
         {
             var group = app.MapGroup("/users")
-                .WithTags("User Administration");
-                //.RequireAuthorization("Admin");
+                .WithTags("User Administration")
+                .RequireAuthorization("Admin");
 
             group.MapGet("/", async (IUserAdminBLL userAdminBLL) =>
             {

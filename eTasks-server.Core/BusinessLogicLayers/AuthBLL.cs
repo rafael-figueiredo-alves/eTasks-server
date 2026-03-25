@@ -167,6 +167,15 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sua sessão expirou. Faça login novamente.");
             }
 
+            if (tokenRecord.User!.IsBlocked)
+            {
+                _logger.LogWarning("Usuário {Uid} tentou renovar token, mas encontra-se bloqueado.", tokenRecord.User.Uid);
+                // Não temos o IP aqui no RefreshTokenAsync, então passamos null
+                await _context.LoginLogs.AddAsync(new LoginLog { UserUid = tokenRecord.User.Uid, Status = "Blocked", IpAddress = null, UserAgent = request.UserAgent });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi suspensa temporariamente. Entre em contato com o suporte.");
+            }
+
             // Revogar o antigo e gerar novo (Refresh Token Rotation)
             tokenRecord.IsRevoked = true;
             

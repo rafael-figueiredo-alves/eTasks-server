@@ -1,8 +1,9 @@
-﻿@using eTasks_server.Models.Utils
+@using Microsoft.AspNetCore.Authorization
+@using eTasks_server.Models.Utils
 @using MudBlazor
 
 @page "/login"
-
+@attribute [AllowAnonymous]
 @rendermode InteractiveAuto
 @layout EmptyLayout
 @inherits LoginBase

@@ -23,8 +23,15 @@ namespace eTasks_server.Client.Services
 
                 if (string.IsNullOrWhiteSpace(token))
                     return new AuthenticationState(_anonymous);
+                var principal = CreateClaimsPrincipalFromToken(token);
+                if (principal == null)
+                {
+                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "refreshToken");
+                    return new AuthenticationState(_anonymous);
+                }
 
-                return new AuthenticationState(CreateClaimsPrincipalFromToken(token));
+                return new AuthenticationState(principal);
             }
             catch
             {
@@ -35,7 +42,7 @@ namespace eTasks_server.Client.Services
         public void NotifyUserAuthentication(string token)
         {
             var authenticatedUser = CreateClaimsPrincipalFromToken(token);
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+            var authState = Task.FromResult(new AuthenticationState(authenticatedUser ?? _anonymous));
             NotifyAuthenticationStateChanged(authState);
         }
 
@@ -45,11 +52,20 @@ namespace eTasks_server.Client.Services
             NotifyAuthenticationStateChanged(authState);
         }
 
-        private ClaimsPrincipal CreateClaimsPrincipalFromToken(string token)
+        private ClaimsPrincipal? CreateClaimsPrincipalFromToken(string token)
         {
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
-            var identity = new ClaimsIdentity(jwtToken.Claims, "jwt");
+            
+            if (jwtToken.ValidTo < DateTime.UtcNow)
+            {
+                return null;
+            }
+            
+            var nameClaimType = jwtToken.Claims.Any(c => c.Type == ClaimTypes.Name) ? ClaimTypes.Name : "name";
+            var roleClaimType = jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role) ? ClaimTypes.Role : "role";
+
+            var identity = new ClaimsIdentity(jwtToken.Claims, "jwt", nameClaimType, roleClaimType);
             return new ClaimsPrincipal(identity);
         }
     }

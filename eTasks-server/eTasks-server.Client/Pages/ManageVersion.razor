@@ -1,7 +1,7 @@
 @using eTasks_server.Client.Services.Interfaces
 
 @page "/version/edit"
-
+@attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveAuto
 @inherits ManageVersionBase
 

@@ -11,6 +11,7 @@ using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
@@ -69,7 +70,10 @@ namespace eTasks_server.Extensions
             private IServiceCollection SetupHttpClient(ConfigurationManager configuration)
             {
                 services.AddScoped(sp =>
-                    new HttpClient { BaseAddress = new Uri(configuration[Constants.ApiBaseUrl]!) });
+                {
+                    var baseUrl = configuration[Constants.ApiBaseUrl]?.TrimEnd('/') + "/";
+                    return new HttpClient { BaseAddress = new Uri(baseUrl + Constants.URLClientServicesAPISegment) };
+                });
 
                 return services;
             }
@@ -121,6 +125,7 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
                 services.AddScoped<UserLogsDrawerService>();
+                services.AddScoped<IAuthService, AuthService>();
 
                 return services;
             }
@@ -176,6 +181,24 @@ namespace eTasks_server.Extensions
                             ValidIssuer = configuration[Constants.JwtIssuerConfig] ?? "eTasksServer",
                             ValidAudience = configuration[Constants.JwtAudienceConfig] ?? "eTasksClient",
                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                        };
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnChallenge = context =>
+                            {
+                                // Se for chamada de API, deixa retornar 401 nativo
+                                if (context.Request.Path.StartsWithSegments("/api"))
+                                {
+                                    return Task.CompletedTask;
+                                }
+
+                                // Se for o App Web Blazor renderizado no servidor (SSR), o Bearer auth falha por 
+                                // não receber header HTTP de auth, então forçamos redirect pro login com returnUrl:
+                                var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
+                                context.Response.Redirect($"/login?returnUrl={returnUrl}");
+                                context.HandleResponse(); // Supress 401 response and return 302 Redirect
+                                return Task.CompletedTask;
+                            }
                         };
                     });
 

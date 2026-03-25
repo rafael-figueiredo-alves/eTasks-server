@@ -1,6 +1,8 @@
 using eTasks_server.Client.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
+using eTasks_server.Client.Services;
 
 namespace eTasks_server.Client.Pages
 {
@@ -9,12 +11,44 @@ namespace eTasks_server.Client.Pages
         [Inject] protected IAuthService AuthService { get; set; } = default!;
         [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
+        [Inject] protected Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+        [Inject] protected IJSRuntime JSRuntime { get; set; } = default!;
+
+        [SupplyParameterFromQuery]
+        public string? ReturnUrl { get; set; }
 
         protected string _email = string.Empty;
         protected string _password = string.Empty;
         protected bool _rememberMe = false;
         protected bool _showPassword = false;
         protected bool _isLoading = false;
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                if (authState.User.Identity?.IsAuthenticated == true)
+                {
+                    if (authState.User.IsInRole("Admin"))
+                    {
+                        if (AuthStateProvider is CustomAuthStateProvider customProvider)
+                        {
+                            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                            if (!string.IsNullOrWhiteSpace(token))
+                            {
+                                customProvider.NotifyUserAuthentication(token);
+                            }
+                        }
+                        NavigationManager.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+                    }
+                    else
+                    {
+                        await AuthService.LogoutAsync();
+                    }
+                }
+            }
+        }
 
         protected void TogglePassword() => _showPassword = !_showPassword;
 

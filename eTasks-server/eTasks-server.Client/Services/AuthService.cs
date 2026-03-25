@@ -1,8 +1,11 @@
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Auth;
+using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using MudBlazor;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 
@@ -24,10 +27,15 @@ namespace eTasks_server.Client.Services
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
-            var response = await PostAsync<LoginResponse>("/auth/login", request);
+            var response = await PostAsync<LoginResponse>("auth/login", request);
             
             if (response != null)
             {
+                if (!HasAdminRole(response.Token))
+                {
+                    throw new ApiException(HttpStatusCode.Forbidden, "{}", "Acesso restrito. Apenas administradores podem acessar o servidor.");
+                }
+
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", response.Token);
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", response.RefreshToken);
                 
@@ -45,10 +53,16 @@ namespace eTasks_server.Client.Services
             if (string.IsNullOrWhiteSpace(refreshToken)) return null;
 
             var request = new RefreshTokenRequest { RefreshToken = refreshToken, UserAgent = "Web" };
-            var response = await PostAsync<LoginResponse>("/auth/refresh", request);
+            var response = await PostAsync<LoginResponse>("auth/refresh", request);
 
             if (response != null)
             {
+                if (!HasAdminRole(response.Token))
+                {
+                    await LogoutAsync();
+                    throw new ApiException(HttpStatusCode.Forbidden, "{}", "Acesso restrito. Apenas administradores podem acessar o servidor.");
+                }
+
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", response.Token);
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", response.RefreshToken);
 
@@ -75,6 +89,21 @@ namespace eTasks_server.Client.Services
         public async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             return await _authStateProvider.GetAuthenticationStateAsync();
+        }
+
+        private bool HasAdminRole(string token)
+        {
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role");
+                return roleClaim != null && roleClaim.Value == "Admin";
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
