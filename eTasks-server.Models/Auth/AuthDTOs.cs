@@ -1,3 +1,5 @@
+using eTasks_server.Models.DataAnnotations;
+using eTasks_server.Models.Utils;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,11 +14,13 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// E-mail do usuário, utilizado para autenticação. Deve ser um endereço de e-mail válido e registrado no sistema.
         /// </summary>
+        [Required]
         [EmailAddress(ErrorMessage = "Só é aceito endereço de e-mail válido")]
         public string Email { get; set; } = string.Empty;
         /// <summary>
         /// Senha do usuário, utilizada para autenticação. Deve ser uma string segura e seguir as políticas de senha definidas pelo sistema (ex: mínimo de caracteres, uso de caracteres especiais, etc.).
         /// </summary>
+        [Required]
         [PasswordPropertyText]
         [MinLength(6, ErrorMessage = "A senha deve ter pelo menos 6 caracteres")]
         [MaxLength(30, ErrorMessage = "A senha não deve exceder 30 caracteres")]
@@ -30,6 +34,7 @@ namespace eTasks_server.Models.Auth
         /// <example>
         /// Web: "Web", Delphi: "Delphi", ou pode ser deixado em branco se a origem do login não for relevante ou conhecida.
         /// </example>
+        [AllowedUserAgent]
         public string? UserAgent { get; set; } // Opcional, o front pode enviar "Web" ou "Delphi"
     }
 
@@ -74,11 +79,13 @@ namespace eTasks_server.Models.Auth
         /// <example>
         /// sac@etasks.com; fulano@outlook.com; beltrano.silva@bol.com.br
         /// </example> 
+        [Required]
         [EmailAddress(ErrorMessage = "Só é aceito endereço de e-mail válido")]
         public string Email { get; set; } = string.Empty;
         /// <summary>
         /// Abriga a senha do usuário, que é um elemento crucial para a segurança da conta. Este campo é obrigatório e deve conter uma senha forte, seguindo as políticas de segurança definidas pelo sistema, como um mínimo de caracteres, uso de letras maiúsculas e minúsculas, números e caracteres especiais. A senha deve ser armazenada de forma segura no servidor, utilizando técnicas de hashing e salting para proteger os dados do usuário contra acessos não autorizados.
         /// </summary>
+        [Required]
         [PasswordPropertyText]
         [MinLength(6, ErrorMessage = "A senha deve ter pelo menos 6 caracteres")]
         [MaxLength(30, ErrorMessage = "A senha não deve exceder 30 caracteres")]
@@ -98,10 +105,12 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Representa o token de atualização (refresh token) que foi previamente gerado pelo servidor e fornecido ao cliente durante o processo de login. Este token é utilizado para solicitar um novo token de autenticação (JWT) quando o token atual expirar, permitindo que o cliente mantenha a sessão do usuário ativa sem a necessidade de solicitar as credenciais novamente. O refresh token deve ser armazenado de forma segura pelo cliente, pois pode ser utilizado para obter acesso contínuo aos recursos protegidos do sistema. O cliente deve enviar este token em uma requisição específica para renovar o token de autenticação, garantindo uma experiência de usuário contínua e sem interrupções.
         /// </summary>
+        [Required]
         public string RefreshToken { get; set; } = string.Empty;
         /// <summary>
         /// Representa o user agent da solicitação de renovação do token, que é uma string opcional utilizada para identificar a origem da solicitação, como "Web" para logins realizados através da interface web ou "Delphi" para logins realizados através de um cliente Delphi. O campo UserAgent pode ser útil para fins de análise, monitoramento ou aplicação de políticas específicas de segurança com base na origem da solicitação de renovação do token. No entanto, é importante lembrar que o campo UserAgent é opcional e pode ser facilmente manipulado, portanto, não deve ser a única medida de segurança utilizada para proteger o sistema.
         /// </summary>
+        [AllowedUserAgent]
         public string? UserAgent { get; set; } 
     }
 
@@ -113,6 +122,7 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Representa o email do usuário que está solicitando a recuperação de senha. Este campo é obrigatório e deve ser um endereço de e-mail válido e registrado no sistema, pois será utilizado para identificar o usuário e enviar as instruções de recuperação de senha. O sistema pode enviar um email contendo um link para uma página de redefinição de senha ou um código de verificação que o usuário deve utilizar para confirmar sua identidade antes de permitir a criação de uma nova senha. É importante garantir que o email fornecido seja válido e esteja associado a uma conta existente para que o processo de recuperação de senha funcione corretamente.
         /// </summary>
+        [Required]
         [EmailAddress(ErrorMessage = "Só é aceito endereço de e-mail válido")]
         public string Email { get; set; } = string.Empty;
     }
@@ -125,17 +135,19 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Representa o email do usuário que está solicitando a redefinição de senha. Este campo é obrigatório e deve ser um endereço de e-mail válido e registrado no sistema, pois será utilizado para identificar o usuário e garantir que a solicitação de redefinição de senha seja associada à conta correta. O sistema pode enviar um email contendo um link para uma página de redefinição de senha ou um código de verificação que o usuário deve utilizar para confirmar sua identidade antes de permitir a criação de uma nova senha. É importante garantir que o email fornecido seja válido e esteja associado a uma conta existente para que o processo de redefinição de senha funcione corretamente.
         /// </summary>
+        [Required]
         [EmailAddress(ErrorMessage = "Só é aceito endereço de e-mail válido")]
         public string Email { get; set; } = string.Empty;
         /// <summary>
         /// Código de verificação ou token que foi enviado para o email do usuário durante o processo de recuperação de senha. Este campo é obrigatório e deve conter o código ou token correto para que o sistema possa validar a solicitação de redefinição de senha e garantir que apenas o usuário legítimo possa criar uma nova senha para a conta. O código ou token geralmente tem um tempo de validade limitado, e o usuário deve utilizá-lo dentro desse período para concluir o processo de redefinição de senha com sucesso.
         /// </summary>
-        [MinLength(6, ErrorMessage = "O código de verificação deve ter exatamente 6 dígitos")]
-        [MaxLength(6, ErrorMessage = "O código de verificação tem no máximo 6 dígitos")]      
+        [Required]
+        [Length(6, 6, ErrorMessage = "O código de verificação deve ter exatamente 6 dígitos")]        
         public string Code { get; set; } = string.Empty;
         /// <summary>
         /// Representa a nova senha que o usuário deseja definir para sua conta após a validação do código de verificação. Este campo é obrigatório e deve conter uma senha forte, seguindo as políticas de segurança definidas pelo sistema, como um mínimo de caracteres, uso de letras maiúsculas e minúsculas, números e caracteres especiais. A nova senha deve ser armazenada de forma segura no servidor, utilizando técnicas de hashing e salting para proteger os dados do usuário contra acessos não autorizados. O processo de redefinição de senha deve garantir que apenas o usuário legítimo possa alterar a senha da conta, utilizando o código de verificação como uma medida de segurança adicional.
         /// </summary>
+        [Required]
         [PasswordPropertyText]
         [MinLength(6, ErrorMessage = "A nova senha deve ter pelo menos 6 caracteres")]
         [MaxLength(30, ErrorMessage = "A nova senha não deve exceder 30 caracteres")]
@@ -150,6 +162,7 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Senha atual do usuário, utilizada para validar a solicitação de alteração de senha. Este campo é obrigatório e deve conter a senha correta do usuário para garantir que apenas o usuário legítimo possa alterar a senha da conta. A senha atual é uma medida de segurança adicional para proteger as credenciais do usuário e evitar que terceiros não autorizados possam alterar a senha da conta sem o conhecimento do usuário.
         /// </summary>
+        [Required]
         [PasswordPropertyText]
         [MinLength(6, ErrorMessage = "A senha atual deve ter pelo menos 6 caracteres")]
         [MaxLength(30, ErrorMessage = "A senha atual não deve exceder 30 caracteres")]
@@ -157,6 +170,7 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Nova senha que o usuário deseja definir para sua conta. Este campo é obrigatório e deve conter uma senha forte, seguindo as políticas de segurança definidas pelo sistema, como um mínimo de caracteres, uso de letras maiúsculas e minúsculas, números e caracteres especiais. A nova senha deve ser armazenada de forma segura no servidor, utilizando técnicas de hashing e salting para proteger os dados do usuário contra acessos não autorizados. O processo de alteração de senha deve garantir que apenas o usuário legítimo possa alterar a senha da conta, utilizando a senha atual como uma medida de segurança adicional para validar a solicitação de alteração.
         /// </summary>
+        [Required]
         [PasswordPropertyText]
         [MinLength(6, ErrorMessage = "A nova senha deve ter pelo menos 6 caracteres")]
         [MaxLength(30, ErrorMessage = "A nova senha não deve exceder 30 caracteres")]
