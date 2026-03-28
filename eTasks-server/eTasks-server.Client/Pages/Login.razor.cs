@@ -1,8 +1,10 @@
+using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Models.Exceptions;
+using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
-using eTasks_server.Client.Services;
 
 namespace eTasks_server.Client.Pages
 {
@@ -25,29 +27,35 @@ namespace eTasks_server.Client.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
+            if (!firstRender)
             {
-                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-                if (authState.User.Identity?.IsAuthenticated == true)
+                return;
+            }
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            if (authState.User.IsInRole("Admin"))
+            {
+                if (AuthStateProvider is CustomAuthStateProvider customProvider)
                 {
-                    if (authState.User.IsInRole("Admin"))
+                    var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                    if (!string.IsNullOrWhiteSpace(token))
                     {
-                        if (AuthStateProvider is CustomAuthStateProvider customProvider)
-                        {
-                            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-                            if (!string.IsNullOrWhiteSpace(token))
-                            {
-                                customProvider.NotifyUserAuthentication(token);
-                            }
-                        }
-                        NavigationManager.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
-                    }
-                    else
-                    {
-                        await AuthService.LogoutAsync();
+                        customProvider.NotifyUserAuthentication(token);
                     }
                 }
+
+                NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
+                return;
             }
+
+            await AuthService.LogoutAsync();
+            Snackbar.Add("Acesso restrito. Faça login com uma conta Administradora.", Severity.Warning);
+            NavigationManager.NavigateTo("/login", replace: true);
         }
 
         protected void TogglePassword() => _showPassword = !_showPassword;
@@ -63,19 +71,23 @@ namespace eTasks_server.Client.Pages
             _isLoading = true;
             try
             {
-                var request = new eTasks_server.Models.Auth.LoginRequest 
-                { 
-                    Email = _email, 
+                var request = new eTasks_server.Models.Auth.LoginRequest
+                {
+                    Email = _email,
                     Password = _password,
-                    UserAgent = "Web"
+                    UserAgent = Constants.WebAdminUserAgent
                 };
 
                 var response = await AuthService.LoginAsync(request);
                 if (response != null)
                 {
                     Snackbar.Add("Login realizado com sucesso!", Severity.Success);
-                    NavigationManager.NavigateTo("/");
+                    NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
                 }
+            }
+            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                Snackbar.Add("Acesso restrito. Apenas administradores podem acessar o sistema.", Severity.Warning);
             }
             catch (Exception ex)
             {
@@ -85,6 +97,16 @@ namespace eTasks_server.Client.Pages
             {
                 _isLoading = false;
             }
+        }
+
+        private string GetSafeReturnUrl()
+        {
+            if (string.IsNullOrWhiteSpace(ReturnUrl) || !Uri.IsWellFormedUriString(ReturnUrl, UriKind.Relative))
+            {
+                return "/";
+            }
+
+            return ReturnUrl;
         }
     }
 }

@@ -104,7 +104,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             #pragma warning restore CS4014
 
             // Auto login after register
-            return await GenerateAuthResponseAsync(user, "Web"); // Mock do UserAgent
+            return await GenerateAuthResponseAsync(user, Constants.WebAdminUserAgent);
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request, string? ipAddress)
@@ -307,6 +307,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 new Claim(ClaimTypes.NameIdentifier, user.Uid.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim(Constants.UserAgentClaimType, string.IsNullOrWhiteSpace(userAgent) ? "unknown" : userAgent)
             };
 
             if (user.IsAdmin)

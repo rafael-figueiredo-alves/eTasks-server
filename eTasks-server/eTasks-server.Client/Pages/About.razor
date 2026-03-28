@@ -1,6 +1,7 @@
 ﻿@using eTasks_server.Models.Utils
 
 @page "/about"
+@attribute [Authorize(Roles = "Admin")]
 
 @rendermode InteractiveAuto
 @inherits AboutBase

@@ -83,7 +83,18 @@ namespace eTasks_server.Core.Services
                 #endregion
 
                 #region Configurações do Template
+                string appName = "eTasks";
+                string year = DateTime.UtcNow.Year.ToString();
+                string baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
+                string logoUrl = $"{baseUrl.TrimEnd('/')}/logo.png"; // Placeholder image
 
+                string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", "password-reset.html");
+                string htmlBody = await File.ReadAllTextAsync(templatePath);
+
+                htmlBody = htmlBody.Replace("{{resetCode}}", resetCode)
+                   .Replace("{{logoUrl}}", logoUrl)
+                   .Replace("{{appName}}", appName)
+                   .Replace("{{year}}", year);
                 #endregion
 
                 using var smtpClient = new SmtpClient(emailConfig.host, emailConfig.port)

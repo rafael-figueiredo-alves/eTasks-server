@@ -1,0 +1,32 @@
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject ISnackbar Snackbar
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var isAdmin = await AuthService.IsCurrentUserAdminAsync();
+        if (!isAdmin)
+        {
+            var authState = await AuthService.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                await AuthService.LogoutAsync();
+                Snackbar.Add("Acesso restrito. Faça login com uma conta Administradora.", Severity.Warning);
+            }
+
+            var currentRelativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            var returnUrl = string.IsNullOrWhiteSpace(currentRelativePath)
+                ? "/"
+                : $"/{currentRelativePath}";
+
+            var encodedReturnUrl = Uri.EscapeDataString(returnUrl);
+            NavigationManager.NavigateTo($"/login?returnUrl={encodedReturnUrl}", replace: true);
+        }
+    }
+}

@@ -1,6 +1,7 @@
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Auth;
 using eTasks_server.Models.Exceptions;
+using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -52,7 +53,7 @@ namespace eTasks_server.Client.Services
             var refreshToken = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "refreshToken");
             if (string.IsNullOrWhiteSpace(refreshToken)) return null;
 
-            var request = new RefreshTokenRequest { RefreshToken = refreshToken, UserAgent = "Web" };
+            var request = new RefreshTokenRequest { RefreshToken = refreshToken, UserAgent = Constants.WebAdminUserAgent };
             var response = await PostAsync<LoginResponse>("auth/refresh", request);
 
             if (response != null)
@@ -91,6 +92,12 @@ namespace eTasks_server.Client.Services
             return await _authStateProvider.GetAuthenticationStateAsync();
         }
 
+        public async Task<bool> IsCurrentUserAdminAsync()
+        {
+            var authState = await _authStateProvider.GetAuthenticationStateAsync();
+            return authState.User.Identity?.IsAuthenticated == true && authState.User.IsInRole("Admin");
+        }
+
         private bool HasAdminRole(string token)
         {
             try
@@ -98,7 +105,11 @@ namespace eTasks_server.Client.Services
                 var handler = new JwtSecurityTokenHandler();
                 var jwtToken = handler.ReadJwtToken(token);
                 var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role");
-                return roleClaim != null && roleClaim.Value == "Admin";
+                var userAgentClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == Constants.UserAgentClaimType);
+                return roleClaim != null
+                    && roleClaim.Value == "Admin"
+                    && userAgentClaim != null
+                    && userAgentClaim.Value == Constants.WebAdminUserAgent;
             }
             catch
             {

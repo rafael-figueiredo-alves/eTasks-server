@@ -3,7 +3,7 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)">
                 <NotAuthorized>
-                    <eTasks_server.Client.Pages.Login />
+                    <eTasks_server.Client.Components.RedirectToLogin />
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="routeData" Selector="h1" />

@@ -8,6 +8,7 @@ namespace eTasks_server.Client.Services.Interfaces
         Task<LoginResponse?> LoginAsync(LoginRequest request);
         Task<LoginResponse?> RefreshTokenAsync();
         Task LogoutAsync();
+        Task<bool> IsCurrentUserAdminAsync();
         Task<AuthenticationState> GetAuthenticationStateAsync();
     }
 }

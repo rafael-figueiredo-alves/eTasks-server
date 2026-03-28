@@ -85,6 +85,16 @@ namespace eTasks_server.Models.Utils
         /// </summary>
         public const string JwtAudienceConfig = "Jwt:Audience";
 
+        /// <summary>
+        /// Claim customizado que identifica o tipo de cliente para o qual o token JWT foi emitido.
+        /// </summary>
+        public const string UserAgentClaimType = "user_agent";
+
+        /// <summary>
+        /// UserAgent aceito pelo painel administrativo web.
+        /// </summary>
+        public const string WebAdminUserAgent = "web-adm";
+
         // SMTP Configurations
 
         /// <summary>
