@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Mail;
-using System.Runtime.CompilerServices;
 
 namespace eTasks_server.Core.Services
 {
@@ -35,6 +34,7 @@ namespace eTasks_server.Core.Services
             _logger = logger;
         }
 
+        #region Private Helper Methods
         private bool IsSmtpEnabled()
         {
             return bool.TryParse(_configuration[Constants.SmtpEnabled], out var enabled) && enabled;
@@ -54,11 +54,59 @@ namespace eTasks_server.Core.Services
             };
         }
 
-        private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, string Content)
+        private SmtpClient CreateSmtpClient(EmailConfiguration emailConfig)
         {
-            return new MailMessage();
-            // Implementar lógica para ler o template HTML correspondente ao tipo de e-mail (PasswordReset ou AccountConfirmation) e substituir as variáveis de template pelo conteúdo fornecido.
+            return new SmtpClient(emailConfig.host, emailConfig.port)
+            {
+                Credentials = new NetworkCredential(emailConfig.username, emailConfig.password),
+                EnableSsl = emailConfig.enableSsl
+            };
         }
+
+        private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, string Content, EmailConfiguration emailConfiguration)
+        {
+            string TemplateFilename = string.Empty;
+            string EmailSubject = string.Empty;
+            string FieldToReplace = string.Empty;
+
+            switch (emailTemplate)
+            {
+                case EmailTemplate.PasswordReset:
+                    TemplateFilename = "password-reset.html";
+                    EmailSubject = "Seu código de recuperação chegou! (eTasks)";
+                    FieldToReplace = "{{resetCode}}";
+                    break;
+                case EmailTemplate.AccountConfirmation:
+                    TemplateFilename = "account-confirmation.html";
+                    EmailSubject = "Confirme sua conta no eTasks";
+                    FieldToReplace = "{{confirmationLink}}";
+                    break;
+                default:
+                    throw new ArgumentException("Tipo de template de e-mail desconhecido.");
+            }
+
+            string appName = "eTasks";
+            string year = DateTime.UtcNow.Year.ToString();
+            string baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
+            string logoUrl = $"{baseUrl.TrimEnd('/')}/logo.png"; // Placeholder image
+
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", TemplateFilename);
+            string htmlBody = await File.ReadAllTextAsync(templatePath);
+
+            htmlBody = htmlBody.Replace(FieldToReplace, Content)
+               .Replace("{{logoUrl}}", logoUrl)
+               .Replace("{{appName}}", appName)
+               .Replace("{{year}}", year);
+
+            return new MailMessage()
+            {
+                From = new MailAddress(emailConfiguration.fromEmail, emailConfiguration.fromName),
+                Subject = EmailSubject,
+                Body = htmlBody,
+                IsBodyHtml = true
+            };           
+        }
+        #endregion
 
         /// <summary>
         /// Método para enviar e-mail de recuperação de senha, utilizando um template HTML localizado em wwwroot/templates/emails/password-reset.html.
@@ -78,40 +126,12 @@ namespace eTasks_server.Core.Services
 
             try
             {
-                #region Configuranção SMTP
                 EmailConfiguration emailConfig = GetEmailConfiguration();
-                #endregion
 
-                #region Configurações do Template
-                string appName = "eTasks";
-                string year = DateTime.UtcNow.Year.ToString();
-                string baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
-                string logoUrl = $"{baseUrl.TrimEnd('/')}/logo.png"; // Placeholder image
+                var smtpClient = CreateSmtpClient(emailConfig);
 
-                string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", "password-reset.html");
-                string htmlBody = await File.ReadAllTextAsync(templatePath);
-
-                htmlBody = htmlBody.Replace("{{resetCode}}", resetCode)
-                   .Replace("{{logoUrl}}", logoUrl)
-                   .Replace("{{appName}}", appName)
-                   .Replace("{{year}}", year);
-                #endregion
-
-                using var smtpClient = new SmtpClient(emailConfig.host, emailConfig.port)
-                {
-                    Credentials = new NetworkCredential(emailConfig.username, emailConfig.password),
-                    EnableSsl = emailConfig.enableSsl
-                };
-
-                using var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(emailConfig.fromEmail, emailConfig.fromName),
-                    Subject = "Seu código de recuperação chegou! (eTasks)",
-                    Body = htmlBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(toEmail);
+                MailMessage mailMessage = await GetTemplateMailMessage(EmailTemplate.PasswordReset, resetCode, emailConfig);
+                mailMessage.To.Add(toEmail);               
 
                 _logger.LogInformation("Efetuando envio de e-mail SMTP para {Email}", toEmail);
                 await smtpClient.SendMailAsync(mailMessage);
@@ -139,39 +159,12 @@ namespace eTasks_server.Core.Services
 
             try
             {
-                #region Configuranção SMTP
                 EmailConfiguration emailConfig = GetEmailConfiguration();
-                #endregion
 
-                #region Configurações do Template
-                string appName = "eTasks";
-                string year = DateTime.UtcNow.Year.ToString();
-                string baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
-                string logoUrl = $"{baseUrl.TrimEnd('/')}/logo.png";
 
-                string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", "account-confirmation.html");
-                string htmlBody = await File.ReadAllTextAsync(templatePath);
+                var smtpClient = CreateSmtpClient(emailConfig);
 
-                htmlBody = htmlBody.Replace("{{confirmationLink}}", confirmationLink)
-                                   .Replace("{{logoUrl}}", logoUrl)
-                                   .Replace("{{appName}}", appName)
-                                   .Replace("{{year}}", year);
-                #endregion
-
-                using var smtpClient = new SmtpClient(emailConfig.host, emailConfig.port)
-                {
-                    Credentials = new NetworkCredential(emailConfig.username, emailConfig.password),
-                    EnableSsl = emailConfig.enableSsl
-                };
-
-                using var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(emailConfig.fromEmail, emailConfig.fromName),
-                    Subject = "Confirme sua conta no eTasks",
-                    Body = htmlBody,
-                    IsBodyHtml = true
-                };
-
+                var mailMessage = await GetTemplateMailMessage(EmailTemplate.AccountConfirmation, confirmationLink, emailConfig);
                 mailMessage.To.Add(toEmail);
 
                 _logger.LogInformation("Efetuando envio de e-mail de confirmação para {Email}", toEmail);

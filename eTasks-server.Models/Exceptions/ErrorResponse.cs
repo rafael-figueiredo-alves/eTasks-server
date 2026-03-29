@@ -1,8 +1,5 @@
 using System.Text.Json.Serialization;
 
-/// <summary>
-/// Namespace que contém a classe ErrorResponse, utilizada para representar a estrutura de resposta de erro em casos de exceções na aplicação.
-/// </summary>
 namespace eTasks_server.Models.Exceptions
 {
     /// <summary>

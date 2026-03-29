@@ -6,17 +6,14 @@
         {
             public void MapUtilsEndpoints()
             {
-                app.MapGet("/online", () => Results.NoContent());
-            }
-
-            public void MapDirectoriesEndpoint(IWebHostEnvironment env)
-            {
-                app.MapGet("/directories", () => env.ContentRootPath);
-            }
-
-            public void MapUpDirectoriesEndpoint(IWebHostEnvironment env)
-            {
-                app.MapGet("/updirectories", () => Directory.GetParent(env.ContentRootPath)?.FullName);
+                app.MapGet("/online", () => Results.NoContent())
+                    .WithDescription("Endpoint para verificar se o servidor está online.")
+                    .WithDisplayName("Utilidades")
+                    .WithName("Utilidades")
+                    .WithSummary("Verifica se o servidor está online.")
+                    .WithTags("Utilidades")
+                    .Produces(StatusCodes.Status204NoContent)
+                    .WithDisplayName("Verificar se o servidor está online");
             }
         }
     }

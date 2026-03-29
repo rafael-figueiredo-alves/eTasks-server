@@ -4,6 +4,9 @@ using MySqlConnector;
 
 namespace eTasks_server.Middlewares
 {
+    /// <summary>
+    /// Middleware global para captura e tratamento de exceções não tratadas em toda a aplicação.
+    /// </summary>
     public class GlobalExceptionHandler : IExceptionHandler
     {
         private readonly ILogger<GlobalExceptionHandler> _logger;

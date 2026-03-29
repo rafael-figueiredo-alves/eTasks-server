@@ -128,6 +128,21 @@ namespace eTasks_server.Models.Auth
     }
 
     /// <summary>
+    /// Resposta da solicitação de esqueci minha senha, indicando se a operação foi bem-sucedida e fornecendo uma mensagem informativa. Este DTO é utilizado para informar ao usuário sobre o resultado da solicitação de recuperação de senha, garantindo que o usuário saiba se as instruções de recuperação foram enviadas para o email fornecido ou se ocorreu algum problema durante o processo. A mensagem pode ser personalizada para fornecer informações adicionais ou orientações sobre os próximos passos a serem seguidos pelo usuário.
+    /// </summary>
+    public class PasswordResponse
+    {
+        /// <summary>
+        /// Indicado de sucesso da operação de solicitação de recuperação de senha. Este campo é um booleano que indica se a solicitação foi processada com sucesso, ou seja, se as instruções de recuperação de senha foram enviadas para o email do usuário. Um valor de true indica que a operação foi bem-sucedida, enquanto um valor de false indica que ocorreu um problema durante o processo, como um email inválido ou não registrado no sistema. Essa informação é crucial para que o usuário saiba se deve verificar seu email para obter as instruções de recuperação ou se precisa corrigir algum erro na solicitação.
+        /// </summary>
+        public bool Success { get; set; }
+        /// <summary>
+        /// Mensagem informativa sobre o resultado da solicitação de recuperação de senha. Este campo é uma string que pode conter informações adicionais ou orientações para o usuário, como "Se o e-mail existir, um código foi enviado." ou "O email fornecido não está registrado no sistema." A mensagem deve ser clara e útil para orientar o usuário sobre os próximos passos a serem seguidos, garantindo uma experiência de usuário positiva durante o processo de recuperação de senha.
+        /// </summary>
+        public string Message { get; set; } = string.Empty;
+    };
+
+    /// <summary>
     /// Representa a entidade que contém os dados necessários para solicitar a redefinição de senha, incluindo o email do usuário, o código de verificação enviado para o email do usuário e a nova senha que o usuário deseja definir. Este DTO é essencial para permitir que os usuários concluam o processo de redefinição de senha após receberem as instruções de recuperação, garantindo que apenas o usuário legítimo possa alterar a senha da conta. O campo de email deve ser um endereço de e-mail válido e registrado no sistema, o campo de código deve conter o código de verificação correto enviado para o email do usuário, e o campo de nova senha deve conter uma senha forte seguindo as políticas de segurança definidas pelo sistema.
     /// </summary>
     public class ResetPasswordRequest

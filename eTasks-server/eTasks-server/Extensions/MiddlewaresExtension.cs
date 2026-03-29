@@ -1,8 +1,5 @@
 using eTasks_server.Models.Utils;
-using Microsoft.AspNetCore.Diagnostics;
-using MySqlConnector;
 using Scalar.AspNetCore;
-using eTasks_server.Endpoints;
 
 namespace eTasks_server.Extensions
 {

@@ -8,7 +8,7 @@
         /// <summary>
         /// Endereço do servidor SMTP, por exemplo: "smtp.gmail.com". Deve ser configurado no appsettings.json com a chave "SmtpHost".
         /// </summary>
-        public string host { get; set; }
+        public string host { get; set; } = string.Empty;
         /// <summary>
         /// Porta do servidor SMTP, geralmente 587 para TLS ou 465 para SSL. Deve ser configurado no appsettings.json com a chave "SmtpPort". O valor padrão é 587 se não for especificado.
         /// </summary>

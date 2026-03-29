@@ -1,8 +1,5 @@
 using System.Net;
 
-/// <summary>
-/// Este namespace contém a classe ApiException, que é usada para representar erros de negócio e autenticação na API, fornecendo um código HTTP e uma mensagem amigável ao usuário. Essa classe é projetada para ser lançada pelo servidor quando ocorre um erro de negócio ou autenticação, e também pode ser usada pelo cliente Blazor (BaseService) para capturar erros ao consumir a API, mantendo compatibilidade com o construtor de 3 parâmetros.
-/// </summary>
 namespace eTasks_server.Models.Exceptions
 {
     /// <summary>

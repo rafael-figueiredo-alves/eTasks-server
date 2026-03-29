@@ -11,8 +11,6 @@ namespace eTasks_server.Endpoints
 
                 await API_V2.MapVersionEndpoints();
                 API_V2.MapUtilsEndpoints();
-                API_V2.MapDirectoriesEndpoint(app.Environment);
-                API_V2.MapUpDirectoriesEndpoint(app.Environment);
                 API_V2.MapAuthEndpoints();
                 API_V2.MapUserAdminEndpoints();
 

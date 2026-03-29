@@ -12,6 +12,7 @@ namespace eTasks_server.Extensions
                 app.MapHealthChecks(Constants.HealthCheckEndpoint);
 
                 app.MapStaticAssets();
+                
                 app.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode()
                     .AddInteractiveWebAssemblyRenderMode()
