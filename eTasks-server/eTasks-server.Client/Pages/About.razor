@@ -1,7 +1,6 @@
-﻿@using eTasks_server.Models.Utils
+@using eTasks_server.Models.Utils
 
 @page "/about"
-@attribute [Authorize(Roles = "Admin")]
 
 @rendermode InteractiveAuto
 @inherits AboutBase
@@ -17,4 +16,3 @@
                   Lines="10" />
     <MudText Typo="Typo.subtitle1" Class="mt-4">© @DateTime.UtcNow.Year - @Constants.DeveloperName</MudText>
 </MudContainer>
-

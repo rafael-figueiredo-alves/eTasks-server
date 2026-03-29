@@ -1,19 +1,22 @@
-using eTasks_server.Client.Services;
-using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Models.Auth;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
 
 namespace eTasks_server.Client.Pages
 {
     public class LoginBase : ComponentBase
     {
-        [Inject] protected IAuthService AuthService { get; set; } = default!;
+        [Inject] protected HttpClient HttpClient { get; set; } = default!;
         [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
-        [Inject] protected Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
         [Inject] protected IJSRuntime JSRuntime { get; set; } = default!;
 
         [SupplyParameterFromQuery]
@@ -32,28 +35,20 @@ namespace eTasks_server.Client.Pages
                 return;
             }
 
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated != true)
+            var token = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "authToken");
+            if (string.IsNullOrWhiteSpace(token))
             {
                 return;
             }
 
-            if (authState.User.IsInRole("Admin"))
+            if (HasAdminRole(token))
             {
-                if (AuthStateProvider is CustomAuthStateProvider customProvider)
-                {
-                    var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-                    if (!string.IsNullOrWhiteSpace(token))
-                    {
-                        customProvider.NotifyUserAuthentication(token);
-                    }
-                }
-
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
                 return;
             }
 
-            await AuthService.LogoutAsync();
+            await LogoutAsync();
             Snackbar.Add("Acesso restrito. Faça login com uma conta Administradora.", Severity.Warning);
             NavigationManager.NavigateTo("/login", replace: true);
         }
@@ -71,21 +66,21 @@ namespace eTasks_server.Client.Pages
             _isLoading = true;
             try
             {
-                var request = new eTasks_server.Models.Auth.LoginRequest
+                var request = new LoginRequest
                 {
                     Email = _email,
                     Password = _password,
                     UserAgent = Constants.WebAdminUserAgent
                 };
 
-                var response = await AuthService.LoginAsync(request);
+                var response = await LoginAsync(request);
                 if (response != null)
                 {
                     Snackbar.Add("Login realizado com sucesso!", Severity.Success);
                     NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
                 }
             }
-            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
             {
                 Snackbar.Add("Acesso restrito. Apenas administradores podem acessar o sistema.", Severity.Warning);
             }
@@ -107,6 +102,68 @@ namespace eTasks_server.Client.Pages
             }
 
             return ReturnUrl;
+        }
+
+        private async Task<LoginResponse?> LoginAsync(LoginRequest request)
+        {
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await HttpClient.PostAsJsonAsync("auth/login", request);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                throw new ApiException(response.StatusCode, content, $"Erro ao consumir API: {response.ReasonPhrase}");
+            }
+
+            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+            if (loginResponse is null)
+            {
+                return null;
+            }
+
+            if (!HasAdminRole(loginResponse.Token))
+            {
+                throw new ApiException(HttpStatusCode.Forbidden, "{}", "Acesso restrito. Apenas administradores podem acessar o servidor.");
+            }
+
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", loginResponse.Token);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "refreshToken", loginResponse.RefreshToken);
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginResponse.Token);
+
+            return loginResponse;
+        }
+
+        private async Task LogoutAsync()
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "refreshToken");
+            HttpClient.DefaultRequestHeaders.Authorization = null;
+        }
+
+        private static bool HasAdminRole(string token)
+        {
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role");
+                var userAgentClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == Constants.UserAgentClaimType);
+
+                return roleClaim?.Value == "Admin"
+                    && userAgentClaim?.Value == Constants.WebAdminUserAgent;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
 @page "/admin/users"
-@attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveAuto
 @inherits ManageUsersBase
 
@@ -10,7 +9,7 @@
         <ToolBarContent>
             <MudText Typo="Typo.h6">Usuários do Sistema</MudText>
             <MudSpacer />
-            <MudTextField @bind-Value="SearchString" Placeholder="Buscar por nome ou e-mail..." Adornment="Adornment.Start" 
+            <MudTextField @bind-Value="SearchString" Placeholder="Buscar por nome ou e-mail..." Adornment="Adornment.Start"
                 Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <Columns>
@@ -57,27 +56,27 @@
             <TemplateColumn Sortable="false" Class="d-flex justify-end" HeaderStyle="padding-bottom: 42px;">
                 <CellTemplate>
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                        <MudMenuItem OnClick="@(() => ToggleBlock(context.Item))" 
+                        <MudMenuItem OnClick="@(() => ToggleBlock(context.Item))"
                                      Icon="@(context.Item.IsBlocked ? Icons.Material.Filled.LockOpen : Icons.Material.Filled.Lock)"
                                      IconColor="@(context.Item.IsBlocked ? Color.Success : Color.Error)">
                             @(context.Item.IsBlocked ? "Desbloquear" : "Bloquear Conta")
                         </MudMenuItem>
-                        
+
                         @if (!context.Item.IsConfirmed)
                         {
                             <MudMenuItem OnClick="@(() => ConfirmAccount(context.Item))" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
                                 Confirmar Conta
                             </MudMenuItem>
                         }
-                        
+
                         <MudMenuItem OnClick="@(() => ResetPassword(context.Item))" Icon="@Icons.Material.Filled.Password">
                             Trocar Senha
                         </MudMenuItem>
-                        
+
                         <MudMenuItem OnClick="@(() => SendResetEmail(context.Item))" Icon="@Icons.Material.Filled.Mail">
                             Enviar Reset por E-mail
                         </MudMenuItem>
-                        
+
                         <MudMenuItem OnClick="@(() => ViewLogs(context.Item))" Icon="@Icons.Material.Filled.History">
                             Ver Log de Logins
                         </MudMenuItem>

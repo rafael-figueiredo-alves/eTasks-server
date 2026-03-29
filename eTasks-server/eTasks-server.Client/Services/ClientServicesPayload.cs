@@ -44,10 +44,7 @@ namespace eTasks_server.Client.Services
             private WebAssemblyHostBuilder SetupAPIServices()
             {
                 builder.Services.AddAuthorizationCore();
-                builder.Services.AddScoped<CustomAuthStateProvider>();
-                builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 
-                builder.Services.AddScoped<IAuthService, AuthService>();
                 builder.Services.AddScoped<IVersionService, VersionService>();
                 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
                 builder.Services.AddScoped<UserLogsDrawerService>();

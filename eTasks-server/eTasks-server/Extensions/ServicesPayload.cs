@@ -1,5 +1,4 @@
 using eTasks_server.Client.Services;
-using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.BusinessLogicLayers;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
@@ -9,13 +8,13 @@ using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Middlewares;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
 using System.Text;
+using eTasks_server.Client.Services.Interfaces;
 
 namespace eTasks_server.Extensions
 {
@@ -125,7 +124,6 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
                 services.AddScoped<UserLogsDrawerService>();
-                services.AddScoped<IAuthService, AuthService>();
 
                 return services;
             }
@@ -159,10 +157,6 @@ namespace eTasks_server.Extensions
                     options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
                 });
                 services.AddControllers();
-
-                services.AddAuthorizationCore();
-                services.AddScoped<CustomAuthStateProvider>();
-                services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 
                 // Dependency Injection mapping
                 services.AddScoped<IEmailService, EmailService>();
