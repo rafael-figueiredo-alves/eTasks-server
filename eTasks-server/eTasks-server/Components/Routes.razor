@@ -1,6 +1,28 @@
-<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(eTasks_server.Client._Imports).Assembly }">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
-    </Found>
-</Router>
+@using eTasks_server.Client.Components
+
+@inject NavigationManager Nv
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(eTasks_server.Client._Imports).Assembly }">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)">
+                <Authorizing>
+                    <p>Autorizando...</p>
+                </Authorizing>
+                <NotAuthorized>
+                    @{
+                        Nv.NavigateTo("login");
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>eTasks Server | Página não encontrada</PageTitle>
+            <h1>Página não encontrada</h1>
+            <LayoutView Layout="@typeof(eTasks_server.Client.Layout.EmptyLayout)">
+                <_404Page />
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
