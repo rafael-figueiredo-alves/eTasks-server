@@ -15,6 +15,8 @@ using Serilog;
 using Serilog.Events;
 using System.Text;
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Client.Auth;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace eTasks_server.Extensions
 {
@@ -70,8 +72,10 @@ namespace eTasks_server.Extensions
             {
                 services.AddScoped(sp =>
                 {
-                    var baseUrl = configuration[Constants.ApiBaseUrl]?.TrimEnd('/') + "/";
-                    return new HttpClient { BaseAddress = new Uri(baseUrl + Constants.URLClientServicesAPISegment) };
+                    var configuredBaseUrl = configuration[Constants.ApiBaseUrl]?.Trim();
+                    var apiBaseUrl = BuildApiBaseUrl(configuredBaseUrl);
+
+                    return new HttpClient { BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute) };
                 });
 
                 return services;
@@ -84,6 +88,25 @@ namespace eTasks_server.Extensions
                     .AddInteractiveWebAssemblyComponents();
 
                 return services;
+            }
+
+            private static string BuildApiBaseUrl(string? configuredBaseUrl)
+            {
+                if (string.IsNullOrWhiteSpace(configuredBaseUrl))
+                {
+                    throw new InvalidOperationException($"A configuração '{Constants.ApiBaseUrl}' não foi informada.");
+                }
+
+                var normalizedBaseUrl = configuredBaseUrl.TrimEnd('/') + "/";
+                var apiSegment = Constants.URLClientServicesAPISegment.Trim('/');
+
+                if (normalizedBaseUrl.Contains($"/{apiSegment}/", StringComparison.OrdinalIgnoreCase)
+                    || normalizedBaseUrl.EndsWith($"/{apiSegment}", StringComparison.OrdinalIgnoreCase))
+                {
+                    return normalizedBaseUrl;
+                }
+
+                return normalizedBaseUrl + Constants.URLClientServicesAPISegment;
             }
 
             private IServiceCollection SetupCors()
@@ -119,6 +142,13 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection ServerAppServices()
             {
+                services.AddAuthorizationCore();
+                services.AddScoped<ITokenStorageService, TokenStorageService>();
+                services.AddScoped<IAuthServices, AuthService>();
+                services.AddScoped<TokenAuthenticationProvider>();
+                services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
+                services.AddScoped<IAuthToken>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
+
                 services.AddScoped<VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
                 services.AddScoped<IVersionService, VersionService>();
@@ -188,8 +218,7 @@ namespace eTasks_server.Extensions
 
                                 // Se for o App Web Blazor renderizado no servidor (SSR), o Bearer auth falha por 
                                 // não receber header HTTP de auth, então forçamos redirect pro login com returnUrl:
-                                var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
-                                context.Response.Redirect($"/login?returnUrl={returnUrl}");
+                                context.Response.Redirect("/login");
                                 context.HandleResponse(); // Supress 401 response and return 302 Redirect
                                 return Task.CompletedTask;
                             }

@@ -1,0 +1,130 @@
+@using System.Reflection
+@using Microsoft.AspNetCore.Authorization
+@using eTasks_server.Client.Auth
+@inject NavigationManager NavigationManager
+@inject eTasks_server.Client.Services.Interfaces.IAuthServices AuthServices
+@inject eTasks_server.Client.Auth.IAuthToken AuthToken
+
+@if (_isAnonymousRoute)
+{
+    <RouteView RouteData="@RouteData" DefaultLayout="@DefaultLayout" />
+}
+else if (!_isResolved)
+{
+    @if (Authorizing is not null)
+    {
+        @Authorizing
+    }
+    else
+    {
+        <p>Autorizando...</p>
+    }
+}
+else if (_isAuthorized)
+{
+    <RouteView RouteData="@RouteData" DefaultLayout="@DefaultLayout" />
+}
+else
+{
+    <p>Redirecionando...</p>
+}
+
+@code {
+    [Parameter, EditorRequired] public RouteData RouteData { get; set; } = default!;
+    [Parameter] public Type? DefaultLayout { get; set; }
+    [Parameter] public RenderFragment? Authorizing { get; set; }
+
+    private bool _isAnonymousRoute;
+    private bool _isResolved;
+    private bool _isAuthorized;
+    private Type? _lastPageType;
+
+    protected override void OnParametersSet()
+    {
+        var pageType = RouteData.PageType;
+        if (_lastPageType == pageType)
+        {
+            return;
+        }
+
+        _lastPageType = pageType;
+        _isAnonymousRoute = pageType.IsDefined(typeof(AllowAnonymousAttribute), inherit: true)
+            || !pageType.IsDefined(typeof(ClientAuthorizeAttribute), inherit: true);
+
+        if (_isAnonymousRoute)
+        {
+            _isResolved = true;
+            _isAuthorized = true;
+            return;
+        }
+
+        _isResolved = false;
+        _isAuthorized = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_isAnonymousRoute || _isResolved)
+        {
+            return;
+        }
+
+        var isValidSession = await AuthServices.EnsureValidTokenAsync();
+        if (!isValidSession)
+        {
+            _isResolved = true;
+            _isAuthorized = false;
+            NavigationManager.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        _isAuthorized = await IsAuthorizedForRouteAsync();
+        _isResolved = true;
+
+        if (!_isAuthorized)
+        {
+            await AuthServices.LogoutAsync();
+            NavigationManager.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task<bool> IsAuthorizedForRouteAsync()
+    {
+        var authorizeAttributes = RouteData.PageType
+            .GetCustomAttributes<ClientAuthorizeAttribute>(inherit: true)
+            .ToArray();
+
+        if (authorizeAttributes.Length == 0)
+        {
+            return true;
+        }
+
+        var role = await AuthToken.GetRole();
+        var userAgent = await AuthToken.GetUserAgent();
+        if (role != "Admin" || userAgent != eTasks_server.Models.Utils.Constants.WebAdminUserAgent)
+        {
+            return false;
+        }
+
+        foreach (var attribute in authorizeAttributes)
+        {
+            if (string.IsNullOrWhiteSpace(attribute.Roles))
+            {
+                continue;
+            }
+
+            var allowedRoles = attribute.Roles
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (!allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

@@ -1,8 +1,7 @@
 @rendermode InteractiveAuto
 @inject NavigationManager Navigation
-@inject HttpClient HttpClient
-@inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
+@inject eTasks_server.Client.Services.Interfaces.IAuthServices AuthServices
 
 <MudAppBar Elevation="3">
     <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -84,9 +83,7 @@
     private async Task HandleLogout()
     {
         _drawerOpen = false;
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "refreshToken");
-        HttpClient.DefaultRequestHeaders.Authorization = null;
+        await AuthServices.LogoutAsync();
         Snackbar.Add("Sessão encerrada com sucesso.", Severity.Info);
         Navigation.NavigateTo("/login", replace: true);
     }

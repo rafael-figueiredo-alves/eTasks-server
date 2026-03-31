@@ -1,3 +1,4 @@
+using eTasks_server.Client.Auth;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -44,6 +45,11 @@ namespace eTasks_server.Client.Services
             private WebAssemblyHostBuilder SetupAPIServices()
             {
                 builder.Services.AddAuthorizationCore();
+                builder.Services.AddScoped<ITokenStorageService, TokenStorageService>();
+                builder.Services.AddScoped<IAuthServices, AuthService>();
+                builder.Services.AddScoped<TokenAuthenticationProvider>();
+                builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
+                builder.Services.AddScoped<IAuthToken>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
 
                 builder.Services.AddScoped<IVersionService, VersionService>();
                 builder.Services.AddScoped<IUserAdminService, UserAdminService>();

@@ -1,0 +1,28 @@
+@inject NavigationManager NavigationManager
+@inject eTasks_server.Client.Services.Interfaces.IAuthServices AuthServices
+
+<p>Redirecionando...</p>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var currentPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        if (currentPath == "/")
+        {
+            currentPath = "/";
+        }
+
+        if (await AuthServices.EnsureValidTokenAsync())
+        {
+            NavigationManager.NavigateTo(currentPath, replace: true);
+            return;
+        }
+
+        NavigationManager.NavigateTo("/login", replace: true);
+    }
+}
