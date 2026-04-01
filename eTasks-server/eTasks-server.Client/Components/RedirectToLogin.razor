@@ -1,5 +1,4 @@
 @inject NavigationManager NavigationManager
-@inject eTasks_server.Client.Services.Interfaces.IAuthServices AuthServices
 
 <p>Redirecionando...</p>
 
@@ -12,17 +11,12 @@
         }
 
         var currentPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        if (currentPath == "/")
+        if (string.IsNullOrWhiteSpace(currentPath) || currentPath == "/")
         {
             currentPath = "/";
         }
 
-        if (await AuthServices.EnsureValidTokenAsync())
-        {
-            NavigationManager.NavigateTo(currentPath, replace: true);
-            return;
-        }
-
-        NavigationManager.NavigateTo("/login", replace: true);
+        var encodedReturnUrl = Uri.EscapeDataString(currentPath);
+        NavigationManager.NavigateTo($"/login?returnUrl={encodedReturnUrl}", replace: true);
     }
 }

@@ -1,7 +1,7 @@
 @rendermode InteractiveAuto
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
-@inject eTasks_server.Client.Services.Interfaces.IAuthServices AuthServices
+@inject eTasks_server.Client.Services.Interfaces.IWebAuthService WebAuthService
 
 <MudAppBar Elevation="3">
     <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -43,7 +43,7 @@
         <MudNavLink Href="/"
                     Match="NavLinkMatch.All"
                     Icon="@Icons.Material.Filled.Home">
-            In√≠cio
+            InÌcio
         </MudNavLink>
 
         <MudNavLink Href="/version"
@@ -53,7 +53,7 @@
 
         <MudNavLink Href="/admin/users"
                     Icon="@Icons.Material.Filled.People">
-            Gerenciar Usu√°rios
+            Gerenciar Usu·rios
         </MudNavLink>
 
         <MudDivider Class="my-2" />
@@ -83,8 +83,8 @@
     private async Task HandleLogout()
     {
         _drawerOpen = false;
-        await AuthServices.LogoutAsync();
-        Snackbar.Add("Sess√£o encerrada com sucesso.", Severity.Info);
-        Navigation.NavigateTo("/login", replace: true);
+        await WebAuthService.LogoutAsync();
+        Snackbar.Add("Sess„o encerrada com sucesso.", Severity.Info);
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

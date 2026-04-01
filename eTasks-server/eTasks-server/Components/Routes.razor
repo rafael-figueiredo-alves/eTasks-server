@@ -1,21 +1,22 @@
 @using eTasks_server.Client.Components
 
-<CascadingAuthenticationState>
-    <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(eTasks_server.Client._Imports).Assembly }">
-        <Found Context="routeData">
-            <InteractiveAuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)">
-                <Authorizing>
-                    <p>Autorizando...</p>
-                </Authorizing>
-            </InteractiveAuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-        </Found>
-        <NotFound>
-            <PageTitle>eTasks Server | P√°gina n√£o encontrada</PageTitle>
-            <h1>P√°gina n√£o encontrada</h1>
-            <LayoutView Layout="@typeof(eTasks_server.Client.Layout.EmptyLayout)">
-                <_404Page />
-            </LayoutView>
-        </NotFound>
-    </Router>
-</CascadingAuthenticationState>
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(eTasks_server.Client._Imports).Assembly }">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)">
+            <Authorizing>
+                <p>Autorizando...</p>
+            </Authorizing>
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>eTasks Server | P·gina n„o encontrada</PageTitle>
+        <h1>P·gina n„o encontrada</h1>
+        <LayoutView Layout="@typeof(eTasks_server.Client.Layout.EmptyLayout)">
+            <_404Page />
+        </LayoutView>
+    </NotFound>
+</Router>

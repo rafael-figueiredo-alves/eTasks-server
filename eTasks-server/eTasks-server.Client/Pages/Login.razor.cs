@@ -1,6 +1,5 @@
 using eTasks_server.Models.Auth;
 using eTasks_server.Models.Exceptions;
-using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Net;
@@ -11,8 +10,9 @@ namespace eTasks_server.Client.Pages
     {
         [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
-        [Inject] protected Services.Interfaces.IAuthServices AuthServices { get; set; } = default!;
-        [Inject] protected Auth.IAuthToken AuthToken { get; set; } = default!;
+        [Inject] protected Services.Interfaces.IWebAuthService WebAuthService { get; set; } = default!;
+
+        [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
 
         protected string _email = string.Empty;
         protected string _password = string.Empty;
@@ -27,21 +27,14 @@ namespace eTasks_server.Client.Pages
                 return;
             }
 
-            if (!await AuthServices.EnsureValidTokenAsync())
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
             {
-                return;
+                NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
             }
-
-            if (await AuthToken.GetRole() == "Admin" && await AuthToken.GetUserAgent() == Constants.WebAdminUserAgent)
-            {
-                NavigationManager.NavigateTo("/", replace: true);
-                return;
-            }
-
-            await AuthServices.LogoutAsync();
-            Snackbar.Add("Acesso restrito. Faça login com uma conta Administradora.", Severity.Warning);
-            NavigationManager.NavigateTo("/login", replace: true);
         }
+
+        [Inject] protected Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
         protected void TogglePassword() => _showPassword = !_showPassword;
 
@@ -56,16 +49,16 @@ namespace eTasks_server.Client.Pages
             _isLoading = true;
             try
             {
-                var request = new LoginRequest
+                var request = new WebLoginRequest
                 {
                     Email = _email,
                     Password = _password,
-                    UserAgent = Constants.WebAdminUserAgent
+                    RememberMe = _rememberMe
                 };
 
-                await AuthServices.LoginAsync(request, _rememberMe);
+                await WebAuthService.LoginAsync(request);
                 Snackbar.Add("Login realizado com sucesso!", Severity.Success);
-                NavigationManager.NavigateTo("/", replace: true);
+                NavigationManager.NavigateTo(GetSafeReturnUrl(), forceLoad: true);
             }
             catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
             {
@@ -79,6 +72,16 @@ namespace eTasks_server.Client.Pages
             {
                 _isLoading = false;
             }
+        }
+
+        private string GetSafeReturnUrl()
+        {
+            if (string.IsNullOrWhiteSpace(ReturnUrl) || !Uri.IsWellFormedUriString(ReturnUrl, UriKind.Relative))
+            {
+                return "/";
+            }
+
+            return ReturnUrl;
         }
     }
 }

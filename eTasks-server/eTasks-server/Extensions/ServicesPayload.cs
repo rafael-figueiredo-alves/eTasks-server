@@ -1,22 +1,23 @@
-using eTasks_server.Client.Services;
+﻿using eTasks_server.Client.Services;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.BusinessLogicLayers;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
+using eTasks_server.Core.Handlers;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Middlewares;
 using eTasks_server.Models.Utils;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
 using System.Text;
-using eTasks_server.Client.Services.Interfaces;
-using eTasks_server.Client.Auth;
-using Microsoft.AspNetCore.Components.Authorization;
 
 namespace eTasks_server.Extensions
 {
@@ -70,13 +71,18 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupHttpClient(ConfigurationManager configuration)
             {
-                services.AddScoped(sp =>
+                services.AddHttpContextAccessor();
+                services.AddTransient<CurrentRequestAuthHandler>();
+                services.AddHttpClient("ServerApiClient", (_, client) =>
                 {
                     var configuredBaseUrl = configuration[Constants.ApiBaseUrl]?.Trim();
                     var apiBaseUrl = BuildApiBaseUrl(configuredBaseUrl);
 
-                    return new HttpClient { BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute) };
-                });
+                    client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
+                })
+                .AddHttpMessageHandler<CurrentRequestAuthHandler>();
+
+                services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("ServerApiClient"));
 
                 return services;
             }
@@ -85,7 +91,8 @@ namespace eTasks_server.Extensions
             {
                 services.AddRazorComponents()
                     .AddInteractiveServerComponents()
-                    .AddInteractiveWebAssemblyComponents();
+                    .AddInteractiveWebAssemblyComponents()
+                    .AddAuthenticationStateSerialization(options => options.SerializeAllClaims = true);
 
                 return services;
             }
@@ -133,7 +140,7 @@ namespace eTasks_server.Extensions
                                                         options.UseMySql(
                                                         configuration.GetConnectionString(Constants.DatabaseConnection),
                                                         ServerVersion.AutoDetect(configuration.GetConnectionString(Constants.DatabaseConnection)),
-                                                        mySqlOptions => mySqlOptions.EnableRetryOnFailure()  // Opcional: retry em falhas
+                                                        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
                                                         )
                                                     );
 
@@ -142,12 +149,10 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection ServerAppServices()
             {
+                services.AddCascadingAuthenticationState();
                 services.AddAuthorizationCore();
-                services.AddScoped<ITokenStorageService, TokenStorageService>();
-                services.AddScoped<IAuthServices, AuthService>();
-                services.AddScoped<TokenAuthenticationProvider>();
-                services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
-                services.AddScoped<IAuthToken>(sp => sp.GetRequiredService<TokenAuthenticationProvider>());
+                services.AddScoped<IWebAuthBLL, WebAuthBLL>();
+                services.AddScoped<IWebAuthService, WebAuthService>();
 
                 services.AddScoped<VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
@@ -188,42 +193,50 @@ namespace eTasks_server.Extensions
                 });
                 services.AddControllers();
 
-                // Dependency Injection mapping
                 services.AddScoped<IEmailService, EmailService>();
-                services.AddScoped<IAuthBLL, AuthBLL>();              
+                services.AddScoped<IAuthBLL, AuthBLL>();
 
-                services.AddAuthentication("Bearer")
-                    .AddJwtBearer(options =>
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = "Hybrid";
+                    options.DefaultAuthenticateScheme = "Hybrid";
+                    options.DefaultChallengeScheme = "Hybrid";
+                })
+                .AddPolicyScheme("Hybrid", "JWT or Cookie", options =>
+                {
+                    options.ForwardDefaultSelector = context =>
                     {
-                        var jwtKey = configuration[Constants.JwtKeyConfig] ?? "defaultSecretKey_1234567890_min32chars!";
-                        options.TokenValidationParameters = new TokenValidationParameters
+                        var authHeader = context.Request.Headers.Authorization.ToString();
+                        if (!string.IsNullOrWhiteSpace(authHeader)
+                            && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                         {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-                            ValidIssuer = configuration[Constants.JwtIssuerConfig] ?? "eTasksServer",
-                            ValidAudience = configuration[Constants.JwtAudienceConfig] ?? "eTasksClient",
-                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-                        };
-                        options.Events = new JwtBearerEvents
-                        {
-                            OnChallenge = context =>
-                            {
-                                // Se for chamada de API, deixa retornar 401 nativo
-                                if (context.Request.Path.StartsWithSegments("/api"))
-                                {
-                                    return Task.CompletedTask;
-                                }
+                            return JwtBearerDefaults.AuthenticationScheme;
+                        }
 
-                                // Se for o App Web Blazor renderizado no servidor (SSR), o Bearer auth falha por 
-                                // não receber header HTTP de auth, então forçamos redirect pro login com returnUrl:
-                                context.Response.Redirect("/login");
-                                context.HandleResponse(); // Supress 401 response and return 302 Redirect
-                                return Task.CompletedTask;
-                            }
-                        };
-                    });
+                        return CookieAuthenticationDefaults.AuthenticationScheme;
+                    };
+                })
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    options.LoginPath = "/login";
+                    options.AccessDeniedPath = "/login";
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                })
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    var jwtKey = configuration[Constants.JwtKeyConfig] ?? "defaultSecretKey_1234567890_min32chars!";
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = configuration[Constants.JwtIssuerConfig] ?? "eTasksServer",
+                        ValidAudience = configuration[Constants.JwtAudienceConfig] ?? "eTasksClient",
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                    };
+                });
 
                 return services;
             }
@@ -241,7 +254,6 @@ namespace eTasks_server.Extensions
             #region Private Methods
             private IServiceCollection SetupSerilog(IWebHostEnvironment env)
             {
-                // Configuração do Serilog
                 Log.Logger = new LoggerConfiguration()
                     .MinimumLevel.Information()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)

@@ -1,4 +1,6 @@
-ï»¿using eTasks_server.Models.Exceptions;
+using eTasks_server.Models.Exceptions;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Net;
 using System.Net.Http.Json;
@@ -10,11 +12,19 @@ namespace eTasks_server.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IDialogService _dialogService;
+        private readonly NavigationManager _navigationManager;
+        private readonly IJSRuntime _jsRuntime;
 
-        protected BaseService(HttpClient httpClient, IDialogService dialogService)
+        protected BaseService(
+            HttpClient httpClient,
+            IDialogService dialogService,
+            NavigationManager navigationManager,
+            IJSRuntime jsRuntime)
         {
-            _httpClient    = httpClient;
+            _httpClient = httpClient;
             _dialogService = dialogService;
+            _navigationManager = navigationManager;
+            _jsRuntime = jsRuntime;
         }
 
         protected async Task<T?> HandleResponseAsync<T>(HttpResponseMessage response)
@@ -23,17 +33,18 @@ namespace eTasks_server.Client.Services
             {
                 return await response.Content.ReadFromJsonAsync<T>();
             }
-            else
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                throw new ApiException(response.StatusCode, content, $"Erro ao consumir API: {response.ReasonPhrase}");
-            }
+
+            await HandleAuthorizationFailureAsync(response);
+
+            var content = await response.Content.ReadAsStringAsync();
+            throw new ApiException(response.StatusCode, content, $"Erro ao consumir API: {response.ReasonPhrase}");
         }
 
         protected async Task HandleResponseAsync(HttpResponseMessage response)
         {
             if (!response.IsSuccessStatusCode)
             {
+                await HandleAuthorizationFailureAsync(response);
                 var content = await response.Content.ReadAsStringAsync();
                 throw new ApiException(response.StatusCode, content, $"Erro ao consumir API: {response.ReasonPhrase}");
             }
@@ -54,101 +65,48 @@ namespace eTasks_server.Client.Services
 
         public async Task<T?> PostAsync<T>(string endpoint, object data)
         {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync(endpoint, data);
-                return await HandleResponseAsync<T>(response);
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Post, endpoint, data);
+            return await HandleResponseAsync<T>(response);
         }
 
         public async Task<bool> PostAsync(string endpoint, object data)
         {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync(endpoint, data);
-                await HandleResponseAsync(response);
-                return true;
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Post, endpoint, data);
+            await HandleResponseAsync(response);
+            return true;
         }
 
         public async Task<T?> PutAsync<T>(string endpoint, object data)
         {
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync(endpoint, data);
-                return await HandleResponseAsync<T>(response);
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Put, endpoint, data);
+            return await HandleResponseAsync<T>(response);
         }
 
         public async Task<bool> PutAsync(string endpoint, object data)
         {
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync(endpoint, data);
-                await HandleResponseAsync(response);
-                return true;
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Put, endpoint, data);
+            await HandleResponseAsync(response);
+            return true;
         }
 
         public async Task<T?> PatchAsync<T>(string endpoint, object data)
         {
-            try
-            {
-                var content = new StringContent(JsonSerializer.Serialize(data), System.Text.Encoding.UTF8, "application/json");
-                var request = new HttpRequestMessage(new HttpMethod("PATCH"), endpoint) { Content = content };
-                var response = await _httpClient.SendAsync(request);
-                return await HandleResponseAsync<T>(response);
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Patch, endpoint, data);
+            return await HandleResponseAsync<T>(response);
         }
 
         public async Task<bool> PatchAsync(string endpoint, object data)
         {
-            try
-            {
-                var content = new StringContent(JsonSerializer.Serialize(data), System.Text.Encoding.UTF8, "application/json");
-                var request = new HttpRequestMessage(new HttpMethod("PATCH"), endpoint) { Content = content };
-                var response = await _httpClient.SendAsync(request);
-                await HandleResponseAsync(response);
-                return true;
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Patch, endpoint, data);
+            await HandleResponseAsync(response);
+            return true;
         }
 
         public async Task<bool> DeleteAsync(string endpoint)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync(endpoint);
-                await HandleResponseAsync(response);
-                return true;
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
-            }
+            var response = await SendBrowserJsonAsync(HttpMethod.Delete, endpoint, null);
+            await HandleResponseAsync(response);
+            return true;
         }
 
         public async Task<HttpResponseMessage> OptionsAsync(string endpoint)
@@ -162,6 +120,67 @@ namespace eTasks_server.Client.Services
             {
                 throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
             }
+        }
+
+        private async Task HandleAuthorizationFailureAsync(HttpResponseMessage response)
+        {
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var currentPath = "/" + _navigationManager.ToBaseRelativePath(_navigationManager.Uri);
+                if (string.IsNullOrWhiteSpace(currentPath) || currentPath == "/")
+                {
+                    currentPath = "/";
+                }
+
+                var encodedReturnUrl = Uri.EscapeDataString(currentPath);
+                _navigationManager.NavigateTo($"/login?returnUrl={encodedReturnUrl}", forceLoad: true);
+                return;
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                await _dialogService.ShowMessageBoxAsync(
+                    "Acesso negado",
+                    "Você não tem permissão para acessar este recurso.",
+                    yesText: "OK");
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendBrowserJsonAsync(HttpMethod method, string endpoint, object? data)
+        {
+            var url = new Uri(_httpClient.BaseAddress!, endpoint).ToString();
+            var payload = data is null ? null : JsonSerializer.Serialize(data);
+
+            BrowserHttpResponse response;
+            try
+            {
+                response = await _jsRuntime.InvokeAsync<BrowserHttpResponse>(
+                    "webAuth.send",
+                    method.Method,
+                    url,
+                    payload);
+            }
+            catch (JSException ex)
+            {
+                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, $"Erro de Rede: {ex.Message}");
+            }
+
+            if (response.IsNetworkError)
+            {
+                throw new ApiException(HttpStatusCode.ServiceUnavailable, null, response.Body ?? "Erro de rede ao consumir API.");
+            }
+
+            return new HttpResponseMessage(response.StatusCode)
+            {
+                Content = new StringContent(response.Body ?? string.Empty)
+            };
+        }
+
+        private sealed class BrowserHttpResponse
+        {
+            public bool IsNetworkError { get; set; }
+            public HttpStatusCode StatusCode { get; set; }
+            public string? Body { get; set; }
         }
     }
 }

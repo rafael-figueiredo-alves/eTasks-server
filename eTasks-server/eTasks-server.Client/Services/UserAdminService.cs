@@ -1,12 +1,19 @@
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.Users;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace eTasks_server.Client.Services
 {
     public class UserAdminService : BaseService, IUserAdminService
     {
-        public UserAdminService(HttpClient httpClient, IDialogService dialogService) : base(httpClient, dialogService) { }
+        public UserAdminService(
+            HttpClient httpClient,
+            IDialogService dialogService,
+            NavigationManager navigationManager,
+            IJSRuntime jsRuntime)
+            : base(httpClient, dialogService, navigationManager, jsRuntime) { }
 
         public async Task<List<AdminUserDTO>> GetUsersAsync()
         {
