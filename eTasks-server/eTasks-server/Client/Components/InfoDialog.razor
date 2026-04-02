@@ -1,0 +1,34 @@
+﻿@rendermode InteractiveServer
+@inherits InfoDialogBase
+
+<MudDialog Class="info-dialog">
+    <TitleContent>
+        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pt-4 pb-2">
+            <div class="info-icon-wrapper">
+                <MudIcon Icon="@Icons.Material.Filled.Info"
+                         Color="Color.Info"
+                         Style="font-size: 3.5rem;" />
+            </div>
+            <MudText Typo="Typo.h5" Align="Align.Center" Style="font-weight: 700;">
+                @Title
+            </MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudText Align="Align.Center" Class="px-4" Color="Color.Default">
+            @Message
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudStack AlignItems="AlignItems.Center" Class="w-100 pb-3">
+            <MudButton Color="Color.Info"
+                       Variant="Variant.Filled"
+                       Size="Size.Large"
+                       Style="min-width: 140px; border-radius: 8px;"
+                       OnClick="Close">
+                Entendido
+            </MudButton>
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+

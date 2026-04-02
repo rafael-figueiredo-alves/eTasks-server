@@ -1,0 +1,39 @@
+﻿@using eTasks_server.Client.Services.Interfaces
+
+@page "/version/edit"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inherits ManageVersionBase
+
+<MudContainer MaxWidth="MaxWidth.Large">
+
+    <MudToolBar Dense="true" Class="mb-4">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" EndIcon="@Icons.Material.Filled.SaveAs" OnClick="Save">Salvar</MudButton>
+    </MudToolBar>
+
+    <MudContainer MaxWidth="MaxWidth.Medium">
+        <MudText Typo="Typo.h4" Class="mb-4">Editando InformaÃ§Ãµes da VersÃ£o do Aplicativo</MudText>
+            <MudForm @ref="_form" Model="_model">
+                    @if (isLoading)
+                    {
+                        <MudSkeleton Height="40px" Class="mb-2" />
+                        <MudSkeleton Height="40px" Class="mb-2" />
+                        <MudSkeleton Height="40px" Class="mb-2" />
+                        <MudSkeleton Height="40px" />
+                    }
+                    else
+                    {
+                        <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="VersÃ£o do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
+                        <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="VersÃ£o de exibiÃ§Ã£o" Variant="Variant.Outlined" Class="mb-4" />
+                        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" />
+                        <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" />
+                    }
+                </MudForm>
+    </MudContainer>
+
+</MudContainer>
+
+
+

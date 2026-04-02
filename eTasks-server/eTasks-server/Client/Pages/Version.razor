@@ -1,0 +1,40 @@
+﻿@rendermode InteractiveServer
+@page "/version"
+@attribute [Authorize]
+@inherits VersionBase
+
+<MudContainer MaxWidth="MaxWidth.Large">
+
+    <MudToolBar Dense="true" Class="mb-4">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
+    </MudToolBar>
+
+    <MudContainer MaxWidth="MaxWidth.Medium">
+
+        <MudText Typo="Typo.h4" Class="mb-4">Informações da Versão do Aplicativo</MudText>
+
+        <MudForm Model="_model">
+            @if (isLoading)
+            {
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" Class="mb-2" />
+                <MudSkeleton Height="40px" />
+            }
+            else
+            {
+                <MudTextField @bind-Value="_model.AppVersion" Label="VersÃ£o do Aplicativo" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+                <MudTextField @bind-Value="_model.DisplayVersion" Label="VersÃ£o de exibiÃ§Ã£o" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+                <MudTextField @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+                <MudTextField @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" ReadOnly />
+            }
+        </MudForm>
+
+    </MudContainer>
+
+</MudContainer>
+
+
+

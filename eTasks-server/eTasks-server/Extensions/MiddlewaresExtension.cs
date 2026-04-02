@@ -20,11 +20,7 @@ namespace eTasks_server.Extensions
                     options.WithOpenApiRoutePattern($"/openapi/{Constants.ApiVersion}.json");
                 });
 
-                if (webApplication.Environment.IsDevelopment())
-                {
-                    webApplication.UseWebAssemblyDebugging();
-                }
-                else
+                if (!webApplication.Environment.IsDevelopment())
                 {
                     webApplication.UseExceptionHandler("/Error", createScopeForErrors: true);
                     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.

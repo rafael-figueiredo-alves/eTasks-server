@@ -14,9 +14,7 @@ namespace eTasks_server.Extensions
                 app.MapStaticAssets();
                 
                 app.MapRazorComponents<App>()
-                    .AddInteractiveServerRenderMode()
-                    .AddInteractiveWebAssemblyRenderMode()
-                    .AddAdditionalAssemblies(typeof(eTasks_server.Client._Imports).Assembly);
+                    .AddInteractiveServerRenderMode();
             }
         }
     }

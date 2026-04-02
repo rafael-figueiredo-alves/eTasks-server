@@ -54,7 +54,8 @@ namespace eTasks_server.Endpoints
                 .WithName("Salvar alterações na versão do App")
                 .WithDisplayName("Salvar alterações na versão do App")
                 .WithSummary("Salva as alterações na versão do aplicativo")
-                .RequireAuthorization("Admin")
+                .RequireAuthorization("WebAdmin")
+                .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK, typeof(eTasksVersion))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
                 .WithDescription("Permite salvar as edições da versão do aplicativo. Requer autorização de administrador.");

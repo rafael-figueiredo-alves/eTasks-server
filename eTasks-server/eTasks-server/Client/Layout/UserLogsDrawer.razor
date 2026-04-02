@@ -1,0 +1,35 @@
+﻿@inherits UserLogsDrawerBase
+@rendermode InteractiveServer
+
+<MudDrawer @bind-Open="@IsDrawerOpen" Anchor="@_anchor"  Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px" Height="100dvh" Overlay="true">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Log de Logins - @SelectedUser?.Name</MudText>
+    </MudDrawerHeader>
+    <div class="pa-4">
+        @if (SelectedUserLogs.Any())
+        {
+            <MudList T="string">
+                @foreach (var log in SelectedUserLogs)
+                {
+                    <MudListItem T="string">
+                        <div class="d-flex flex-column">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.subtitle2">@log.CreatedAt.ToString("g")</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@(log.Status == "Success" ? Color.Success : Color.Error)">
+                                    @log.Status
+                                </MudChip>
+                            </div>
+                            <MudText Typo="Typo.caption">IP: @log.IpAddress</MudText>
+                            <MudText Typo="Typo.caption" Class="text-truncate">@log.UserAgent</MudText>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        }
+        else
+        {
+            <MudText>Nenhum log encontrado para este usuário.</MudText>
+        }
+    </div>
+</MudDrawer>

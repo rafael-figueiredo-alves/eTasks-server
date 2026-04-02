@@ -10,7 +10,8 @@ namespace eTasks_server.Endpoints
         {
             var group = app.MapGroup("/users")
                 .WithTags("Gerenciamento de usuários")
-                .RequireAuthorization("Admin");
+                .RequireAuthorization("WebAdmin")
+                .ExcludeFromDescription();
 
             group.MapGet("/", async (IUserAdminBLL userAdminBLL) =>
             {

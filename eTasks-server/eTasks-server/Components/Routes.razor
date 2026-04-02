@@ -1,6 +1,6 @@
-@using eTasks_server.Client.Components
+Ôªø@using eTasks_server.Client.Components
 
-<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(eTasks_server.Client._Imports).Assembly }">
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(eTasks_server.Client.Layout.MainLayout)">
             <Authorizing>
@@ -13,8 +13,8 @@
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <PageTitle>eTasks Server | P·gina n„o encontrada</PageTitle>
-        <h1>P·gina n„o encontrada</h1>
+        <PageTitle>eTasks Server | P√°gina n√£o encontrada</PageTitle>
+        <h1>P√°gina n√£o encontrada</h1>
         <LayoutView Layout="@typeof(eTasks_server.Client.Layout.EmptyLayout)">
             <_404Page />
         </LayoutView>

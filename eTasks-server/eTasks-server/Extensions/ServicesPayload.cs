@@ -4,7 +4,6 @@ using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.BusinessLogicLayers;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
-using eTasks_server.Core.Handlers;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Middlewares;
@@ -71,49 +70,15 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupHttpClient(ConfigurationManager configuration)
             {
-                services.AddHttpContextAccessor();
-                services.AddTransient<CurrentRequestAuthHandler>();
-                services.AddHttpClient("ServerApiClient", (_, client) =>
-                {
-                    var configuredBaseUrl = configuration[Constants.ApiBaseUrl]?.Trim();
-                    var apiBaseUrl = BuildApiBaseUrl(configuredBaseUrl);
-
-                    client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
-                })
-                .AddHttpMessageHandler<CurrentRequestAuthHandler>();
-
-                services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("ServerApiClient"));
-
                 return services;
             }
 
             private IServiceCollection SetupRazorComponents()
             {
                 services.AddRazorComponents()
-                    .AddInteractiveServerComponents()
-                    .AddInteractiveWebAssemblyComponents()
-                    .AddAuthenticationStateSerialization(options => options.SerializeAllClaims = true);
+                    .AddInteractiveServerComponents();
 
                 return services;
-            }
-
-            private static string BuildApiBaseUrl(string? configuredBaseUrl)
-            {
-                if (string.IsNullOrWhiteSpace(configuredBaseUrl))
-                {
-                    throw new InvalidOperationException($"A configuração '{Constants.ApiBaseUrl}' não foi informada.");
-                }
-
-                var normalizedBaseUrl = configuredBaseUrl.TrimEnd('/') + "/";
-                var apiSegment = Constants.URLClientServicesAPISegment.Trim('/');
-
-                if (normalizedBaseUrl.Contains($"/{apiSegment}/", StringComparison.OrdinalIgnoreCase)
-                    || normalizedBaseUrl.EndsWith($"/{apiSegment}", StringComparison.OrdinalIgnoreCase))
-                {
-                    return normalizedBaseUrl;
-                }
-
-                return normalizedBaseUrl + Constants.URLClientServicesAPISegment;
             }
 
             private IServiceCollection SetupCors()
@@ -152,7 +117,6 @@ namespace eTasks_server.Extensions
                 services.AddCascadingAuthenticationState();
                 services.AddAuthorizationCore();
                 services.AddScoped<IWebAuthBLL, WebAuthBLL>();
-                services.AddScoped<IWebAuthService, WebAuthService>();
 
                 services.AddScoped<VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
@@ -190,6 +154,12 @@ namespace eTasks_server.Extensions
                 services.AddAuthorization(options =>
                 {
                     options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+                    options.AddPolicy("WebAdmin", policy =>
+                    {
+                        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+                        policy.RequireAuthenticatedUser();
+                        policy.RequireRole("Admin");
+                    });
                 });
                 services.AddControllers();
 
