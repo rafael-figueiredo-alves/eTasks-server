@@ -95,6 +95,16 @@ namespace eTasks_server.Models.Utils
         /// </summary>
         public const string WebAdminUserAgent = "web-adm";
 
+        /// <summary>
+        /// Nome do cookie HttpOnly usado para transportar o access token JWT nas chamadas da API.
+        /// </summary>
+        public const string AccessTokenCookieName = "access_token";
+
+        /// <summary>
+        /// Nome do cookie HttpOnly usado para transportar o refresh token nas chamadas da API.
+        /// </summary>
+        public const string RefreshTokenCookieName = "refresh_token";
+
         // SMTP Configurations
 
         /// <summary>

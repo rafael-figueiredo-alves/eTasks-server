@@ -1,6 +1,7 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.Auth;
 using eTasks_server.Models.Exceptions;
+using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -15,6 +16,7 @@ namespace eTasks_server.Endpoints
             LoginEndpoint(group);
             RegisterEndpoint(group);
             RefreshTokenEndpoint(group);
+            LogoutEndpoint(group);
             ForgotPasswordEndpoint(group);
             ResetPasswordEndpoint(group);
             ChangePasswordEndpoint(group);
@@ -30,6 +32,7 @@ namespace eTasks_server.Endpoints
             {
                 var ip = context.Connection.RemoteIpAddress?.ToString();
                 var response = await authBLL.LoginAsync(request, ip);
+                SetAuthCookies(context, response);
                 return Results.Ok(response);
             })
             .WithName("Login")
@@ -42,9 +45,10 @@ namespace eTasks_server.Endpoints
 
         private static void RegisterEndpoint(RouteGroupBuilder group)
         {
-            group.MapPost("/register", async ([FromBody] RegisterRequest request, IAuthBLL authBLL) =>
+            group.MapPost("/register", async (HttpContext context, [FromBody] RegisterRequest request, IAuthBLL authBLL) =>
             {
                 var response = await authBLL.RegisterAsync(request);
+                SetAuthCookies(context, response);
                 return Results.Ok(response);
             })
             .WithName("UserRegister")
@@ -58,9 +62,18 @@ namespace eTasks_server.Endpoints
 
         private static void RefreshTokenEndpoint(RouteGroupBuilder group)
         {
-            group.MapPost("/refresh", async ([FromBody] RefreshTokenRequest request, IAuthBLL authBLL) =>
+            group.MapPost("/refresh", async (HttpContext context, [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequest? request, IAuthBLL authBLL) =>
             {
+                request ??= new RefreshTokenRequest();
+
+                if (string.IsNullOrWhiteSpace(request.RefreshToken)
+                    && context.Request.Cookies.TryGetValue(Constants.RefreshTokenCookieName, out var cookieRefreshToken))
+                {
+                    request.RefreshToken = cookieRefreshToken;
+                }
+
                 var response = await authBLL.RefreshTokenAsync(request);
+                SetAuthCookies(context, response);
                 return Results.Ok(response);
             })
             .WithName("RefreshToken")
@@ -69,6 +82,27 @@ namespace eTasks_server.Endpoints
             .WithDescription("Utilizado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado. O JWT retornado deve ser usado no header Authorization Bearer para acessar rotas protegidas.")
             .Produces(StatusCodes.Status200OK, typeof(LoginResponse))
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse));
+        }
+
+        private static void LogoutEndpoint(RouteGroupBuilder group)
+        {
+            group.MapPost("/logout", async (HttpContext context, [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequest? request, IAuthBLL authBLL) =>
+            {
+                var refreshToken = request?.RefreshToken;
+                if (string.IsNullOrWhiteSpace(refreshToken)
+                    && context.Request.Cookies.TryGetValue(Constants.RefreshTokenCookieName, out var cookieRefreshToken))
+                {
+                    refreshToken = cookieRefreshToken;
+                }
+
+                await authBLL.RevokeRefreshTokenAsync(refreshToken);
+                ClearAuthCookies(context);
+                return Results.Ok(new { Message = "Logout realizado com sucesso." });
+            })
+            .WithName("Logout")
+            .WithSummary("Revoga o refresh token atual e remove os cookies HttpOnly de autenticaÃ§Ã£o.")
+            .WithDisplayName("Logout da API")
+            .Produces(StatusCodes.Status200OK);
         }
 
         private static void ForgotPasswordEndpoint(RouteGroupBuilder group)
@@ -133,6 +167,31 @@ namespace eTasks_server.Endpoints
             .WithDescription("Utilizado para confirmar o endereço de e-mail de um usuário após o registro. O token JWT enviado no link de confirmação é validado e, se for válido, a conta do usuário é ativada. O usuário deve clicar no link de confirmação enviado para o e-mail após o registro para ativar a conta antes de poder fazer login.")
             .WithDisplayName("Confirmar e-mail de registro")
             .Produces(StatusCodes.Status200OK, contentType: "text/html");
+        }
+
+        private static void SetAuthCookies(HttpContext context, LoginResponse response)
+        {
+            context.Response.Cookies.Append(Constants.AccessTokenCookieName, response.Token, BuildCookieOptions(response.TokenExpiresAt));
+            context.Response.Cookies.Append(Constants.RefreshTokenCookieName, response.RefreshToken, BuildCookieOptions(response.RefreshTokenExpiresAt));
+        }
+
+        private static void ClearAuthCookies(HttpContext context)
+        {
+            var cookieOptions = BuildCookieOptions(null);
+            context.Response.Cookies.Delete(Constants.AccessTokenCookieName, cookieOptions);
+            context.Response.Cookies.Delete(Constants.RefreshTokenCookieName, cookieOptions);
+        }
+
+        private static CookieOptions BuildCookieOptions(DateTime? expiresAtUtc)
+        {
+            return new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/api",
+                Expires = expiresAtUtc.HasValue ? new DateTimeOffset(expiresAtUtc.Value) : null
+            };
         }
         #endregion
     }

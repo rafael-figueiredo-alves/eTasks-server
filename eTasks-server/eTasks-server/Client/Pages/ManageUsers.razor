@@ -4,17 +4,17 @@
 @inherits ManageUsersBase
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-6">Gerenciamento de UsuÃ¡rios</MudText>
+    <MudText Typo="Typo.h4" Class="mb-6">Gerenciamento de Usuários</MudText>
 
     <MudDataGrid T="AdminUserDTO" Items="@Users" Loading="@IsLoading" Filterable="true" QuickFilter="@FilterFunc" Hover="true">
         <ToolBarContent>
-            <MudText Typo="Typo.h6">UsuÃ¡rios do Sistema</MudText>
+            <MudText Typo="Typo.h6">Usuários do Sistema</MudText>
             <MudSpacer />
             <MudTextField @bind-Value="SearchString" Placeholder="Buscar por nome ou e-mail..." Adornment="Adornment.Start"
                 Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <Columns>
-            <TemplateColumn Title="UsuÃ¡rio" Sortable="false">
+            <TemplateColumn Title="Usuário" Sortable="false">
                 <CellTemplate>
                     <div class="d-flex align-center">
                         <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="mr-3">
@@ -90,39 +90,6 @@
         </PagerContent>
     </MudDataGrid>
 </MudContainer>
-
-@* <MudDrawer @bind-Open="@IsDrawerOpen" Anchor="Anchor.Right" Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px">
-    <MudDrawerHeader>
-        <MudText Typo="Typo.h6">Log de Logins - @SelectedUser?.Name</MudText>
-    </MudDrawerHeader>
-    <div class="pa-4">
-        @if (SelectedUserLogs.Any())
-        {
-            <MudList T="string">
-                @foreach (var log in SelectedUserLogs)
-                {
-                    <MudListItem T="string">
-                        <div class="d-flex flex-column">
-                            <div class="d-flex justify-space-between align-center">
-                                <MudText Typo="Typo.subtitle2">@log.CreatedAt.ToString("g")</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="@(log.Status == "Success" ? Color.Success : Color.Error)">
-                                    @log.Status
-                                </MudChip>
-                            </div>
-                            <MudText Typo="Typo.caption">IP: @log.IpAddress</MudText>
-                            <MudText Typo="Typo.caption" Class="text-truncate">@log.UserAgent</MudText>
-                        </div>
-                    </MudListItem>
-                    <MudDivider />
-                }
-            </MudList>
-        }
-        else
-        {
-            <MudText>Nenhum log encontrado para este usuÃ¡rio.</MudText>
-        }
-    </div>
-</MudDrawer> *@
 
 
 

@@ -8,13 +8,13 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudText Typo="Typo.h4" Class="mb-4" Style="font-weight:bold">@Constants.AppTitle</MudText>
-    <MudText Typo="Typo.h6" Class="mb-1">VersÃ£o: @Constants.ServerVersion</MudText>
-    <MudText Typo="Typo.h6" Class="mb-4">VersÃ£o da API: @Constants.ApiVersion</MudText>
-    <MudTextField Label="HistÃ³rico de VersÃµes"
+    <MudText Typo="Typo.h6" Class="mb-1">Versão: @Constants.ServerVersion</MudText>
+    <MudText Typo="Typo.h6" Class="mb-4">Versão da API: @Constants.ApiVersion</MudText>
+    <MudTextField Label="Histórico de Versões"
                   Value="@VersionDetails"
                   ReadOnly="true"
                   Variant="Variant.Outlined"
                   Lines="10" />
-    <MudText Typo="Typo.subtitle1" Class="mt-4">Â© @DateTime.UtcNow.Year - @Constants.DeveloperName</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mt-4">© @DateTime.UtcNow.Year - @Constants.DeveloperName</MudText>
 </MudContainer>
 

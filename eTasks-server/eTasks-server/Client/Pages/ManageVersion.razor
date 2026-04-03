@@ -14,7 +14,7 @@
     </MudToolBar>
 
     <MudContainer MaxWidth="MaxWidth.Medium">
-        <MudText Typo="Typo.h4" Class="mb-4">Editando InformaÃ§Ãµes da VersÃ£o do Aplicativo</MudText>
+        <MudText Typo="Typo.h4" Class="mb-4">Editando Informações da Versão do Aplicativo</MudText>
             <MudForm @ref="_form" Model="_model">
                     @if (isLoading)
                     {
@@ -25,8 +25,8 @@
                     }
                     else
                     {
-                        <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="VersÃ£o do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
-                        <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="VersÃ£o de exibiÃ§Ã£o" Variant="Variant.Outlined" Class="mb-4" />
+                        <MudTextField InputMode="InputMode.numeric" @bind-Value="_model.AppVersion" Label="Versão do Aplicativo" Variant="Variant.Outlined" Class="mb-4" AutoFocus />
+                        <MudTextField InputMode="InputMode.text" @bind-Value="_model.DisplayVersion" Label="Versão de exibição" Variant="Variant.Outlined" Class="mb-4" />
                         <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_APK" Label="URL de download do APK" Variant="Variant.Outlined" Class="mb-4" />
                         <MudTextField InputMode="InputMode.url" @bind-Value="_model.URL_Win" Label="URL de download do Windows" Variant="Variant.Outlined" Class="mb-4" />
                     }

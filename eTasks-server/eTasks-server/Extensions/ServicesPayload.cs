@@ -183,6 +183,12 @@ namespace eTasks_server.Extensions
                             return JwtBearerDefaults.AuthenticationScheme;
                         }
 
+                        if (context.Request.Path.StartsWithSegments("/api")
+                            && context.Request.Cookies.ContainsKey(Constants.AccessTokenCookieName))
+                        {
+                            return JwtBearerDefaults.AuthenticationScheme;
+                        }
+
                         return CookieAuthenticationDefaults.AuthenticationScheme;
                     };
                 })
@@ -205,6 +211,21 @@ namespace eTasks_server.Extensions
                         ValidIssuer = configuration[Constants.JwtIssuerConfig] ?? "eTasksServer",
                         ValidAudience = configuration[Constants.JwtAudienceConfig] ?? "eTasksClient",
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            if (context.Request.Path.StartsWithSegments("/api")
+                                && string.IsNullOrWhiteSpace(context.Token)
+                                && context.Request.Cookies.TryGetValue(Constants.AccessTokenCookieName, out var cookieToken)
+                                && !string.IsNullOrWhiteSpace(cookieToken))
+                            {
+                                context.Token = cookieToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
                     };
                 });
 

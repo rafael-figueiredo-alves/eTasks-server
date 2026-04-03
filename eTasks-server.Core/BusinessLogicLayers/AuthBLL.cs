@@ -288,6 +288,23 @@ namespace eTasks_server.Core.BusinessLogicLayers
             }
         }
 
+        public async Task RevokeRefreshTokenAsync(string? refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return;
+            }
+
+            var tokenRecord = await _context.RefreshTokens.FirstOrDefaultAsync(r => r.Token == refreshToken && !r.IsRevoked);
+            if (tokenRecord is null)
+            {
+                return;
+            }
+
+            tokenRecord.IsRevoked = true;
+            await _context.SaveChangesAsync();
+        }
+
         #region Helper: Generate Tokens
         private async Task<LoginResponse> GenerateAuthResponseAsync(User user, string? userAgent)
         {

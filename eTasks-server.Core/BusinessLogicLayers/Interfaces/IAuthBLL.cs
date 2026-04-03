@@ -57,5 +57,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <param name="token">Token recebido pelo usuário</param>
         /// <returns>Verdadeiro se a confirmação puder ser concluída</returns>
         Task<bool> ConfirmEmailAsync(string token);
+
+        /// <summary>
+        /// Revoga um refresh token previamente emitido, quando informado.
+        /// </summary>
+        /// <param name="refreshToken">Refresh token a ser revogado</param>
+        Task RevokeRefreshTokenAsync(string? refreshToken);
     }
 }

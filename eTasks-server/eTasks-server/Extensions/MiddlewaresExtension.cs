@@ -18,7 +18,7 @@ namespace eTasks_server.Extensions
                 webApplication.MapScalarApiReference($"/{Constants.ScalarDocEndpoint}", options => 
                 {
                     options.WithOpenApiRoutePattern($"/openapi/{Constants.ApiVersion}.json");
-                });
+                }).RequireAuthorization();
 
                 if (!webApplication.Environment.IsDevelopment())
                 {
