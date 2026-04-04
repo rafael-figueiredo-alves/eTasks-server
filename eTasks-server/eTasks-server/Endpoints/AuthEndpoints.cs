@@ -32,7 +32,7 @@ namespace eTasks_server.Endpoints
             {
                 var ip = context.Connection.RemoteIpAddress?.ToString();
                 var response = await authBLL.LoginAsync(request, ip);
-                SetAuthCookies(context, response);
+                SetRefreshTokenCookie(context, response, request.UserAgent);
                 return Results.Ok(response);
             })
             .WithName("Login")
@@ -48,7 +48,7 @@ namespace eTasks_server.Endpoints
             group.MapPost("/register", async (HttpContext context, [FromBody] RegisterRequest request, IAuthBLL authBLL) =>
             {
                 var response = await authBLL.RegisterAsync(request);
-                SetAuthCookies(context, response);
+                SetRefreshTokenCookie(context, response, request.UserAgent);
                 return Results.Ok(response);
             })
             .WithName("UserRegister")
@@ -66,14 +66,15 @@ namespace eTasks_server.Endpoints
             {
                 request ??= new RefreshTokenRequest();
 
-                if (string.IsNullOrWhiteSpace(request.RefreshToken)
+                if (ShouldUseRefreshTokenCookie(request.UserAgent)
+                    && string.IsNullOrWhiteSpace(request.RefreshToken)
                     && context.Request.Cookies.TryGetValue(Constants.RefreshTokenCookieName, out var cookieRefreshToken))
                 {
                     request.RefreshToken = cookieRefreshToken;
                 }
 
                 var response = await authBLL.RefreshTokenAsync(request);
-                SetAuthCookies(context, response);
+                SetRefreshTokenCookie(context, response, request.UserAgent);
                 return Results.Ok(response);
             })
             .WithName("RefreshToken")
@@ -88,15 +89,24 @@ namespace eTasks_server.Endpoints
         {
             group.MapPost("/logout", async (HttpContext context, [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequest? request, IAuthBLL authBLL) =>
             {
+                if (string.IsNullOrWhiteSpace(request?.UserAgent))
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["UserAgent"] = ["O UserAgent e obrigatorio."]
+                    });
+                }
+
                 var refreshToken = request?.RefreshToken;
-                if (string.IsNullOrWhiteSpace(refreshToken)
+                if (ShouldUseRefreshTokenCookie(request?.UserAgent)
+                    && string.IsNullOrWhiteSpace(refreshToken)
                     && context.Request.Cookies.TryGetValue(Constants.RefreshTokenCookieName, out var cookieRefreshToken))
                 {
                     refreshToken = cookieRefreshToken;
                 }
 
                 await authBLL.RevokeRefreshTokenAsync(refreshToken);
-                ClearAuthCookies(context);
+                ClearRefreshTokenCookie(context);
                 return Results.Ok(new { Message = "Logout realizado com sucesso." });
             })
             .WithName("Logout")
@@ -169,16 +179,20 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status200OK, contentType: "text/html");
         }
 
-        private static void SetAuthCookies(HttpContext context, LoginResponse response)
+        private static void SetRefreshTokenCookie(HttpContext context, LoginResponse response, string? userAgent)
         {
-            context.Response.Cookies.Append(Constants.AccessTokenCookieName, response.Token, BuildCookieOptions(response.TokenExpiresAt));
+            if (!ShouldUseRefreshTokenCookie(userAgent))
+            {
+                ClearRefreshTokenCookie(context);
+                return;
+            }
+
             context.Response.Cookies.Append(Constants.RefreshTokenCookieName, response.RefreshToken, BuildCookieOptions(response.RefreshTokenExpiresAt));
         }
 
-        private static void ClearAuthCookies(HttpContext context)
+        private static void ClearRefreshTokenCookie(HttpContext context)
         {
             var cookieOptions = BuildCookieOptions(null);
-            context.Response.Cookies.Delete(Constants.AccessTokenCookieName, cookieOptions);
             context.Response.Cookies.Delete(Constants.RefreshTokenCookieName, cookieOptions);
         }
 
@@ -192,6 +206,11 @@ namespace eTasks_server.Endpoints
                 Path = "/api",
                 Expires = expiresAtUtc.HasValue ? new DateTimeOffset(expiresAtUtc.Value) : null
             };
+        }
+
+        private static bool ShouldUseRefreshTokenCookie(string? userAgent)
+        {
+            return string.Equals(userAgent, Constants.WebUserAgent, StringComparison.OrdinalIgnoreCase);
         }
         #endregion
     }

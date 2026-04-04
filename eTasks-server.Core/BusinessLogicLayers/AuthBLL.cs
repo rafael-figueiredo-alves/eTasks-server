@@ -36,15 +36,17 @@ namespace eTasks_server.Core.BusinessLogicLayers
             _logger.LogInformation("Iniciando processo de registro para o e-mail: {Email}", request.Email);
 
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException("Geral", "E-mail e senha são obrigatórios.");
+                throw new ValidationException("Geral", "E-mail e senha sao obrigatorios.");
+
+            if (string.IsNullOrWhiteSpace(request.UserAgent))
+                throw new ValidationException("UserAgent", "O UserAgent e obrigatorio.");
 
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                _logger.LogWarning("Tentativa de registro falhou. O e-mail {Email} já está em uso.", request.Email);
-                throw new ValidationException("Email", "O e-mail informado já está cadastrado.");
+                _logger.LogWarning("Tentativa de registro falhou. O e-mail {Email} ja esta em uso.", request.Email);
+                throw new ValidationException("Email", "O e-mail informado ja esta cadastrado.");
             }
 
-            // Tratamento da imagem Base64 (Opcional)
             string? photoPath = null;
             if (!string.IsNullOrWhiteSpace(request.PhotoBase64))
             {
@@ -54,14 +56,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
                     var imageBytes = Convert.FromBase64String(base64Data);
                     string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
                     if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-                    
+
                     string fileName = $"{Guid.NewGuid()}.jpg";
-                    photoPath = Path.Combine("uploads", "profiles", fileName); // Caminho relativo para recuperar via URL
+                    photoPath = Path.Combine("uploads", "profiles", fileName);
                     await File.WriteAllBytesAsync(Path.Combine(directoryPath, fileName), imageBytes);
                 }
                 catch
                 {
-                    // Falha no processamento da imagem, continua sem foto.
                 }
             }
 
@@ -71,14 +72,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 PhotoPath = photoPath,
-                IsAdmin = false 
+                IsAdmin = false
             };
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Novo usuário criado no banco de dados. Uid: {Uid}, E-mail: {Email}", user.Uid, user.Email);
+            _logger.LogInformation("Novo usuario criado no banco de dados. Uid: {Uid}, E-mail: {Email}", user.Uid, user.Email);
 
-            // Generate Confirmation Token & Dispatch Email
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration[Constants.JwtKeyConfig] ?? "defaultSecretKey_1234567890_min32chars!");
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -88,38 +88,40 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var confirmationToken = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
-            
+
             var baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
             var confirmationLink = $"{baseUrl.TrimEnd('/')}/api/v2/auth/confirm-email?token={confirmationToken}";
-            
-            #pragma warning disable CS4014 // Fire and forget para não segurar a API
-            _emailService.SendAccountConfirmationEmailAsync(user.Email, confirmationLink);
-            #pragma warning restore CS4014
 
-            // Auto login after register
-            return await GenerateAuthResponseAsync(user, Constants.WebAdminUserAgent);
+#pragma warning disable CS4014
+            _emailService.SendAccountConfirmationEmailAsync(user.Email, confirmationLink);
+#pragma warning restore CS4014
+
+            return await GenerateAuthResponseAsync(user, request.UserAgent);
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request, string? ipAddress)
         {
-            _logger.LogInformation("Iniciando tentativa de login para o usuário: {Email}", request.Email);
+            _logger.LogInformation("Iniciando tentativa de login para o usuario: {Email}", request.Email);
 
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException("Geral", "Forneça o e-mail e a senha para continuar.");
+                throw new ValidationException("Geral", "Forneca o e-mail e a senha para continuar.");
+
+            if (string.IsNullOrWhiteSpace(request.UserAgent))
+                throw new ValidationException("UserAgent", "O UserAgent e obrigatorio.");
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
             {
-                _logger.LogWarning("Falha de autenticação. E-mail não encontrado: {Email}", request.Email);
+                _logger.LogWarning("Falha de autenticacao. E-mail nao encontrado: {Email}", request.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = null, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
-                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Não encontramos uma conta com esse e-mail.");
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Nao encontramos uma conta com esse e-mail.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                _logger.LogWarning("Falha de autenticação. Senha incorreta para o usuário: {Uid}", user.Uid);
+                _logger.LogWarning("Falha de autenticacao. Senha incorreta para o usuario: {Uid}", user.Uid);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Senha incorreta. Verifique e tente novamente.");
@@ -127,65 +129,67 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
             if (user.IsBlocked)
             {
-                _logger.LogWarning("Usuário {Uid} ({Email}) tentou logar, mas encontra-se bloqueado.", user.Uid, user.Email);
+                _logger.LogWarning("Usuario {Uid} ({Email}) tentou logar, mas encontra-se bloqueado.", user.Uid, user.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Blocked", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi suspensa temporariamente. Entre em contato com o suporte.");
             }
 
-            _logger.LogInformation("Usuário {Uid} autenticado com sucesso.", user.Uid);
-            
-            // Grava log de sucesso
+            _logger.LogInformation("Usuario {Uid} autenticado com sucesso.", user.Uid);
+
             await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Success", IpAddress = ipAddress, UserAgent = request.UserAgent });
-            
+
             return await GenerateAuthResponseAsync(user, request.UserAgent);
         }
 
         public async Task<LoginResponse> RefreshTokenAsync(RefreshTokenRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.RefreshToken))
-                throw new ValidationException("RefreshToken", "O token de renovação é obrigatório.");
+                throw new ValidationException("RefreshToken", "O token de renovacao e obrigatorio.");
+
+            if (string.IsNullOrWhiteSpace(request.UserAgent))
+                throw new ValidationException("UserAgent", "O UserAgent e obrigatorio.");
 
             var tokenRecord = await _context.RefreshTokens
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && !r.IsRevoked);
 
             if (tokenRecord == null)
-                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sessão inválida. Faça login novamente.");
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sessao invalida. Faca login novamente.");
+
+            if (!string.Equals(tokenRecord.UserAgent, request.UserAgent, StringComparison.OrdinalIgnoreCase))
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sessao invalida para este cliente. Faca login novamente.");
 
             if (tokenRecord.ExpiresAt <= DateTime.UtcNow)
             {
                 tokenRecord.IsRevoked = true;
                 await _context.SaveChangesAsync();
-                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sua sessão expirou. Faça login novamente.");
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sua sessao expirou. Faca login novamente.");
             }
 
             if (tokenRecord.User!.IsBlocked)
             {
-                _logger.LogWarning("Usuário {Uid} tentou renovar token, mas encontra-se bloqueado.", tokenRecord.User.Uid);
-                // Não temos o IP aqui no RefreshTokenAsync, então passamos null
+                _logger.LogWarning("Usuario {Uid} tentou renovar token, mas encontra-se bloqueado.", tokenRecord.User.Uid);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = tokenRecord.User.Uid, Status = "Blocked", IpAddress = null, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi suspensa temporariamente. Entre em contato com o suporte.");
             }
 
-            // Revogar o antigo e gerar novo (Refresh Token Rotation)
             tokenRecord.IsRevoked = true;
-            
+
             return await GenerateAuthResponseAsync(tokenRecord.User!, request.UserAgent);
         }
 
         public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            _logger.LogInformation("Solicitação de recuperação de senha recebida para o e-mail: {Email}", request.Email);
+            _logger.LogInformation("Solicitacao de recuperacao de senha recebida para o e-mail: {Email}", request.Email);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) 
+            if (user == null)
             {
-                _logger.LogInformation("O e-mail {Email} não foi localizado na base. Abortando silenciosamente por segurança.", request.Email);
-                return true; // Para não revelar a existência do e-mail (segurança)
+                _logger.LogInformation("O e-mail {Email} nao foi localizado na base. Abortando silenciosamente por seguranca.", request.Email);
+                return true;
             }
 
-            // Gera código de 6 digitos numéricos
             var random = new Random();
             string code = random.Next(100000, 999999).ToString();
 
@@ -193,21 +197,21 @@ namespace eTasks_server.Core.BusinessLogicLayers
             {
                 UserUid = user.Uid,
                 Code = code,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15) // Código expira em 15 minutos
+                ExpiresAt = DateTime.UtcNow.AddMinutes(15)
             };
 
             await _context.PasswordResetCodes.AddAsync(resetCode);
             await _context.SaveChangesAsync();
 
             await _emailService.SendPasswordResetEmailAsync(user.Email, code);
-            
+
             return true;
         }
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) throw new ValidationException("Geral", "Solicitação inválida.");
+            if (user == null) throw new ValidationException("Geral", "Solicitacao invalida.");
 
             var resetCode = await _context.PasswordResetCodes
                 .Where(c => c.UserUid == user.Uid && c.Code == request.Code && !c.IsUsed && c.ExpiresAt > DateTime.UtcNow)
@@ -215,14 +219,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 .FirstOrDefaultAsync();
 
             if (resetCode == null)
-                throw new ValidationException("Code", "Código inválido ou já expirado.");
+                throw new ValidationException("Code", "Codigo invalido ou ja expirado.");
 
             resetCode.IsUsed = true;
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
-            // Ao resetar a senha, invalida todos os Refresh Tokens abertos para deslogar todos devices
             var activeTokens = await _context.RefreshTokens.Where(r => r.UserUid == user.Uid && !r.IsRevoked).ToListAsync();
-            foreach(var tk in activeTokens) tk.IsRevoked = true;
+            foreach (var tk in activeTokens) tk.IsRevoked = true;
 
             await _context.SaveChangesAsync();
 
@@ -231,21 +234,20 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
         public async Task<bool> ChangePasswordAsync(Guid userUid, ChangePasswordRequest request)
         {
-            _logger.LogInformation("Solicitação de mudança de senha para o usuário: {Uid}", userUid);
+            _logger.LogInformation("Solicitacao de mudanca de senha para o usuario: {Uid}", userUid);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid);
-            if (user == null) throw new ValidationException("User", "Usuário não localizado.");
+            if (user == null) throw new ValidationException("User", "Usuario nao localizado.");
 
             if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
             {
-                _logger.LogWarning("O usuário {Uid} tentou trocar a senha mas forneceu a senha atual incorretamente.", userUid);
-                throw new ValidationException("CurrentPassword", "A senha atual está incorreta.");
+                _logger.LogWarning("O usuario {Uid} tentou trocar a senha mas forneceu a senha atual incorretamente.", userUid);
+                throw new ValidationException("CurrentPassword", "A senha atual esta incorreta.");
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
-            // Invalida a sessão atual/outras pra forçar logoff
             var activeTokens = await _context.RefreshTokens.Where(r => r.UserUid == user.Uid && !r.IsRevoked).ToListAsync();
-            foreach(var tk in activeTokens) tk.IsRevoked = true;
+            foreach (var tk in activeTokens) tk.IsRevoked = true;
 
             await _context.SaveChangesAsync();
 
@@ -275,7 +277,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                     return false;
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid);
-                if (user == null || user.IsConfirmed) return true; // Se já confirmou, retorna true
+                if (user == null || user.IsConfirmed) return true;
 
                 user.IsConfirmed = true;
                 await _context.SaveChangesAsync();
@@ -283,7 +285,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Falha na validação do token de e-mail.");
+                _logger.LogWarning(ex, "Falha na validacao do token de e-mail.");
                 return false;
             }
         }
@@ -305,32 +307,28 @@ namespace eTasks_server.Core.BusinessLogicLayers
             await _context.SaveChangesAsync();
         }
 
-        #region Helper: Generate Tokens
         private async Task<LoginResponse> GenerateAuthResponseAsync(User user, string? userAgent)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtKeyString = _configuration[Constants.JwtKeyConfig] ?? "default_very_secret_key_1234567890_min_32_chars!";
             var key = Encoding.UTF8.GetBytes(jwtKeyString);
-            
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Uid.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(Constants.UserAgentClaimType, string.IsNullOrWhiteSpace(userAgent) ? "unknown" : userAgent)
+                new Claim(Constants.UserAgentClaimType, userAgent ?? string.Empty)
             };
 
-            if (user.IsAdmin)
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            else
-                claims.Add(new Claim(ClaimTypes.Role, "User"));
+            claims.Add(new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User"));
 
-            var jwtExpiration = DateTime.UtcNow.AddHours(4); // Válido por 4 horas (Access Token)
+            var jwtExpiration = DateTime.UtcNow.AddHours(4);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = jwtExpiration, 
+                Expires = jwtExpiration,
                 Issuer = _configuration[Constants.JwtIssuerConfig],
                 Audience = _configuration[Constants.JwtAudienceConfig],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -339,20 +337,19 @@ namespace eTasks_server.Core.BusinessLogicLayers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = tokenHandler.WriteToken(token);
 
-            // Generate Refresh Token
             var randomNumber = new byte[32];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
             var refreshTokenString = Convert.ToBase64String(randomNumber);
 
-            var refreshTokenExpiration = DateTime.UtcNow.AddDays(30); // Refresh por 30 dias
+            var refreshTokenExpiration = DateTime.UtcNow.AddDays(30);
 
             var refreshToken = new RefreshToken
             {
                 UserUid = user.Uid,
                 Token = refreshTokenString,
-                UserAgent = userAgent ?? "Unknown",
-                ExpiresAt = refreshTokenExpiration 
+                UserAgent = userAgent,
+                ExpiresAt = refreshTokenExpiration
             };
 
             await _context.RefreshTokens.AddAsync(refreshToken);
@@ -366,6 +363,5 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 RefreshTokenExpiresAt = refreshTokenExpiration
             };
         }
-        #endregion
     }
 }

@@ -91,19 +91,39 @@ namespace eTasks_server.Models.Utils
         public const string UserAgentClaimType = "user_agent";
 
         /// <summary>
+        /// UserAgent aceito pela aplicaÃ§Ã£o WebAssembly/PWA consumindo a API.
+        /// </summary>
+        public const string WebUserAgent = "web";
+
+        /// <summary>
+        /// UserAgent aceito pelo aplicativo nativo Delphi no Windows.
+        /// </summary>
+        public const string WindowsUserAgent = "windows";
+
+        /// <summary>
+        /// UserAgent aceito pelo aplicativo nativo Delphi no Android.
+        /// </summary>
+        public const string AndroidUserAgent = "android";
+
+        /// <summary>
         /// UserAgent aceito pelo painel administrativo web.
         /// </summary>
         public const string WebAdminUserAgent = "web-adm";
 
         /// <summary>
-        /// Nome do cookie HttpOnly usado para transportar o access token JWT nas chamadas da API.
-        /// </summary>
-        public const string AccessTokenCookieName = "access_token";
-
-        /// <summary>
         /// Nome do cookie HttpOnly usado para transportar o refresh token nas chamadas da API.
         /// </summary>
         public const string RefreshTokenCookieName = "refresh_token";
+
+        /// <summary>
+        /// Lista de UserAgents aceitos nos consumidores da API.
+        /// </summary>
+        public static readonly string[] ApiClientUserAgents =
+        [
+            WebUserAgent,
+            WindowsUserAgent,
+            AndroidUserAgent
+        ];
 
         // SMTP Configurations
 

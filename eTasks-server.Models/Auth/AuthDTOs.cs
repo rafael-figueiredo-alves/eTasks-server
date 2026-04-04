@@ -34,8 +34,9 @@ namespace eTasks_server.Models.Auth
         /// <example>
         /// Web: "Web", Delphi: "Delphi", ou pode ser deixado em branco se a origem do login não for relevante ou conhecida.
         /// </example>
+        [Required]
         [AllowedUserAgent]
-        public string? UserAgent { get; set; } // Opcional, o front pode enviar "Web" ou "Delphi"
+        public string? UserAgent { get; set; }
     }
 
     /// <summary>
@@ -94,7 +95,11 @@ namespace eTasks_server.Models.Auth
         /// Campo opcional que pode conter a foto do usuário em formato Base64. Este campo é utilizado para permitir que os usuários forneçam uma imagem de perfil durante o processo de registro. A foto em Base64 é uma representação textual de uma imagem binária, permitindo que a imagem seja transmitida como parte dos dados do registro sem a necessidade de um upload separado. Se fornecida, a foto pode ser armazenada e exibida no perfil do usuário ou em outras áreas do sistema onde a imagem do usuário seja relevante. No entanto, como este campo é opcional, os usuários podem optar por não fornecer uma foto durante o registro, e o sistema deve ser capaz de lidar com essa situação adequadamente.
         /// </summary>
         [Base64String(ErrorMessage = "Formato de imagem aceito é apenas Base 64.")]
-        public string? PhotoBase64 { get; set; } 
+        public string? PhotoBase64 { get; set; }
+
+        [Required]
+        [AllowedUserAgent]
+        public string? UserAgent { get; set; }
     }
 
     /// <summary>
@@ -110,8 +115,9 @@ namespace eTasks_server.Models.Auth
         /// <summary>
         /// Representa o user agent da solicitação de renovação do token, que é uma string opcional utilizada para identificar a origem da solicitação, como "Web" para logins realizados através da interface web ou "Delphi" para logins realizados através de um cliente Delphi. O campo UserAgent pode ser útil para fins de análise, monitoramento ou aplicação de políticas específicas de segurança com base na origem da solicitação de renovação do token. No entanto, é importante lembrar que o campo UserAgent é opcional e pode ser facilmente manipulado, portanto, não deve ser a única medida de segurança utilizada para proteger o sistema.
         /// </summary>
+        [Required]
         [AllowedUserAgent]
-        public string? UserAgent { get; set; } 
+        public string? UserAgent { get; set; }
     }
 
     /// <summary>
