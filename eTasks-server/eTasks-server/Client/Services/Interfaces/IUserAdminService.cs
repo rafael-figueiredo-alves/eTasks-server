@@ -1,4 +1,4 @@
-using eTasks_server.Models.Users;
+using eTasks_server.Models.DTOs.Users.Admin.Responses;
 
 namespace eTasks_server.Client.Services.Interfaces
 {

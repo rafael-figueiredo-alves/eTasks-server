@@ -1,4 +1,4 @@
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
 using Microsoft.AspNetCore.Http;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Interfaces

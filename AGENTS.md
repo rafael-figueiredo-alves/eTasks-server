@@ -1,19 +1,30 @@
 # AGENTS.md
 
-## Visão Geral
+## Objetivo
 
-Esta solução é um `Blazor Web App` hospedado com `InteractiveAuto`, dividida em quatro projetos:
+Este arquivo orienta agentes que trabalham neste repositorio. O foco e manter as instrucoes alinhadas com a estrutura real da solucao atual, evitar edicoes no caminho errado e preservar as decisoes arquiteturais ja adotadas.
 
-- `eTasks-server/eTasks-server/eTasks-server`: host web/server, endpoints, bootstrap, middleware, assets.
-- `eTasks-server/eTasks-server/eTasks-server.Client`: UI, páginas, layouts e serviços do painel administrativo.
-- `eTasks-server.Core`: regra de negócio, BLLs, acesso a dados e serviços internos.
-- `eTasks-server.Models`: entidades, DTOs, constantes e exceções compartilhadas.
+## Estrutura Atual da Solucao
 
-Há caminhos parecidos no repositório. O código real usado pela solução está dentro de `eTasks-server/eTasks-server/...`. Antes de editar, confirme o caminho.
+Hoje a solucao carregada por `eTasks-server.slnx` possui **3 projetos**:
 
-## Estrutura Real
+- `eTasks-server/eTasks-server/eTasks-server.csproj`
+- `eTasks-server.Core/eTasks-server.Core.csproj`
+- `eTasks-server.Models/eTasks-server.Models.csproj`
 
-### Server
+Importante:
+
+- O painel administrativo **nao esta em um projeto separado** na solucao atual.
+- O codigo de UI do painel fica dentro do projeto web, em `eTasks-server/eTasks-server/Client`.
+- Existe uma pasta `eTasks-server.Client` na raiz do repositorio, mas ela **nao faz parte da solucao atual**. Antes de editar qualquer arquivo nela, confirme se a mudanca realmente deve atingir codigo fora da solucao ativa.
+
+## Mapa do Repositorio
+
+### 1. Web Host / Server
+
+Caminho real:
+
+- `eTasks-server/eTasks-server`
 
 Arquivos centrais:
 
@@ -24,312 +35,340 @@ Arquivos centrais:
 - `eTasks-server/eTasks-server/Components/App.razor`
 - `eTasks-server/eTasks-server/Components/Routes.razor`
 - `eTasks-server/eTasks-server/Endpoints/*`
+- `eTasks-server/eTasks-server/wwwroot/*`
 
 Responsabilidades:
 
-- bootstrap de DI
-- autenticação e autorização
-- mapeamento de endpoints `/api/v2/*`
-- hospedagem do `Blazor Web App`
+- bootstrap da aplicacao
+- DI
+- autenticacao e autorizacao
+- middlewares
+- endpoints `/api/v2/*`
+- hospedagem do painel Blazor
+- assets estaticos
 
-### Client
+### 2. Client do Painel Administrativo
+
+Caminho real:
+
+- `eTasks-server/eTasks-server/Client`
 
 Arquivos centrais:
 
-- `eTasks-server/eTasks-server.Client/Program.cs`
-- `eTasks-server/eTasks-server.Client/Services/ClientServicesPayload.cs`
-- `eTasks-server/eTasks-server.Client/Pages/*`
-- `eTasks-server/eTasks-server.Client/Layout/*`
-- `eTasks-server/eTasks-server.Client/Services/*`
+- `eTasks-server/eTasks-server/Client/Pages/*`
+- `eTasks-server/eTasks-server/Client/Layout/*`
+- `eTasks-server/eTasks-server/Client/Components/*`
+- `eTasks-server/eTasks-server/Client/Services/*`
 
 Responsabilidades:
 
 - UI administrativa
-- páginas protegidas
-- login/logout do painel
-- consumo da API
+- paginas autenticadas
+- login web
+- dialogs e layout
+- consumo de servicos internos registrados no host
 
-### Core
+### 3. Core
+
+Caminho real:
+
+- `eTasks-server.Core`
 
 Arquivos centrais:
 
 - `eTasks-server.Core/BusinessLogicLayers/AuthBLL.cs`
 - `eTasks-server.Core/BusinessLogicLayers/WebAuthBLL.cs`
 - `eTasks-server.Core/BusinessLogicLayers/UserAdminBLL.cs`
-- `eTasks-server.Core/BusinessLogicLayers/VersionBLL.cs`
+- `eTasks-server.Core/BusinessLayers/VersionBLL.cs`
 - `eTasks-server.Core/Data/AppDbContext.cs`
+- `eTasks-server.Core/Services/*`
 
 Responsabilidades:
 
-- JWT para clientes externos
-- cookie auth para o painel web
-- usuários, logs, refresh token e versão
+- regras de negocio
+- autenticacao JWT para clientes externos
+- autenticacao por cookie para o painel web
+- acesso a dados via EF Core
+- servicos internos como e-mail e perfil
 
-### Models
+### 4. Models
 
-Arquivos centrais:
+Caminho real:
 
-- `eTasks-server.Models/Auth/AuthDTOs.cs`
-- `eTasks-server.Models/Auth/WebLoginRequest.cs`
-- `eTasks-server.Models/Users/*`
-- `eTasks-server.Models/Utils/Constants.cs`
-- `eTasks-server.Models/Exceptions/*`
+- `eTasks-server.Models`
 
-## Bootstrapping
+Responsabilidades:
 
-### Entrada do app
+- entidades
+- DTOs
+- constantes
+- excecoes
+- contratos compartilhados entre host e core
 
-`eTasks-server/eTasks-server/Program.cs`:
+## Bootstrap da Aplicacao
+
+Entrada principal:
+
+- `eTasks-server/eTasks-server/Program.cs`
+
+Fluxo atual:
 
 1. `builder.RegisterServices()`
-2. `app.RegisterMiddlewares()`
-3. `await app.AddAPIEndpoints()`
-4. `app.MapResourcesEndpoints()`
+2. `var app = builder.Build()`
+3. `app.RegisterMiddlewares()`
+4. `await app.AddAPIEndpoints()`
+5. `app.MapResourcesEndpoints()`
+6. `app.Run()`
 
-### Endpoints
+## Registro de Servicos
 
-`eTasks-server/eTasks-server/Endpoints/EndpointsEntry.cs` monta `/api/v2` e registra:
+Arquivo principal:
 
-- version
-- utils
-- auth JWT
-- web auth por cookie
-- user admin
+- `eTasks-server/eTasks-server/Extensions/ServicesPayload.cs`
 
-## Autenticação
+Responsabilidades atuais desse arquivo:
 
-O projeto hoje usa dois fluxos distintos. Isso é intencional.
+- banco MySQL
+- Razor Components com `AddInteractiveServerComponents()`
+- CORS
+- MudBlazor
+- health checks
+- OpenAPI
+- exception handler global
+- autenticacao hibrida
+- politicas de autorizacao
+- registro dos servicos usados pelo painel
+
+Observacoes importantes:
+
+- O estado atual usa `InteractiveServer`, nao o fluxo antigo descrito em versoes anteriores deste arquivo.
+- Os servicos do painel (`VersionService`, `UserAdminService`, `UserLogsDrawerService`) sao registrados no host e consumidos pela UI do proprio app.
+- Hoje nao existe `ClientServicesPayload.cs` na solucao ativa.
+
+## Endpoints
+
+Arquivo central:
+
+- `eTasks-server/eTasks-server/Endpoints/EndpointsEntry.cs`
+
+Prefixo atual:
+
+- `/api/v2`
+
+Grupos registrados hoje:
+
+- `version`
+- `utils`
+- `auth`
+- `web-auth`
+- `users`
+- `usuarios`
+
+Arquivos relevantes:
+
+- `eTasks-server/eTasks-server/Endpoints/AuthEndpoints.cs`
+- `eTasks-server/eTasks-server/Endpoints/WebAuthEndpoints.cs`
+- `eTasks-server/eTasks-server/Endpoints/UserAdminEndpoints.cs`
+- `eTasks-server/eTasks-server/Endpoints/UsuariosEndpoints.cs`
+- `eTasks-server/eTasks-server/Endpoints/VersionEndpoint.cs`
+- `eTasks-server/eTasks-server/Endpoints/UtilsEndpoint.cs`
+
+## Autenticacao
+
+O projeto continua com dois fluxos distintos. Essa separacao deve ser preservada.
 
 ### 1. JWT para clientes externos
 
-Arquivos:
+Arquivos principais:
 
 - `eTasks-server.Core/BusinessLogicLayers/AuthBLL.cs`
 - `eTasks-server/eTasks-server/Endpoints/AuthEndpoints.cs`
 
-Rotas:
-
-- `/api/v2/auth/login`
-- `/api/v2/auth/refresh`
-
 Uso:
 
-- eTasks WASM
-- cliente Delphi
-- outros consumidores da API
+- consumidores externos da API
+- apps clientes que usam bearer token
+- refresh token com suporte a cookie HttpOnly em cenarios web especificos
 
-Regra:
+Regras:
 
-- não quebrar o contrato JWT ao ajustar o painel web
+- nao quebrar contratos de login, refresh, logout, registro e confirmacao
+- manter compatibilidade com `Authorization: Bearer`
 
 ### 2. Cookie auth para o painel administrativo
 
-Arquivos:
+Arquivos principais:
 
 - `eTasks-server.Core/BusinessLogicLayers/WebAuthBLL.cs`
 - `eTasks-server/eTasks-server/Endpoints/WebAuthEndpoints.cs`
-- `eTasks-server/eTasks-server/wwwroot/js/webAuth.js`
-- `eTasks-server/eTasks-server.Client/Services/WebAuthService.cs`
+- `eTasks-server/eTasks-server/Client/Pages/Login.razor`
+- `eTasks-server/eTasks-server/Components/Routes.razor`
 
-Rotas:
+Fluxo atual:
 
-- `POST /api/v2/web-auth/login`
-- `POST /api/v2/web-auth/logout`
+- a tela de login faz `POST` tradicional para `/api/v2/web-auth/login`
+- o endpoint recebe `WebLoginRequest` via `FromForm`
+- o backend autentica o usuario admin
+- o backend emite cookie com `SignInAsync`
+- o endpoint responde com redirect local seguro para `returnUrl`
+- o logout atual e feito via `GET /api/v2/web-auth/logout`
 
-Fluxo:
+Nao assuma mais:
 
-- o login do painel valida credenciais e exige `Admin`
-- o backend emite cookie via `SignInAsync`
-- o navegador consome isso por `fetch(..., credentials: "include")`
+- existencia de `webAuth.js`
+- `fetch(..., credentials: "include")` como base do painel
+- `WebAuthService`
+- `BaseService`
 
-### InteractiveAuto
+Esses itens faziam parte de uma organizacao anterior e nao representam o estado atual da solucao ativa.
 
-O painel segue o padrão atual compatível com `InteractiveAuto`:
-
-- server: `AddCascadingAuthenticationState()`
-- server: `.AddAuthenticationStateSerialization(...)`
-- client: `AddCascadingAuthenticationState()`
-- client: `AddAuthenticationStateDeserialization()`
-
-Arquivos:
-
-- `eTasks-server/eTasks-server/Extensions/ServicesPayload.cs`
-- `eTasks-server/eTasks-server.Client/Services/ClientServicesPayload.cs`
-
-## Autorização
+## Autorizacao
 
 ### UI
-
-As páginas protegidas usam:
-
-- `[Authorize]`
-- `AuthorizeRouteView`
 
 Arquivos principais:
 
 - `eTasks-server/eTasks-server/Components/Routes.razor`
-- `eTasks-server/eTasks-server.Client/Pages/Home.razor`
-- `eTasks-server/eTasks-server.Client/Pages/Version.razor`
-- `eTasks-server/eTasks-server.Client/Pages/ManageVersion.razor`
-- `eTasks-server/eTasks-server.Client/Pages/ManageUsers.razor`
+- `eTasks-server/eTasks-server/Client/Pages/Home.razor`
+- `eTasks-server/eTasks-server/Client/Pages/Version.razor`
+- `eTasks-server/eTasks-server/Client/Pages/ManageVersion.razor`
+- `eTasks-server/eTasks-server/Client/Pages/ManageUsers.razor`
 
-`Routes.razor` usa `RedirectToLogin` no bloco `NotAuthorized`.
+Padrao atual:
+
+- `AuthorizeRouteView`
+- paginas protegidas com `[Authorize]`
+- `RedirectToLogin` no fluxo de `NotAuthorized`
 
 ### API
 
-A política principal é `Admin`, registrada em `ServicesPayload.cs`.
+Politicas registradas em `ServicesPayload.cs`:
 
-Endpoints administrativos costumam usar:
+- `Admin`
+- `WebAdmin`
 
-- `.RequireAuthorization("Admin")`
+Regra pratica:
 
-## Serviços do Client
+- endpoints administrativos web devem preferir `.RequireAuthorization("WebAdmin")`
+- o uso de `WebAdmin` deixa explicito que a rota deve usar o esquema de cookie para o painel
 
-### BaseService
+## Middlewares e Pipeline
 
-Arquivo:
+Arquivo principal:
 
-- `eTasks-server/eTasks-server.Client/Services/BaseService.cs`
+- `eTasks-server/eTasks-server/Extensions/MiddlewaresExtension.cs`
 
-Regra atual:
+Pontos atuais do pipeline:
 
-- `GET` usa `HttpClient`
-- `POST`, `PUT`, `PATCH` e `DELETE` usam `fetch` no navegador via `webAuth.send`
+- `UseCors(...)`
+- `UseExceptionHandler()`
+- `MapOpenApi()`
+- `MapScalarApiReference(...)`
+- `UseStatusCodePages(...)` para respostas JSON em rotas `/api`
+- `UseAuthentication()`
+- `UseAuthorization()`
+- `UseHttpsRedirection()`
+- `UseAntiforgery()`
 
-Motivo:
+Atenções:
 
-- chamadas mutáveis autenticadas do painel precisam enviar o cookie do navegador
-- o tratamento foi centralizado para evitar repetição em novas features
+- o projeto usa `Scalar` para referencia da API
+- `UseAntiforgery()` ja esta ativo
+- mudanças em rotas mutaveis do painel devem considerar antiforgery e auth por cookie
 
-Tratamento centralizado:
+## Servicos do Painel
 
-- `401`: redireciona para `/login?returnUrl=...`
-- `403`: mostra diálogo de acesso negado
+Arquivos atuais:
 
-Ao criar novos serviços client-side que chamem a API, herde de `BaseService`.
+- `eTasks-server/eTasks-server/Client/Services/UserAdminService.cs`
+- `eTasks-server/eTasks-server/Client/Services/VersionService.cs`
+- `eTasks-server/eTasks-server/Client/Services/UserLogsDrawerService.cs`
 
-### WebAuthService
+Observacao importante:
 
-Arquivo:
+- esses servicos nao sao wrappers HTTP genericos como na organizacao anterior
+- hoje eles operam dentro do app, consumindo BLLs e contexto registrados por DI
 
-- `eTasks-server/eTasks-server.Client/Services/WebAuthService.cs`
+Se uma nova feature administrativa for implementada, confirme primeiro qual modelo faz sentido:
 
-Responsável apenas por:
+- servico interno via DI, quando a UI roda no mesmo host e a chamada e local
+- endpoint HTTP protegido, quando a funcionalidade tambem precisa ficar disponivel por API
 
-- `LoginAsync`
-- `LogoutAsync`
+Nao reintroduza um padrao antigo por inercia sem validar a necessidade arquitetural.
 
-Ele usa JS interop para chamar `webAuth.login` e `webAuth.logout`.
+## Arquivos Criticos
 
-### ReturnUrl
-
-O retorno para a página anterior está distribuído entre:
-
-- `eTasks-server/eTasks-server.Client/Components/RedirectToLogin.razor`
-- `eTasks-server/eTasks-server.Client/Pages/Login.razor.cs`
-- `eTasks-server/eTasks-server.Client/Services/BaseService.cs`
-
-Regra:
-
-- se a sessão expira ou a API responde `401`, o usuário vai para `/login?returnUrl=...`
-- após login, volta para a rota relativa original, se válida
-
-## Arquivos Críticos
-
-### Configuração de DI e segurança
+### Seguranca e DI
 
 - `eTasks-server/eTasks-server/Extensions/ServicesPayload.cs`
-- `eTasks-server/eTasks-server.Client/Services/ClientServicesPayload.cs`
+- `eTasks-server/eTasks-server/Extensions/MiddlewaresExtension.cs`
 
 ### Login web
 
 - `eTasks-server.Core/BusinessLogicLayers/WebAuthBLL.cs`
 - `eTasks-server/eTasks-server/Endpoints/WebAuthEndpoints.cs`
-- `eTasks-server/eTasks-server.Client/Pages/Login.razor.cs`
-- `eTasks-server/eTasks-server.Client/Services/WebAuthService.cs`
-- `eTasks-server/eTasks-server/wwwroot/js/webAuth.js`
+- `eTasks-server/eTasks-server/Client/Pages/Login.razor`
+- `eTasks-server/eTasks-server/Components/Routes.razor`
 
-### Consumo da API no painel
+### JWT externo
 
-- `eTasks-server/eTasks-server.Client/Services/BaseService.cs`
-- `eTasks-server/eTasks-server.Client/Services/UserAdminService.cs`
-- `eTasks-server/eTasks-server.Client/Services/VersionService.cs`
+- `eTasks-server.Core/BusinessLogicLayers/AuthBLL.cs`
+- `eTasks-server/eTasks-server/Endpoints/AuthEndpoints.cs`
 
-## Convenções Importantes
+### Gerenciamento administrativo
 
-### Base URL da API
+- `eTasks-server.Core/BusinessLogicLayers/UserAdminBLL.cs`
+- `eTasks-server/eTasks-server/Endpoints/UserAdminEndpoints.cs`
+- `eTasks-server/eTasks-server/Client/Pages/ManageUsers.razor`
+- `eTasks-server/eTasks-server/Client/Services/UserAdminService.cs`
 
-`ServicesPayload.cs` contém `BuildApiBaseUrl(...)` para evitar duplicação de `/api/v2/`.
+### Versao
 
-Se mexer em `appsettings` ou no `HttpClient`, valide isso primeiro. Esse problema já existiu.
+- `eTasks-server.Core/BusinessLayers/VersionBLL.cs`
+- `eTasks-server/eTasks-server/Endpoints/VersionEndpoint.cs`
+- `eTasks-server/eTasks-server/Client/Pages/Version.razor`
+- `eTasks-server/eTasks-server/Client/Pages/ManageVersion.razor`
+- `eTasks-server/eTasks-server/Client/Services/VersionService.cs`
 
-### MudBlazor
+## Regras Praticas Para Agentes
 
-O projeto usa `MudBlazor` no server e no client.
+Antes de editar:
 
-Tratamentos globais de UX devem preferir:
+1. confirme se o arquivo pertence a um dos 3 projetos da solucao atual
+2. desconfie de caminhos parecidos fora da solucao ativa
+3. valide se a mudanca afeta JWT externo, cookie auth web, ou ambos
 
-- `ISnackbar`
-- `IDialogService`
-- o fluxo centralizado do `BaseService`
+Ao adicionar feature administrativa:
 
-### JS de autenticação
+1. proteger a pagina com `[Authorize]` quando aplicavel
+2. avaliar se a chamada deve ser local via DI ou exposta como endpoint HTTP
+3. se houver endpoint administrativo web, preferir `.RequireAuthorization("WebAdmin")`
+4. manter `returnUrl` seguro e relativo no fluxo de login/logout
+5. considerar antiforgery em formularios e operacoes mutaveis
 
-Se renomear funções em `wwwroot/js/webAuth.js`, sincronize:
-
-- `WebAuthService.cs`
-- `BaseService.cs`
-- `Components/App.razor`
-
-## Estado Atual da Segurança
-
-Hoje o host usa um esquema híbrido em `ServicesPayload.cs`:
-
-- cookie para o painel web
-- bearer token para clientes externos
-
-Ao mexer nisso, valide sempre:
+Ao alterar autenticacao:
 
 1. JWT externo continua funcionando?
-2. login web por cookie continua funcionando?
-3. `[Authorize]` continua protegendo as páginas?
-4. `returnUrl` continua preservado?
-5. operações mutáveis da API continuam levando o cookie no navegador?
+2. login do painel por cookie continua funcionando?
+3. `AuthorizeRouteView` continua redirecionando corretamente?
+4. `returnUrl` continua validado como relativo?
+5. endpoints administrativos continuam protegidos por `WebAdmin`?
 
 ## Armadilhas Conhecidas
 
-1. `InteractiveAuto` e JWT em `localStorage/sessionStorage` não são uma boa base para autenticar o painel.
-   O caminho adotado aqui foi cookie auth para o Web App.
-
-2. Há arquivos com encoding inconsistente no repositório.
-   Se `apply_patch` falhar por UTF-8 inválido, pode ser necessário regravar o arquivo inteiro.
-
-3. Existem classes legadas do fluxo JWT no client:
-   - `Auth/TokenAuthenticationProvider.cs`
-   - `Services/AuthService.cs`
-   - `Services/TokenStorageService.cs`
-   - interfaces relacionadas
-
-   Elas não são mais a base da autenticação do painel web. Antes de remover, confirme se ainda existe alguma dependência residual.
-
-4. O projeto usa `UseAntiforgery()`.
-   Se novos `POST/PUT/PATCH/DELETE` do painel falharem, revise a interação entre antiforgery, cookie auth e `fetch`.
-
-## Regra Prática Para Novas Features
-
-Ao adicionar uma feature administrativa:
-
-1. proteger a página com `[Authorize]` se necessário
-2. criar serviço client herdando de `BaseService`
-3. preferir endpoint com `.RequireAuthorization("Admin")`
-4. evitar tratar `401/403` manualmente na página
-5. se houver ação mutável, preservar o fluxo centralizado por `webAuth.send`
+1. Ha caminhos antigos e parecidos no repositorio. Edite somente o caminho realmente usado pela solucao.
+2. O texto antigo deste arquivo citava um projeto client separado e servicos que nao existem mais na solucao ativa.
+3. Existem arquivos com encoding inconsistente no repositorio. Se um patch falhar por encoding, pode ser necessario regravar o arquivo inteiro.
+4. Alteracoes em autenticacao costumam ter impacto cruzado entre painel web e API externa. Teste os dois fluxos.
+5. `MapScalarApiReference(...)` esta protegido. Mudancas de auth podem afetar acesso a documentacao.
 
 ## Objetivo Arquitetural
 
-O painel web e a API compartilham o mesmo backend, mas não o mesmo mecanismo principal de autenticação:
+O sistema compartilha backend, mas mantem responsabilidades separadas:
 
-- painel web: cookie auth, compatível com `InteractiveAuto`
-- clientes externos: JWT + refresh token
+- painel administrativo web: auth por cookie
+- clientes externos: auth por JWT e refresh token
+- regras de negocio: centralizadas em `Core`
+- contratos e entidades: centralizados em `Models`
 
-Esse é o ponto mais importante deste repositório. Se uma mudança quebrar essa separação, provavelmente quebrará o comportamento esperado do sistema.
+Qualquer mudanca que misture indevidamente esses fluxos tende a introduzir regressao.

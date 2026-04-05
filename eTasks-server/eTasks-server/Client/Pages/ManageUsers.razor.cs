@@ -1,10 +1,10 @@
-using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Client.Components;
-using eTasks_server.Models.Users;
-using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using eTasks_server.Client.Layout;
 using eTasks_server.Client.Services;
+using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Models.DTOs.Users.Admin.Responses;
+using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace eTasks_server.Client.Pages
 {
@@ -36,7 +36,7 @@ namespace eTasks_server.Client.Pages
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Erro ao carregar usuários: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Erro ao carregar usuarios: {ex.Message}", Severity.Error);
             }
             finally
             {
@@ -56,15 +56,15 @@ namespace eTasks_server.Client.Pages
         {
             var action = user.IsBlocked ? "desbloquear" : "bloquear";
             bool? confirm = await DialogService.ShowMessageBoxAsync(
-                "Confirmação", 
-                $"Deseja realmente {action} o usuário {user.Name}?", 
-                yesText: "Sim", cancelText: "Não");
+                "Confirmacao",
+                $"Deseja realmente {action} o usuario {user.Name}?",
+                yesText: "Sim", cancelText: "Nao");
 
             if (confirm == true)
             {
                 if (await UserAdminService.ToggleBlockAsync(user.Uid))
                 {
-                    Snackbar.Add($"Usuário {(user.IsBlocked ? "desbloqueado" : "bloqueado")} com sucesso!", Severity.Success);
+                    Snackbar.Add($"Usuario {(user.IsBlocked ? "desbloqueado" : "bloqueado")} com sucesso!", Severity.Success);
                     await LoadUsers();
                 }
             }
@@ -73,9 +73,9 @@ namespace eTasks_server.Client.Pages
         protected async Task ConfirmAccount(AdminUserDTO user)
         {
             bool? confirm = await DialogService.ShowMessageBoxAsync(
-                "Confirmar Conta", 
-                $"Deseja confirmar manualmente a conta de {user.Name}?", 
-                yesText: "Sim", cancelText: "Não");
+                "Confirmar Conta",
+                $"Deseja confirmar manualmente a conta de {user.Name}?",
+                yesText: "Sim", cancelText: "Nao");
 
             if (confirm == true)
             {
@@ -89,9 +89,6 @@ namespace eTasks_server.Client.Pages
 
         protected async Task ResetPassword(AdminUserDTO user)
         {
-            var parameters = new DialogParameters();
-            
-            // Usando um prompt simples do MudBlazor para capturar a nova senha
             var options = new DialogOptions { CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<SetPasswordDialog>("Nova Senha", options);
             var result = await dialog.Result;
@@ -108,8 +105,8 @@ namespace eTasks_server.Client.Pages
         protected async Task SendResetEmail(AdminUserDTO user)
         {
             bool? confirm = await DialogService.ShowMessageBoxAsync(
-                "Enviar E-mail", 
-                $"Enviar código de recuperação para {user.Email}?", 
+                "Enviar E-mail",
+                $"Enviar codigo de recuperacao para {user.Email}?",
                 yesText: "Enviar", cancelText: "Cancelar");
 
             if (confirm == true)
@@ -124,10 +121,6 @@ namespace eTasks_server.Client.Pages
         protected async Task ViewLogs(AdminUserDTO user)
         {
             LogsDrawerService.Open(user, await UserAdminService.GetLoginLogsAsync(user.Uid));
-
-            //SelectedUser = user;
-            //SelectedUserLogs = await UserAdminService.GetLoginLogsAsync(user.Uid);
-            //IsDrawerOpen = true;
         }
 
         protected void CloseDrawer()

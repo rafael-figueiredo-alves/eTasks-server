@@ -1,5 +1,5 @@
-﻿using eTasks_server.Client.Services;
-using eTasks_server.Models.Users;
+using eTasks_server.Client.Services;
+using eTasks_server.Models.DTOs.Users.Admin.Responses;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 

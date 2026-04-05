@@ -1,4 +1,5 @@
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
+using eTasks_server.Models.DTOs.Auth.Responses;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
 {

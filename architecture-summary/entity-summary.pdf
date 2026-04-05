@@ -1,0 +1,802 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 7 /Kids [ 4 0 R 6 0 R 8 0 R 10 0 R 12 0 R 14 0 R 16 0 R ] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2263 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+(# Resumo Atual das Entidades do Banco) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Data de referencia: 2026-04-05) Tj
+0 -13 Td
+(Projeto fonte: `eTasks-server.Models/Entities`) Tj
+0 -13 Td
+(Contexto de mapeamento: `eTasks-server.Core/Data/AppDbContext.cs`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Visao Geral) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Hoje o modelo persistido do sistema possui 9 entidades mapeadas no `AppDbContext`:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(1. `eTasksVersion`) Tj
+0 -13 Td
+(2. `User`) Tj
+0 -13 Td
+(3. `RefreshToken`) Tj
+0 -13 Td
+(4. `PasswordResetCode`) Tj
+0 -13 Td
+(5. `LoginLog`) Tj
+0 -13 Td
+(6. `UserSettings`) Tj
+0 -13 Td
+(7. `UserBonusPoint`) Tj
+0 -13 Td
+(8. `BonusAchievement`) Tj
+0 -13 Td
+(9. `UserAchievement`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(O dominio persistido e fortemente centrado em `User`.) Tj
+0 -13 Td
+(Existem tres blocos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- autenticacao e ciclo de conta) Tj
+0 -13 Td
+(- configuracao/perfil do usuario) Tj
+0 -13 Td
+(- sistema de pontuacao e conquistas) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Leitura Arquitetural Rapida) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 1. Nucleo de identidade) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(A entidade central e `User`. Quase todo o restante depende dela direta ou indiretamente.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Ela concentra:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- identidade e credenciais) Tj
+0 -13 Td
+(- flags de acesso \(`IsAdmin`, `IsBlocked`, `IsConfirmed`, `IsDeleted`\)) Tj
+0 -13 Td
+(- metadados de ciclo de vida \(`CreatedAt`, `LastAccessAt`, `DeletedAt`\)) Tj
+0 -13 Td
+(- relacionamentos com tokens, codigos de reset, configuracoes e bonus) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 2. Seguranca e autenticacao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(O conjunto `RefreshToken`, `PasswordResetCode` e `LoginLog` representa o bloco de autenticacao) Tj
+0 -13 Td
+(operacional:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `RefreshToken`: sessao longa para JWT) Tj
+0 -13 Td
+(- `PasswordResetCode`: recuperacao de senha com expiracao e uso unico) Tj
+0 -13 Td
+(- `LoginLog`: trilha de auditoria de tentativas de login) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 3. Perfil e preferencias) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(`UserSettings` isola preferencias do usuario em relacao 1:1 com `User`.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 4. Gamificacao / bonus) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1987 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+() Tj
+0 -13 Td
+(O bloco de bonus foi modelado com catalogo + vinculo historico:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `BonusAchievement`: catalogo mestre de conquistas) Tj
+0 -13 Td
+(- `UserBonusPoint`: lancamentos de pontos por usuario) Tj
+0 -13 Td
+(- `UserAchievement`: snapshot de conquista alcancada por um usuario) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 5. Configuracao global da aplicacao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(`eTasksVersion` e uma entidade singleton usada como configuracao persistida da versao atual do) Tj
+0 -13 Td
+(app.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Entidades) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `eTasksVersion`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `version`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Natureza: configuracao singleton) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Id` fixo em `1`) Tj
+0 -13 Td
+(- `AppVersion`) Tj
+0 -13 Td
+(- `DisplayVersion`) Tj
+0 -13 Td
+(- `URL_APK`) Tj
+0 -13 Td
+(- `URL_Win`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- o sistema assume um unico registro) Tj
+0 -13 Td
+(- esta entidade funciona mais como configuracao persistida do que como agregado de dominio) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `User`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `users`) Tj
+0 -13 Td
+(Chave primaria: `Uid`) Tj
+0 -13 Td
+(Indice unico: `Email`) Tj
+0 -13 Td
+(Natureza: agregado principal do dominio) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- identificacao: `Uid`, `Name`, `Email`) Tj
+0 -13 Td
+(- autenticacao: `PasswordHash`) Tj
+0 -13 Td
+(- perfil: `PhotoPath`) Tj
+0 -13 Td
+(- controle de acesso: `IsConfirmed`, `IsAdmin`, `IsBlocked`) Tj
+0 -13 Td
+(- ciclo de vida: `CreatedAt`, `LastAccessAt`, `IsDeleted`, `DeletedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Relacionamentos:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- 1:N com `RefreshToken`) Tj
+0 -13 Td
+(- 1:N com `PasswordResetCode`) Tj
+0 -13 Td
+(- 1:1 com `UserSettings`) Tj
+0 -13 Td
+(- 1:N com `UserBonusPoint`) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 1911 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+(- 1:N com `UserAchievement`) Tj
+0 -13 Td
+(- possui navegacao em `LoginLog`, mas esse lado nao esta exposto como colecao na entidade) Tj
+0 -13 Td
+(`User`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes arquiteturais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `User` concentra muitas responsabilidades) Tj
+0 -13 Td
+(- hoje ele mistura autenticacao, autorizacao, estado de conta, perfil e gancho para) Tj
+0 -13 Td
+(gamificacao) Tj
+0 -13 Td
+(- para decisoes futuras, vale avaliar se o agregado esta ficando largo demais) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `RefreshToken`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `refresh_tokens`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chave estrangeira: `UserUid -> User.Uid`) Tj
+0 -13 Td
+(Natureza: sessao renovavel de autenticacao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Token`) Tj
+0 -13 Td
+(- `UserAgent`) Tj
+0 -13 Td
+(- `ExpiresAt`) Tj
+0 -13 Td
+(- `IsRevoked`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- pertence ao usuario) Tj
+0 -13 Td
+(- o estado da sessao fica modelado na propria entidade) Tj
+0 -13 Td
+(- e usada tanto para renovacao quanto para revogacao forcada) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `PasswordResetCode`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `password_reset_codes`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chave estrangeira: `UserUid -> User.Uid`) Tj
+0 -13 Td
+(Natureza: token de recuperacao de senha de curta duracao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Code`) Tj
+0 -13 Td
+(- `ExpiresAt`) Tj
+0 -13 Td
+(- `IsUsed`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- modela expiracao e uso unico) Tj
+0 -13 Td
+(- e uma boa entidade transacional de seguranca) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `LoginLog`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `login_logs`) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 1882 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chave de referencia opcional: `UserUid -> User.Uid`) Tj
+0 -13 Td
+(Natureza: auditoria de login) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Status` \(`Success`, `Failed`, `Blocked`\)) Tj
+0 -13 Td
+(- `IpAddress`) Tj
+0 -13 Td
+(- `UserAgent`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- aceita `UserUid` nulo, o que permite registrar tentativas sem usuario identificado) Tj
+0 -13 Td
+(- o relacionamento com `User` nao esta explicitamente configurado no `OnModelCreating`, embora) Tj
+0 -13 Td
+(a navegacao exista) Tj
+0 -13 Td
+(- e uma entidade importante para observabilidade e seguranca) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `UserSettings`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `user_settings`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chave estrangeira unica: `UserUid -> User.Uid`) Tj
+0 -13 Td
+(Natureza: extensao 1:1 de preferencias do usuario) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Theme`) Tj
+0 -13 Td
+(- `Language`) Tj
+0 -13 Td
+(- `UseCamera`) Tj
+0 -13 Td
+(- `EnableBonusSystem`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+(- `UpdatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- separa configuracao de preferencia do agregado principal) Tj
+0 -13 Td
+(- a unicidade de `UserUid` reforca o modelo 1:1) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `UserBonusPoint`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `user_bonus_points`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chave estrangeira: `UserUid -> User.Uid`) Tj
+0 -13 Td
+(Natureza: lancamento de pontos) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Points`) Tj
+0 -13 Td
+(- `Source`) Tj
+0 -13 Td
+(- `Description`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 1925 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+() Tj
+0 -13 Td
+(- o saldo total nao e armazenado no usuario; ele e derivado pela soma dos lancamentos) Tj
+0 -13 Td
+(- esse modelo favorece historico e auditoria, mas pode exigir otimizacao futura em cenarios de) Tj
+0 -13 Td
+(alto volume) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `BonusAchievement`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `bonus_achievements`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Indice unico: `Code`) Tj
+0 -13 Td
+(Natureza: catalogo mestre de conquistas) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `Code`) Tj
+0 -13 Td
+(- `Name`) Tj
+0 -13 Td
+(- `Description`) Tj
+0 -13 Td
+(- `PointsRequired`) Tj
+0 -13 Td
+(- `IsActive`) Tj
+0 -13 Td
+(- `CreatedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- representa definicoes estaveis de conquista) Tj
+0 -13 Td
+(- funciona como tabela de referencia para `UserAchievement`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### `UserAchievement`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Tabela: `user_achievements`) Tj
+0 -13 Td
+(Chave primaria: `Id`) Tj
+0 -13 Td
+(Chaves estrangeiras:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `UserUid -> User.Uid`) Tj
+0 -13 Td
+(- `BonusAchievementId -> BonusAchievement.Id`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Indice unico composto:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `\(UserUid, BonusAchievementId\)`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Natureza: registro de conquista adquirida pelo usuario) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Campos principais:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `PointsAtAchievement`) Tj
+0 -13 Td
+(- `AchievedAt`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Observacoes:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- guarda o momento em que a conquista foi obtida) Tj
+0 -13 Td
+(- `PointsAtAchievement` preserva o snapshot do contexto, o que e bom para auditoria historica) Tj
+0 -13 Td
+(- o delete da relacao para `BonusAchievement` esta como `Restrict`) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Relacionamentos Consolidados) Tj
+0 -13 Td
+() Tj
+ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 15 0 R >>
+endobj
+15 0 obj
+<< /Length 2607 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+(- `User` 1:N `RefreshToken`) Tj
+0 -13 Td
+(- `User` 1:N `PasswordResetCode`) Tj
+0 -13 Td
+(- `User` 1:1 `UserSettings`) Tj
+0 -13 Td
+(- `User` 1:N `UserBonusPoint`) Tj
+0 -13 Td
+(- `User` 1:N `UserAchievement`) Tj
+0 -13 Td
+(- `BonusAchievement` 1:N `UserAchievement`) Tj
+0 -13 Td
+(- `LoginLog` referencia `User` de forma opcional) Tj
+0 -13 Td
+(- `eTasksVersion` nao depende de outras entidades) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Pontos Estruturais Relevantes para Decisao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 1. `User` e um agregado muito central) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Hoje o sistema orbita em torno de `User`. Isso simplifica o inicio do projeto, mas aumenta) Tj
+0 -13 Td
+(acoplamento entre:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- autenticacao) Tj
+0 -13 Td
+(- administracao) Tj
+0 -13 Td
+(- perfil) Tj
+0 -13 Td
+(- preferencias) Tj
+0 -13 Td
+(- bonus/gamificacao) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Se o projeto crescer, pode valer separar melhor os subdominios sem necessariamente quebrar a) Tj
+0 -13 Td
+(tabela imediatamente.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 2. O modulo de autenticacao ja tem persistencia propria razoavel) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(`RefreshToken`, `PasswordResetCode` e `LoginLog` ja formam um bloco coerente.) Tj
+0 -13 Td
+(Isso favorece uma futura modularizacao de seguranca sem reescrever o dominio inteiro.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 3. O modulo de bonus esta relativamente bem desacoplado) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(A combinacao `BonusAchievement` + `UserBonusPoint` + `UserAchievement` ja cria uma fronteira) Tj
+0 -13 Td
+(util para evolucao independente.) Tj
+0 -13 Td
+(Se houver crescimento desse dominio, ele parece um bom candidato a modulo proprio.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 4. `eTasksVersion` nao se comporta como entidade de negocio comum) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Ela parece mais uma configuracao singleton persistida.) Tj
+0 -13 Td
+(Estruturalmente, poderia no futuro migrar para:) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- tabela/config separada de settings globais) Tj
+0 -13 Td
+(- provider de configuracao administravel) Tj
+0 -13 Td
+(- aggregate de release/versionamento, se esse dominio crescer) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(### 5. Falta explicitar alguns relacionamentos de auditoria) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(`LoginLog` possui `UserUid` e navegacao para `User`, mas essa relacao nao esta detalhada no) Tj
+0 -13 Td
+(`OnModelCreating`.) Tj
+0 -13 Td
+(Para clareza arquitetural, pode ser interessante explicitar isso no mapeamento.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Resumo Executivo) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Se eu resumisse o modelo atual em uma frase:) Tj
+ET
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 17 0 R >>
+endobj
+17 0 obj
+<< /Length 1236 >>
+stream
+BT
+/F1 10 Tf
+48 744 Td
+() Tj
+0 -13 Td
+(> O banco hoje e um dominio centrado em `User`, com extensoes para autenticacao operacional,) Tj
+0 -13 Td
+(preferencias do usuario e gamificacao, alem de uma configuracao singleton de versao da) Tj
+0 -13 Td
+(aplicacao.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(Em termos de risco arquitetural, o principal ponto de atencao nao esta na quantidade de) Tj
+0 -13 Td
+(entidades, mas na concentracao de responsabilidades em `User`.) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(## Arquivos de Referencia) Tj
+0 -13 Td
+() Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Version/eTasksVersion.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/User.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/RefreshToken.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/PasswordResetCode.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/LoginLog.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/UserSettings.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/UserBonusPoint.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/BonusAchievement.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Models/Entities/Users/UserAchievement.cs`) Tj
+0 -13 Td
+(- `eTasks-server.Core/Data/AppDbContext.cs`) Tj
+0 -13 Td
+() Tj
+ET
+endstream
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000157 00000 n 
+0000000227 00000 n 
+0000000353 00000 n 
+0000002668 00000 n 
+0000002794 00000 n 
+0000004833 00000 n 
+0000004959 00000 n 
+0000006922 00000 n 
+0000007050 00000 n 
+0000008985 00000 n 
+0000009113 00000 n 
+0000011091 00000 n 
+0000011219 00000 n 
+0000013879 00000 n 
+0000014007 00000 n 
+trailer
+<< /Size 18 /Root 1 0 R >>
+startxref
+15296
+%%EOF

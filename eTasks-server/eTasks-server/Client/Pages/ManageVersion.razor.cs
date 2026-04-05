@@ -1,5 +1,5 @@
 using eTasks_server.Client.Services.Interfaces;
-using eTasks_server.Models.Version;
+using eTasks_server.Models.Entities.Version;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -7,16 +7,14 @@ namespace eTasks_server.Client.Pages
 {
     public class ManageVersionBase : ComponentBase
     {
-        #region Serviços Injetados
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private IVersionService VersionService { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
-        #endregion
 
-        protected eTasksVersion _model = new eTasksVersion();
+        protected eTasksVersion _model = new();
         protected bool isLoading = true;
-        protected MudForm? _form;        
+        protected MudForm? _form;
 
         protected override async Task OnInitializedAsync()
         {
@@ -32,8 +30,8 @@ namespace eTasks_server.Client.Pages
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versão: {ex.Message}", Severity.Error);
+                Console.Error.WriteLine($"Erro ao carregar a versao: {ex.Message}");
+                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versao: {ex.Message}", Severity.Error);
             }
             finally
             {
@@ -43,26 +41,28 @@ namespace eTasks_server.Client.Pages
 
         protected async Task Save()
         {
-            if (_form is not null)
+            if (_form is null)
             {
-                await _form.ValidateAsync();
-                if (_form.IsValid)
-                {
-                    // Para agora, apenas log ou simule salvar
-                if (await VersionService.SaveVersionAsync(_model))
-                {
-                    Snackbar.Add("Versão salva com sucesso!", Severity.Success);
-                    Navigation.NavigateTo("/version");
-                }
-                else
-                {
-                    Snackbar.Add("Erro ao salvar a versão. Tente novamente.", Severity.Error);
-                }
-                // No futuro, salve em arquivo TXT ou similar
+                return;
+            }
 
-                }
+            await _form.ValidateAsync();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+
+            if (await VersionService.SaveVersionAsync(_model))
+            {
+                Snackbar.Add("Versao salva com sucesso!", Severity.Success);
+                Navigation.NavigateTo("/version");
+            }
+            else
+            {
+                Snackbar.Add("Erro ao salvar a versao. Tente novamente.", Severity.Error);
             }
         }
+
         protected void GoBack() => Navigation.NavigateTo("/version");
     }
 }

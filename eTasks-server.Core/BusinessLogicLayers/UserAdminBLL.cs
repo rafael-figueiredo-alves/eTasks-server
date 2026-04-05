@@ -1,8 +1,9 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Services.Interfaces;
+using eTasks_server.Models.DTOs.Users.Admin.Responses;
+using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
-using eTasks_server.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
@@ -22,7 +23,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
         public async Task<List<AdminUserDTO>> GetUsersAsync()
         {
             return await _context.Users
-                .Where(u => !u.IsAdmin)
+                .Where(u => !u.IsAdmin && !u.IsDeleted)
                 .OrderByDescending(u => u.CreatedAt)
                 .Select(u => new AdminUserDTO
                 {
@@ -32,14 +33,16 @@ namespace eTasks_server.Core.BusinessLogicLayers
                     PhotoPath = u.PhotoPath,
                     IsConfirmed = u.IsConfirmed,
                     IsBlocked = u.IsBlocked,
-                    CreatedAt = u.CreatedAt
+                    IsDeleted = u.IsDeleted,
+                    CreatedAt = u.CreatedAt,
+                    LastAccessAt = u.LastAccessAt
                 })
                 .ToListAsync();
         }
 
         public async Task<bool> ToggleBlockAsync(Guid uid)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
             if (user == null) throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
             if (user.IsAdmin) throw new ApiException(HttpStatusCode.Forbidden, "Não é possível bloquear um administrador.");
 
@@ -61,7 +64,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
         public async Task<bool> SetPasswordAsync(Guid uid, string newPassword)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
             if (user == null) throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
@@ -79,7 +82,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
         public async Task<bool> ConfirmAccountAsync(Guid uid)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
             if (user == null) throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
 
             user.IsConfirmed = true;
@@ -89,7 +92,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
         public async Task<bool> SendPasswordResetEmailAsync(Guid uid)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
             if (user == null) throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
 
             var random = new Random();

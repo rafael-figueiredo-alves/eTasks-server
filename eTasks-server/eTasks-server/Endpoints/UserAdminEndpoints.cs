@@ -1,5 +1,5 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Models.Users;
+using eTasks_server.Models.DTOs.Users.Admin.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eTasks_server.Endpoints

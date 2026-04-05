@@ -1,9 +1,11 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
+using eTasks_server.Core.Helpers;
 using eTasks_server.Core.Services.Interfaces;
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
+using eTasks_server.Models.DTOs.Auth.Responses;
+using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
-using eTasks_server.Models.Users;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -52,14 +54,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             {
                 try
                 {
-                    var base64Data = request.PhotoBase64.Contains(',') ? request.PhotoBase64.Split(',')[1] : request.PhotoBase64;
-                    var imageBytes = Convert.FromBase64String(base64Data);
-                    string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
-                    if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-
-                    string fileName = $"{Guid.NewGuid()}.jpg";
-                    photoPath = Path.Combine("uploads", "profiles", fileName);
-                    await File.WriteAllBytesAsync(Path.Combine(directoryPath, fileName), imageBytes);
+                    photoPath = await UserPhotoStorage.SaveAsync(request.PhotoBase64, null);
                 }
                 catch
                 {
@@ -76,6 +71,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             };
 
             await _context.Users.AddAsync(user);
+            await _context.UserSettings.AddAsync(new UserSettings { UserUid = user.Uid });
             await _context.SaveChangesAsync();
             _logger.LogInformation("Novo usuario criado no banco de dados. Uid: {Uid}, E-mail: {Email}", user.Uid, user.Email);
 
@@ -119,6 +115,14 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Nao encontramos uma conta com esse e-mail.");
             }
 
+            if (user.IsDeleted)
+            {
+                _logger.LogWarning("Usuario {Uid} ({Email}) tentou logar, mas a conta foi removida.", user.Uid, user.Email);
+                await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Blocked", IpAddress = ipAddress, UserAgent = request.UserAgent });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi removida e nao pode mais ser utilizada.");
+            }
+
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 _logger.LogWarning("Falha de autenticacao. Senha incorreta para o usuario: {Uid}", user.Uid);
@@ -138,6 +142,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             _logger.LogInformation("Usuario {Uid} autenticado com sucesso.", user.Uid);
 
             await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Success", IpAddress = ipAddress, UserAgent = request.UserAgent });
+            user.LastAccessAt = SaoPauloDateTime.Now();
 
             return await GenerateAuthResponseAsync(user, request.UserAgent);
         }
@@ -167,6 +172,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Sua sessao expirou. Faca login novamente.");
             }
 
+            if (tokenRecord.User is null || tokenRecord.User.IsDeleted)
+            {
+                tokenRecord.IsRevoked = true;
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi removida e nao pode mais ser utilizada.");
+            }
+
             if (tokenRecord.User!.IsBlocked)
             {
                 _logger.LogWarning("Usuario {Uid} tentou renovar token, mas encontra-se bloqueado.", tokenRecord.User.Uid);
@@ -183,7 +195,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
         public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
         {
             _logger.LogInformation("Solicitacao de recuperacao de senha recebida para o e-mail: {Email}", request.Email);
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted);
             if (user == null)
             {
                 _logger.LogInformation("O e-mail {Email} nao foi localizado na base. Abortando silenciosamente por seguranca.", request.Email);
@@ -210,7 +222,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted);
             if (user == null) throw new ValidationException("Geral", "Solicitacao invalida.");
 
             var resetCode = await _context.PasswordResetCodes
@@ -235,7 +247,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
         public async Task<bool> ChangePasswordAsync(Guid userUid, ChangePasswordRequest request)
         {
             _logger.LogInformation("Solicitacao de mudanca de senha para o usuario: {Uid}", userUid);
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid && !u.IsDeleted);
             if (user == null) throw new ValidationException("User", "Usuario nao localizado.");
 
             if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
@@ -276,7 +288,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 if (string.IsNullOrEmpty(uidClaim) || !Guid.TryParse(uidClaim, out Guid userUid))
                     return false;
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid && !u.IsDeleted);
                 if (user == null || user.IsConfirmed) return true;
 
                 user.IsConfirmed = true;
@@ -353,6 +365,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             };
 
             await _context.RefreshTokens.AddAsync(refreshToken);
+            user.LastAccessAt = SaoPauloDateTime.Now();
             await _context.SaveChangesAsync();
 
             return new LoginResponse

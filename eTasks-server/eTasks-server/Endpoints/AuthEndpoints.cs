@@ -1,9 +1,9 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
+using eTasks_server.Models.DTOs.Auth.Responses;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace eTasks_server.Endpoints
 {
@@ -11,15 +11,31 @@ namespace eTasks_server.Endpoints
     {
         public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
         {
+            //Seta um prefixo comum para todas as rotas de autenticação e adiciona tags para documentação Swagger
             var group = app.MapGroup("/auth").WithTags("Autenticação");
 
+            //Responsável por mapear o endpoint responsável pelo login da Aplicação Cliente, retornando um JWT e um Refresh Token para autenticação e autorização de rotas protegidas.
             LoginEndpoint(group);
+
+            //Endpoint para criar conta de usuário, retornando um JWT e um Refresh Token para autenticação imediata após o registro. O endpoint também é responsável por enviar um e-mail de confirmação para o endereço de e-mail fornecido, garantindo a veracidade do endereço e ativando a conta somente após a confirmação.
             RegisterEndpoint(group);
+
+            //Endpoint para trocar um Refresh Token válido e não expirado por um novo Token JWT, permitindo que o usuário obtenha um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado.
             RefreshTokenEndpoint(group);
+
+            //Endpoint para revogar o refresh token atual e remover os cookies HttpOnly de autenticação, garantindo que o usuário seja deslogado da aplicação e não possa mais acessar rotas protegidas sem fazer login novamente.
             LogoutEndpoint(group);
+
+            //Responsável por mapear o endpoint para solicitar o envio de um código de redefinição de senha para o e-mail do usuário, garantindo que apenas o proprietário do e-mail possa solicitar a redefinição de senha.            
             ForgotPasswordEndpoint(group);
+
+            //Endpoint para validar o código de 6 dígitos enviado para o e-mail do usuário e alterar a senha da conta, garantindo que apenas o proprietário do e-mail possa redefinir a senha da conta.
             ResetPasswordEndpoint(group);
+
+            //Endpoint para alterar a senha de um usuário autenticado, garantindo que apenas o proprietário da conta possa alterar a senha e que o usuário esteja autenticado para acessar esta funcionalidade.
             ChangePasswordEndpoint(group);
+
+            //Endpoint para validar o token JWT enviado no link de confirmação de e-mail e ativar a conta do usuário, garantindo que apenas o proprietário do e-mail possa ativar a conta e que a conta seja ativada somente após a confirmação do e-mail.
             ConfirmAccountEndpoint(group);
 
             return app;
@@ -30,9 +46,9 @@ namespace eTasks_server.Endpoints
         {
             group.MapPost("/login", async (HttpContext context, [FromBody] LoginRequest request, IAuthBLL authBLL) =>
             {
-                var ip = context.Connection.RemoteIpAddress?.ToString();
-                var response = await authBLL.LoginAsync(request, ip);
-                SetRefreshTokenCookie(context, response, request.UserAgent);
+                var ip = context.Connection.RemoteIpAddress?.ToString(); //Grava IP do cliente para monitoramento e segurança, podendo ser utilizado para detectar atividades suspeitas ou bloqueio de IPs maliciosos.
+                var response = await authBLL.LoginAsync(request, ip); //Realiza o login do usuário utilizando as credenciais fornecidas e retorna um JWT e um Refresh Token para autenticação e autorização de rotas protegidas.
+                SetRefreshTokenCookie(context, response, request.UserAgent); //Armazena o Refresh Token em um cookie HttpOnly para clientes web, garantindo que o token seja protegido contra ataques de XSS e não seja acessível via JavaScript. Para outros tipos de clientes, o Refresh Token é retornado no corpo da resposta.
                 return Results.Ok(response);
             })
             .WithName("Login")

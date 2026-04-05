@@ -1,5 +1,5 @@
-﻿using eTasks_server.Client.Services.Interfaces;
-using eTasks_server.Models.Version;
+using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Models.Entities.Version;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -7,7 +7,7 @@ namespace eTasks_server.Client.Pages
 {
     public class VersionBase : ComponentBase
     {
-        protected eTasksVersion _model = new eTasksVersion();
+        protected eTasksVersion _model = new();
         protected bool isLoading = true;
         protected string? errorMessage;
 
@@ -25,16 +25,14 @@ namespace eTasks_server.Client.Pages
         {
             isLoading = true;
             try
-            {                
+            {
                 _model = await VersionService.GetVersionAsync();
             }
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
-                Console.Error.WriteLine($"Erro ao carregar a versão: {ex.Message}");
-                Snackbar.Add(
-                    $"Oops! Ocorreu um erro Erro ao carregar a versão: {ex.Message}",
-                    Severity.Error);
+                Console.Error.WriteLine($"Erro ao carregar a versao: {ex.Message}");
+                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versao: {ex.Message}", Severity.Error);
             }
             finally
             {

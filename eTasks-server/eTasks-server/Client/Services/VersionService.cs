@@ -1,7 +1,7 @@
-﻿using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLayers;
 using eTasks_server.Core.Data;
-using eTasks_server.Models.Version;
+using eTasks_server.Models.Entities.Version;
 
 namespace eTasks_server.Client.Services
 {

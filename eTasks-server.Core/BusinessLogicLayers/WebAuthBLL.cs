@@ -1,8 +1,8 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
+using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
-using eTasks_server.Models.Users;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -46,6 +46,19 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Não encontramos uma conta com esse e-mail.");
+            }
+
+            if (user.IsDeleted)
+            {
+                await _context.LoginLogs.AddAsync(new LoginLog
+                {
+                    UserUid = user.Uid,
+                    Status = "Blocked",
+                    IpAddress = ipAddress,
+                    UserAgent = Constants.WebAdminUserAgent
+                });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Conta removida. Nao e possivel acessar o sistema.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -113,6 +126,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 IpAddress = ipAddress,
                 UserAgent = Constants.WebAdminUserAgent
             });
+            user.LastAccessAt = SaoPauloDateTime.Now();
             await _context.SaveChangesAsync();
         }
 

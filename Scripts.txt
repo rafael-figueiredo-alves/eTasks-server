@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   `IsConfirmed` TINYINT(1) NOT NULL DEFAULT 0,
   `IsAdmin` TINYINT(1) NOT NULL DEFAULT 0,
   `IsBlocked` TINYINT(1) DEFAULT 0,
+  `LastAccessAt` DATETIME NULL,
+  `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+  `DeletedAt` DATETIME NULL,
   `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Uid`),
   UNIQUE INDEX `Email_UNIQUE` (`Email` ASC)
@@ -74,3 +77,76 @@ CREATE TABLE IF NOT EXISTS login_logs (
     PRIMARY KEY (Id),
     CONSTRAINT fk_login_logs_user FOREIGN KEY (UserUid) REFERENCES users(Uid) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_settings` (
+    `Id` CHAR(36) NOT NULL,
+    `UserUid` CHAR(36) NOT NULL,
+    `Theme` VARCHAR(10) NOT NULL DEFAULT 'light',
+    `Language` VARCHAR(5) NOT NULL DEFAULT 'pt',
+    `UseCamera` TINYINT(1) NOT NULL DEFAULT 0,
+    `EnableBonusSystem` TINYINT(1) NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_user_settings_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_user_settings_users` FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `bonus_achievements` (
+    `Id` CHAR(36) NOT NULL,
+    `Code` VARCHAR(50) NOT NULL,
+    `Name` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `PointsRequired` INT NOT NULL,
+    `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_bonus_achievements_code` (`Code` ASC)
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_bonus_points` (
+    `Id` CHAR(36) NOT NULL,
+    `UserUid` CHAR(36) NOT NULL,
+    `Points` INT NOT NULL,
+    `Source` VARCHAR(100) NULL,
+    `Description` VARCHAR(255) NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_user_bonus_points_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_user_bonus_points_users` FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_achievements` (
+    `Id` CHAR(36) NOT NULL,
+    `UserUid` CHAR(36) NOT NULL,
+    `BonusAchievementId` CHAR(36) NOT NULL,
+    `PointsAtAchievement` INT NOT NULL,
+    `AchievedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_user_achievements_user_achievement` (`UserUid` ASC, `BonusAchievementId` ASC),
+    CONSTRAINT `fk_user_achievements_users` FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`) ON DELETE CASCADE,
+    CONSTRAINT `fk_user_achievements_bonus_achievements` FOREIGN KEY (`BonusAchievementId`) REFERENCES `bonus_achievements` (`Id`) ON DELETE RESTRICT
+) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+ALTER TABLE `users`
+    ADD COLUMN IF NOT EXISTS `LastAccessAt` DATETIME NULL AFTER `IsBlocked`,
+    ADD COLUMN IF NOT EXISTS `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `LastAccessAt`,
+    ADD COLUMN IF NOT EXISTS `DeletedAt` DATETIME NULL AFTER `IsDeleted`;
+
+INSERT INTO `user_settings` (`Id`, `UserUid`, `Theme`, `Language`, `UseCamera`, `EnableBonusSystem`, `CreatedAt`, `UpdatedAt`)
+SELECT UUID(), `u`.`Uid`, 'light', 'pt', 0, 0, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR), DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+FROM `users` `u`
+LEFT JOIN `user_settings` `s` ON `s`.`UserUid` = `u`.`Uid`
+WHERE `s`.`UserUid` IS NULL;
+
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'FIRST_STEP', 'Primeiro passo', 'Primeira conquista ao atingir 10 pontos.', 10, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'FIRST_STEP');
+
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'FOCUSED_USER', 'Usuario focado', 'Conquista liberada ao atingir 50 pontos.', 50, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'FOCUSED_USER');
+
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'POWER_USER', 'Power user', 'Conquista liberada ao atingir 100 pontos.', 100, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'POWER_USER');

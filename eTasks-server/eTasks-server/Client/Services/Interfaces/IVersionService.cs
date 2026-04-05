@@ -1,4 +1,4 @@
-﻿using eTasks_server.Models.Version;
+using eTasks_server.Models.Entities.Version;
 
 namespace eTasks_server.Client.Services.Interfaces
 {

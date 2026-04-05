@@ -1,6 +1,6 @@
-﻿using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Models.Users;
+using eTasks_server.Models.DTOs.Users.Admin.Responses;
 
 namespace eTasks_server.Client.Services
 {

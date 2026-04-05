@@ -1,5 +1,5 @@
 ﻿using eTasks_server.Core.Data;
-using eTasks_server.Models.Version;
+using eTasks_server.Models.Entities.Version;
 using Microsoft.EntityFrameworkCore;
 
 namespace eTasks_server.Core.BusinessLayers

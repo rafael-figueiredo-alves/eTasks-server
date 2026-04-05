@@ -1,5 +1,5 @@
 ﻿using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Models.Auth;
+using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
