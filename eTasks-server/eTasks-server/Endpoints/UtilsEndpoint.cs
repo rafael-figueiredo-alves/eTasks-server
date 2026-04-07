@@ -7,6 +7,7 @@
             public void MapUtilsEndpoints()
             {
                 app.MapGet("/online", () => Results.NoContent())
+                    .AllowAnonymous()
                     .WithDescription("Endpoint para verificar se o servidor está online.")
                     .WithDisplayName("Utilidades")
                     .WithName("Utilidades")
