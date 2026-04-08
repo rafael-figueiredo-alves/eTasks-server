@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS login_logs (
     UserAgent VARCHAR(255),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (Id),
-    CONSTRAINT fk_login_logs_user FOREIGN KEY (UserUid) REFERENCES users(Uid) ON DELETE SET NULL
+    CONSTRAINT fk_login_logs_user FOREIGN KEY (UserUid) REFERENCES users(Uid) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `user_settings` (
@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS `bonus_achievements` (
     `Name` VARCHAR(100) NOT NULL,
     `Description` VARCHAR(255) NULL,
     `PointsRequired` INT NOT NULL,
+    `DisplayType` INT NOT NULL DEFAULT 1,
     `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`Id`),
@@ -133,20 +134,23 @@ ALTER TABLE `users`
     ADD COLUMN IF NOT EXISTS `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `LastAccessAt`,
     ADD COLUMN IF NOT EXISTS `DeletedAt` DATETIME NULL AFTER `IsDeleted`;
 
+ALTER TABLE `bonus_achievements`
+    ADD COLUMN IF NOT EXISTS `DisplayType` INT NOT NULL DEFAULT 1 AFTER `PointsRequired`;
+
 INSERT INTO `user_settings` (`Id`, `UserUid`, `Theme`, `Language`, `UseCamera`, `EnableBonusSystem`, `CreatedAt`, `UpdatedAt`)
 SELECT UUID(), `u`.`Uid`, 'light', 'pt', 0, 0, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR), DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
 FROM `users` `u`
 LEFT JOIN `user_settings` `s` ON `s`.`UserUid` = `u`.`Uid`
 WHERE `s`.`UserUid` IS NULL;
 
-INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
-SELECT UUID(), 'FIRST_STEP', 'Primeiro passo', 'Primeira conquista ao atingir 10 pontos.', 10, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `DisplayType`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'FIRST_STEP', 'Primeiro passo', 'Primeira conquista ao atingir 10 pontos.', 10, 2, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
 WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'FIRST_STEP');
 
-INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
-SELECT UUID(), 'FOCUSED_USER', 'Usuario focado', 'Conquista liberada ao atingir 50 pontos.', 50, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `DisplayType`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'FOCUSED_USER', 'Usuario focado', 'Conquista liberada ao atingir 50 pontos.', 50, 1, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
 WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'FOCUSED_USER');
 
-INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `IsActive`, `CreatedAt`)
-SELECT UUID(), 'POWER_USER', 'Power user', 'Conquista liberada ao atingir 100 pontos.', 100, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+INSERT INTO `bonus_achievements` (`Id`, `Code`, `Name`, `Description`, `PointsRequired`, `DisplayType`, `IsActive`, `CreatedAt`)
+SELECT UUID(), 'POWER_USER', 'Power user', 'Conquista liberada ao atingir 100 pontos.', 100, 1, 1, DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
 WHERE NOT EXISTS (SELECT 1 FROM `bonus_achievements` WHERE `Code` = 'POWER_USER');

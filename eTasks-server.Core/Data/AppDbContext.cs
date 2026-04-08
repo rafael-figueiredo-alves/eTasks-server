@@ -27,58 +27,15 @@ namespace eTasks_server.Core.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            #region Configurations
-            modelBuilder.Entity<eTasksVersion>().ToTable("version").HasKey(x => x.Id);
-
-            modelBuilder.Entity<User>().ToTable("users").HasKey(x => x.Uid);
-            modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens").HasKey(x => x.Id);
-            modelBuilder.Entity<PasswordResetCode>().ToTable("password_reset_codes").HasKey(x => x.Id);
-            modelBuilder.Entity<LoginLog>().ToTable("login_logs").HasKey(x => x.Id);
-            modelBuilder.Entity<UserSettings>().ToTable("user_settings").HasKey(x => x.Id);
-            modelBuilder.Entity<UserBonusPoint>().ToTable("user_bonus_points").HasKey(x => x.Id);
-            modelBuilder.Entity<BonusAchievement>().ToTable("bonus_achievements").HasKey(x => x.Id);
-            modelBuilder.Entity<UserAchievement>().ToTable("user_achievements").HasKey(x => x.Id);
-
-            modelBuilder.Entity<User>()
-                .HasIndex(x => x.Email)
-                .IsUnique();
-
-            modelBuilder.Entity<User>()
-                .HasOne(x => x.Settings)
-                .WithOne(x => x.User)
-                .HasForeignKey<UserSettings>(x => x.UserUid)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<User>()
-                .HasMany(x => x.BonusPoints)
-                .WithOne(x => x.User)
-                .HasForeignKey(x => x.UserUid)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<User>()
-                .HasMany(x => x.Achievements)
-                .WithOne(x => x.User)
-                .HasForeignKey(x => x.UserUid)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<UserSettings>()
-                .HasIndex(x => x.UserUid)
-                .IsUnique();
-
-            modelBuilder.Entity<BonusAchievement>()
-                .HasIndex(x => x.Code)
-                .IsUnique();
-
-            modelBuilder.Entity<UserAchievement>()
-                .HasOne(x => x.BonusAchievement)
-                .WithMany(x => x.UserAchievements)
-                .HasForeignKey(x => x.BonusAchievementId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<UserAchievement>()
-                .HasIndex(x => new { x.UserUid, x.BonusAchievementId })
-                .IsUnique();
-            #endregion
+            eTasksVersion.Configure(modelBuilder);
+            User.Configure(modelBuilder);
+            RefreshToken.Configure(modelBuilder);
+            PasswordResetCode.Configure(modelBuilder);
+            LoginLog.Configure(modelBuilder);
+            global::eTasks_server.Models.Entities.Users.UserSettings.Configure(modelBuilder);
+            UserBonusPoint.Configure(modelBuilder);
+            BonusAchievement.Configure(modelBuilder);
+            UserAchievement.Configure(modelBuilder);
 
             base.OnModelCreating(modelBuilder);
         }

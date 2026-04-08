@@ -221,6 +221,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                             Code = x.BonusAchievement!.Code,
                             Name = x.BonusAchievement.Name,
                             PointsRequired = x.BonusAchievement.PointsRequired,
+                            DisplayType = (int)x.BonusAchievement.DisplayType,
                             AchievedAt = x.AchievedAt
                         })
                         .ToList()
