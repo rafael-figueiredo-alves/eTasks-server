@@ -1,12 +1,12 @@
 # Resumo Atual das Entidades do Banco
 
-Data de referencia: 2026-04-05
+Data de referencia: 2026-04-08
 Projeto fonte: `eTasks-server.Models/Entities`
 Contexto de mapeamento: `eTasks-server.Core/Data/AppDbContext.cs`
 
 ## Visao Geral
 
-Hoje o modelo persistido do sistema possui 9 entidades mapeadas no `AppDbContext`:
+Hoje o modelo persistido do sistema possui 18 entidades mapeadas no `AppDbContext`:
 
 1. `eTasksVersion`
 2. `User`
@@ -17,50 +17,84 @@ Hoje o modelo persistido do sistema possui 9 entidades mapeadas no `AppDbContext
 7. `UserBonusPoint`
 8. `BonusAchievement`
 9. `UserAchievement`
+10. `BonusPointRule`
+11. `TaskItem`
+12. `TaskRecurrence`
+13. `Goal`
+14. `ShoppingList`
+15. `ShoppingListItem`
+16. `NoteItem`
+17. `ReadingItem`
+18. `FinanceEntry`
 
-O dominio persistido e fortemente centrado em `User`.
-Existem tres blocos principais:
+O dominio persistido continua centrado em `User`, mas agora esta organizado em oito blocos principais:
 
-- autenticacao e ciclo de conta
-- configuracao/perfil do usuario
-- sistema de pontuacao e conquistas
+- configuracao global
+- identidade, autenticacao e perfil
+- gamificacao
+- tarefas
+- metas
+- compras
+- anotacoes e leituras
+- financas
 
 ## Leitura Arquitetural Rapida
 
 ### 1. Nucleo de identidade
 
-A entidade central e `User`. Quase todo o restante depende dela direta ou indiretamente.
-
-Ela concentra:
-
-- identidade e credenciais
-- flags de acesso (`IsAdmin`, `IsBlocked`, `IsConfirmed`, `IsDeleted`)
-- metadados de ciclo de vida (`CreatedAt`, `LastAccessAt`, `DeletedAt`)
-- relacionamentos com tokens, codigos de reset, configuracoes e bonus
+A entidade central continua sendo `User`.
+Ela concentra identidade, credenciais, estado de conta e o ownership dos registros pessoais do aplicativo.
 
 ### 2. Seguranca e autenticacao
 
-O conjunto `RefreshToken`, `PasswordResetCode` e `LoginLog` representa o bloco de autenticacao operacional:
+O conjunto `RefreshToken`, `PasswordResetCode` e `LoginLog` representa o bloco operacional de autenticacao:
 
 - `RefreshToken`: sessao longa para JWT
 - `PasswordResetCode`: recuperacao de senha com expiracao e uso unico
 - `LoginLog`: trilha de auditoria de tentativas de login
 
-### 3. Perfil e preferencias
+### 3. Perfil do usuario
 
-`UserSettings` isola preferencias do usuario em relacao 1:1 com `User`.
+`UserSettings` isola preferencias em relacao 1:1 com `User`.
 
-### 4. Gamificacao / bonus
+### 4. Gamificacao
 
-O bloco de bonus foi modelado com catalogo + vinculo historico:
+O bloco de pontos agora possui tres camadas:
 
-- `BonusAchievement`: catalogo mestre de conquistas
-- `UserBonusPoint`: lancamentos de pontos por usuario
-- `UserAchievement`: snapshot de conquista alcancada por um usuario
+- `BonusPointRule`: catalogo central de regras de pontuacao por origem
+- `UserBonusPoint`: historico de lancamentos de pontos por usuario
+- `BonusAchievement` + `UserAchievement`: catalogo e historico de conquistas
 
-### 5. Configuracao global da aplicacao
+### 5. Tarefas
 
-`eTasksVersion` e uma entidade singleton usada como configuracao persistida da versao atual do app.
+O bloco de produtividade foi modelado com:
+
+- `TaskItem`: tarefa concreta visivel para o usuario
+- `TaskRecurrence`: configuracao de recorrencia 1:1 da tarefa base
+
+O modelo tambem permite autorrelacao em `TaskItem` via `GeneratedFromTaskId` para representar tarefas futuras geradas a partir de uma tarefa raiz.
+
+### 6. Metas
+
+`Goal` representa objetivos simples do usuario com resumo, descricao, tipo, prioridade e status.
+
+### 7. Compras
+
+O bloco de compras foi modelado com:
+
+- `ShoppingList`: lista principal
+- `ShoppingListItem`: itens da lista
+
+### 8. Conhecimento pessoal
+
+Dois recursos foram separados:
+
+- `NoteItem`: anotacoes livres sem pontuacao
+- `ReadingItem`: leituras com progresso, avaliacao e recompensa opcional
+
+### 9. Financas
+
+`FinanceEntry` representa entradas e saidas financeiras, recorrentes ou nao, dentro do mesmo agregado.
 
 ## Entidades
 
@@ -81,7 +115,7 @@ Campos principais:
 Observacoes:
 
 - o sistema assume um unico registro
-- esta entidade funciona mais como configuracao persistida do que como agregado de dominio
+- esta entidade funciona mais como configuracao persistida do que como agregado de negocio
 
 ### `User`
 
@@ -102,16 +136,21 @@ Relacionamentos:
 
 - 1:N com `RefreshToken`
 - 1:N com `PasswordResetCode`
+- 1:N com `LoginLog`
 - 1:1 com `UserSettings`
 - 1:N com `UserBonusPoint`
 - 1:N com `UserAchievement`
-- possui navegacao em `LoginLog`, mas esse lado nao esta exposto como colecao na entidade `User`
+- 1:N com `TaskItem`
+- 1:N com `Goal`
+- 1:N com `ShoppingList`
+- 1:N com `NoteItem`
+- 1:N com `ReadingItem`
+- 1:N com `FinanceEntry`
 
 Observacoes arquiteturais:
 
-- `User` concentra muitas responsabilidades
-- hoje ele mistura autenticacao, autorizacao, estado de conta, perfil e gancho para gamificacao
-- para decisoes futuras, vale avaliar se o agregado esta ficando largo demais
+- `User` continua sendo o principal centro gravitacional do banco
+- ele agora funciona como dono dos registros pessoais dos modulos principais do app
 
 ### `RefreshToken`
 
@@ -128,12 +167,6 @@ Campos principais:
 - `IsRevoked`
 - `CreatedAt`
 
-Observacoes:
-
-- pertence ao usuario
-- o estado da sessao fica modelado na propria entidade
-- e usada tanto para renovacao quanto para revogacao forcada
-
 ### `PasswordResetCode`
 
 Tabela: `password_reset_codes`
@@ -148,11 +181,6 @@ Campos principais:
 - `IsUsed`
 - `CreatedAt`
 
-Observacoes:
-
-- modela expiracao e uso unico
-- e uma boa entidade transacional de seguranca
-
 ### `LoginLog`
 
 Tabela: `login_logs`
@@ -162,16 +190,10 @@ Natureza: auditoria de login
 
 Campos principais:
 
-- `Status` (`Success`, `Failed`, `Blocked`)
+- `Status`
 - `IpAddress`
 - `UserAgent`
 - `CreatedAt`
-
-Observacoes:
-
-- aceita `UserUid` nulo, o que permite registrar tentativas sem usuario identificado
-- o relacionamento com `User` nao esta explicitamente configurado no `OnModelCreating`, embora a navegacao exista
-- e uma entidade importante para observabilidade e seguranca
 
 ### `UserSettings`
 
@@ -189,10 +211,26 @@ Campos principais:
 - `CreatedAt`
 - `UpdatedAt`
 
+### `BonusPointRule`
+
+Tabela: `bonus_point_rules`
+Chave primaria: `Id`
+Indice unico: `Source`
+Natureza: catalogo central de regras de pontuacao
+
+Campos principais:
+
+- `Source`
+- `Name`
+- `Description`
+- `DefaultPoints`
+- `AllowCustomPoints`
+- `IsActive`
+
 Observacoes:
 
-- separa configuracao de preferencia do agregado principal
-- a unicidade de `UserUid` reforca o modelo 1:1
+- foi introduzida para centralizar os pontos padrao por tipo de recompensa
+- prepara o sistema para mudar pontuacao sem espalhar valores fixos pela aplicacao
 
 ### `UserBonusPoint`
 
@@ -206,12 +244,14 @@ Campos principais:
 - `Points`
 - `Source`
 - `Description`
+- `SourceReferenceId`
 - `CreatedAt`
 
 Observacoes:
 
-- o saldo total nao e armazenado no usuario; ele e derivado pela soma dos lancamentos
-- esse modelo favorece historico e auditoria, mas pode exigir otimizacao futura em cenarios de alto volume
+- `Source` agora e enum persistido como inteiro
+- `SourceReferenceId` permite rastrear o recurso que originou a pontuacao
+- o saldo total continua derivado pela soma dos lancamentos
 
 ### `BonusAchievement`
 
@@ -226,13 +266,8 @@ Campos principais:
 - `Name`
 - `Description`
 - `PointsRequired`
+- `DisplayType`
 - `IsActive`
-- `CreatedAt`
-
-Observacoes:
-
-- representa definicoes estaveis de conquista
-- funciona como tabela de referencia para `UserAchievement`
 
 ### `UserAchievement`
 
@@ -254,68 +289,238 @@ Campos principais:
 - `PointsAtAchievement`
 - `AchievedAt`
 
+### `TaskItem`
+
+Tabela: `task_items`
+Chave primaria: `Id`
+Chaves estrangeiras:
+
+- `UserUid -> User.Uid`
+- `GeneratedFromTaskId -> TaskItem.Id` opcional
+
+Natureza: tarefa concreta do usuario
+
+Campos principais:
+
+- `Title`
+- `Description`
+- `Priority`
+- `ScheduledFor`
+- `DueAt`
+- `IsCompleted`
+- `CompletedAt`
+- `IsArchived`
+- `CreatedAt`
+
 Observacoes:
 
-- guarda o momento em que a conquista foi obtida
-- `PointsAtAchievement` preserva o snapshot do contexto, o que e bom para auditoria historica
-- o delete da relacao para `BonusAchievement` esta como `Restrict`
+- suporta tarefas simples e tarefas geradas por recorrencia
+- a autorrelacao permite encadear tarefas filhas a partir de uma tarefa de origem
+
+### `TaskRecurrence`
+
+Tabela: `task_recurrences`
+Chave primaria: `Id`
+Chave estrangeira unica: `TaskItemId -> TaskItem.Id`
+Natureza: configuracao de recorrencia da tarefa base
+
+Campos principais:
+
+- `RecurrenceType`
+- `Interval`
+- `WeekDays`
+- `DayOfMonth`
+- `MonthOfYear`
+- `StartsOn`
+- `EndsOn`
+- `LastGeneratedAt`
+- `IsActive`
+
+Observacoes:
+
+- existe em relacao 1:1 com a tarefa que serve como template
+
+### `Goal`
+
+Tabela: `goals`
+Chave primaria: `Id`
+Chave estrangeira: `UserUid -> User.Uid`
+Natureza: meta ou objetivo do usuario
+
+Campos principais:
+
+- `Summary`
+- `Description`
+- `Type`
+- `Priority`
+- `RewardPoints`
+- `Status`
+- `CreatedAt`
+- `UpdatedAt`
+
+### `ShoppingList`
+
+Tabela: `shopping_lists`
+Chave primaria: `Id`
+Chave estrangeira: `UserUid -> User.Uid`
+Natureza: lista de compras
+
+Campos principais:
+
+- `Name`
+- `StoreName`
+- `EstimatedTotalAmount`
+- `ActualTotalAmount`
+- `RewardPoints`
+- `IsCompleted`
+- `CompletedAt`
+
+### `ShoppingListItem`
+
+Tabela: `shopping_list_items`
+Chave primaria: `Id`
+Chave estrangeira: `ShoppingListId -> ShoppingList.Id`
+Natureza: item de compra
+
+Campos principais:
+
+- `Name`
+- `Brand`
+- `Quantity`
+- `UnitPrice`
+- `IsCompleted`
+- `Notes`
+
+### `NoteItem`
+
+Tabela: `notes`
+Chave primaria: `Id`
+Chave estrangeira: `UserUid -> User.Uid`
+Natureza: anotacao livre do usuario
+
+Campos principais:
+
+- `Subject`
+- `Content`
+- `CreatedAt`
+- `UpdatedAt`
+
+Observacoes:
+
+- nao participa do sistema de pontuacao
+- foi mantida propositalmente simples, como um caderno pessoal do usuario
+
+### `ReadingItem`
+
+Tabela: `reading_items`
+Chave primaria: `Id`
+Chave estrangeira: `UserUid -> User.Uid`
+Natureza: registro de leitura
+
+Campos principais:
+
+- `Title`
+- `Author`
+- `Description`
+- `TotalPages`
+- `CurrentPage`
+- `Rating`
+- `RewardPoints`
+- `Status`
+- `StartedAt`
+- `FinishedAt`
+
+### `FinanceEntry`
+
+Tabela: `finance_entries`
+Chave primaria: `Id`
+Chave estrangeira: `UserUid -> User.Uid`
+Natureza: lancamento financeiro
+
+Campos principais:
+
+- `Title`
+- `Description`
+- `Category`
+- `Counterparty`
+- `EntryType`
+- `PaymentMethod`
+- `Amount`
+- `OccursOn`
+- `IsPaid`
+- `PaidAt`
+- `IsRecurring`
+- `RecurrenceType`
+- `RecurrenceInterval`
+- `WeekDays`
+- `DayOfMonth`
+- `RecurrenceEndsOn`
+
+Observacoes:
+
+- concentra entradas e saidas no mesmo modelo
+- tambem suporta recorrencia sem exigir tabela separada
+- permite calcular saldo mensal por competencia (`OccursOn`) ou por caixa (`PaidAt` + `IsPaid`)
 
 ## Relacionamentos Consolidados
 
 - `User` 1:N `RefreshToken`
 - `User` 1:N `PasswordResetCode`
+- `User` 1:N `LoginLog`
 - `User` 1:1 `UserSettings`
 - `User` 1:N `UserBonusPoint`
 - `User` 1:N `UserAchievement`
 - `BonusAchievement` 1:N `UserAchievement`
-- `LoginLog` referencia `User` de forma opcional
-- `eTasksVersion` nao depende de outras entidades
+- `User` 1:N `TaskItem`
+- `TaskItem` 1:1 `TaskRecurrence`
+- `TaskItem` 1:N `TaskItem` via `GeneratedFromTaskId`
+- `User` 1:N `Goal`
+- `User` 1:N `ShoppingList`
+- `ShoppingList` 1:N `ShoppingListItem`
+- `User` 1:N `NoteItem`
+- `User` 1:N `ReadingItem`
+- `User` 1:N `FinanceEntry`
+- `eTasksVersion` e `BonusPointRule` nao dependem de outras entidades
 
 ## Pontos Estruturais Relevantes para Decisao
 
-### 1. `User` e um agregado muito central
+### 1. `User` segue como dono de quase todo o dominio pessoal
 
-Hoje o sistema orbita em torno de `User`. Isso simplifica o inicio do projeto, mas aumenta acoplamento entre:
+Isso simplifica leitura e filtros por usuario, mas reforca o papel central de `User` em varios subdominios.
 
-- autenticacao
-- administracao
-- perfil
-- preferencias
-- bonus/gamificacao
+### 2. Gamificacao ficou mais preparada para evolucao
 
-Se o projeto crescer, pode valer separar melhor os subdominios sem necessariamente quebrar a tabela imediatamente.
+Com `BonusPointRule`, `UserBonusPoint`, `BonusAchievement` e `UserAchievement`, o modulo de pontos agora tem uma fronteira mais clara.
 
-### 2. O modulo de autenticacao ja tem persistencia propria razoavel
+### 3. Tarefas e financas usam estrategias diferentes para recorrencia
 
-`RefreshToken`, `PasswordResetCode` e `LoginLog` ja formam um bloco coerente.
-Isso favorece uma futura modularizacao de seguranca sem reescrever o dominio inteiro.
+- tarefas: recorrencia em entidade separada (`TaskRecurrence`)
+- financas: recorrencia embutida no proprio `FinanceEntry`
 
-### 3. O modulo de bonus esta relativamente bem desacoplado
+Essa diferenca e aceitavel no estado atual, mas pode ser revisitada se surgir necessidade de padrao unico.
 
-A combinacao `BonusAchievement` + `UserBonusPoint` + `UserAchievement` ja cria uma fronteira util para evolucao independente.
-Se houver crescimento desse dominio, ele parece um bom candidato a modulo proprio.
+### 4. O dominio agora cobre quase todo o produto final
 
-### 4. `eTasksVersion` nao se comporta como entidade de negocio comum
+As novas entidades registram a base persistida dos recursos centrais do app:
 
-Ela parece mais uma configuracao singleton persistida.
-Estruturalmente, poderia no futuro migrar para:
+- tarefas
+- metas
+- compras
+- anotacoes
+- leituras
+- financas
+- gamificacao
 
-- tabela/config separada de settings globais
-- provider de configuracao administravel
-- aggregate de release/versionamento, se esse dominio crescer
+### 5. O modelo foi desenhado priorizando ownership individual
 
-### 5. Falta explicitar alguns relacionamentos de auditoria
-
-`LoginLog` possui `UserUid` e navegacao para `User`, mas essa relacao nao esta detalhada no `OnModelCreating`.
-Para clareza arquitetural, pode ser interessante explicitar isso no mapeamento.
+Quase todos os recursos sao pessoais e dependem diretamente de `UserUid`.
+Se no futuro surgirem recursos compartilhados, o modelo provavelmente precisara de entidades associativas especificas.
 
 ## Resumo Executivo
 
 Se eu resumisse o modelo atual em uma frase:
 
-> O banco hoje e um dominio centrado em `User`, com extensoes para autenticacao operacional, preferencias do usuario e gamificacao, alem de uma configuracao singleton de versao da aplicacao.
-
-Em termos de risco arquitetural, o principal ponto de atencao nao esta na quantidade de entidades, mas na concentracao de responsabilidades em `User`.
+> O banco agora representa um dominio pessoal de produtividade e vida cotidiana, centrado em `User`, cobrindo autenticacao, configuracoes, gamificacao, tarefas, metas, compras, anotacoes, leituras e financas.
 
 ## Arquivos de Referencia
 
@@ -325,7 +530,16 @@ Em termos de risco arquitetural, o principal ponto de atencao nao esta na quanti
 - `eTasks-server.Models/Entities/Users/PasswordResetCode.cs`
 - `eTasks-server.Models/Entities/Users/LoginLog.cs`
 - `eTasks-server.Models/Entities/Users/UserSettings.cs`
+- `eTasks-server.Models/Entities/Gamification/BonusPointRule.cs`
 - `eTasks-server.Models/Entities/Users/UserBonusPoint.cs`
 - `eTasks-server.Models/Entities/Users/BonusAchievement.cs`
 - `eTasks-server.Models/Entities/Users/UserAchievement.cs`
+- `eTasks-server.Models/Entities/Productivity/TaskItem.cs`
+- `eTasks-server.Models/Entities/Productivity/TaskRecurrence.cs`
+- `eTasks-server.Models/Entities/Goals/Goal.cs`
+- `eTasks-server.Models/Entities/Shopping/ShoppingList.cs`
+- `eTasks-server.Models/Entities/Shopping/ShoppingListItem.cs`
+- `eTasks-server.Models/Entities/Notes/NoteItem.cs`
+- `eTasks-server.Models/Entities/Readings/ReadingItem.cs`
+- `eTasks-server.Models/Entities/Finances/FinanceEntry.cs`
 - `eTasks-server.Core/Data/AppDbContext.cs`

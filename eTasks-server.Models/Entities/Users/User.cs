@@ -1,5 +1,11 @@
 using eTasks_server.Models.Utils;
 using eTasks_server.Models.Entities;
+using eTasks_server.Models.Entities.Finances;
+using eTasks_server.Models.Entities.Goals;
+using eTasks_server.Models.Entities.Notes;
+using eTasks_server.Models.Entities.Productivity;
+using eTasks_server.Models.Entities.Readings;
+using eTasks_server.Models.Entities.Shopping;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -100,6 +106,30 @@ namespace eTasks_server.Models.Entities.Users
         /// Conquistas alcançadas pelo usuário, utilizadas para reconhecer e recompensar marcos importantes na jornada do usuário dentro da aplicação. Esta coleção permite que o sistema rastreie as conquistas de cada usuário, possibilitando a implementação de funcionalidades como badges, níveis de conquista e reconhecimento público dentro da comunidade. O sistema deve garantir que as conquistas sejam concedidas de forma justa e transparente, incentivando a participação ativa dos usuários e promovendo um ambiente de comunidade saudável.
         /// </summary>
         public ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
+        /// <summary>
+        /// Tarefas pertencentes ao usuário.
+        /// </summary>
+        public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+        /// <summary>
+        /// Metas cadastradas pelo usuário.
+        /// </summary>
+        public ICollection<Goal> Goals { get; set; } = new List<Goal>();
+        /// <summary>
+        /// Listas de compras do usuário.
+        /// </summary>
+        public ICollection<ShoppingList> ShoppingLists { get; set; } = new List<ShoppingList>();
+        /// <summary>
+        /// Anotações registradas pelo usuário.
+        /// </summary>
+        public ICollection<NoteItem> Notes { get; set; } = new List<NoteItem>();
+        /// <summary>
+        /// Leituras registradas pelo usuário.
+        /// </summary>
+        public ICollection<ReadingItem> Readings { get; set; } = new List<ReadingItem>();
+        /// <summary>
+        /// Lançamentos financeiros do usuário.
+        /// </summary>
+        public ICollection<FinanceEntry> FinanceEntries { get; set; } = new List<FinanceEntry>();
         #endregion
 
         /// <summary>
@@ -148,6 +178,42 @@ namespace eTasks_server.Models.Entities.Users
 
             modelBuilder.Entity<User>()
                                 .HasMany(x => x.Achievements)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.Tasks)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.Goals)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.ShoppingLists)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.Notes)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.Readings)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.FinanceEntries)
                                 .WithOne(x => x.User)
                                 .HasForeignKey(x => x.UserUid)
                                 .OnDelete(DeleteBehavior.Cascade);

@@ -1,6 +1,6 @@
 # Revisao Arquitetural das Entidades Persistidas
 
-Data de referencia: 2026-04-05
+Data de referencia: 2026-04-08
 
 Base analisada:
 
@@ -24,10 +24,19 @@ Entidades mapeadas:
 7. `UserBonusPoint`
 8. `BonusAchievement`
 9. `UserAchievement`
+10. `BonusPointRule`
+11. `TaskItem`
+12. `TaskRecurrence`
+13. `Goal`
+14. `ShoppingList`
+15. `ShoppingListItem`
+16. `NoteItem`
+17. `ReadingItem`
+18. `FinanceEntry`
 
 ## Visao de Dominio
 
-O modelo atual pode ser lido em quatro blocos:
+O modelo atual pode ser lido em oito blocos:
 
 1. `Configuracao Global`
    `eTasksVersion`
@@ -35,8 +44,16 @@ O modelo atual pode ser lido em quatro blocos:
    `User`
 3. `Autenticacao e Auditoria`
    `RefreshToken`, `PasswordResetCode`, `LoginLog`
-4. `Perfil e Gamificacao`
-   `UserSettings`, `UserBonusPoint`, `BonusAchievement`, `UserAchievement`
+4. `Perfil`
+   `UserSettings`
+5. `Gamificacao`
+   `BonusPointRule`, `UserBonusPoint`, `BonusAchievement`, `UserAchievement`
+6. `Produtividade`
+   `TaskItem`, `TaskRecurrence`, `Goal`
+7. `Organizacao Pessoal`
+   `ShoppingList`, `ShoppingListItem`, `NoteItem`, `ReadingItem`
+8. `Financas`
+   `FinanceEntry`
 
 Essa divisao ja e suficiente para orientar futuras separacoes modulares, mesmo que hoje tudo ainda esteja concentrado sob o mesmo contexto.
 
@@ -48,78 +65,51 @@ Essa divisao ja e suficiente para orientar futuras separacoes modulares, mesmo q
                        | singleton config     |
                        +----------------------+
 
+                       +----------------------+
+                       |   BonusPointRule     |
+                       | regras de pontos     |
+                       +----------------------+
+
  +------------------+        1 ----- 1        +------------------+
  |       User       |-------------------------|   UserSettings   |
  | agregado central |                         | preferencias     |
  +------------------+                         +------------------+
           |
           | 1 ----- N
-          v
- +------------------+
- |   RefreshToken   |
- | sessao renovavel |
- +------------------+
-          |
-          | 1 ----- N
-          v
- +----------------------+
- |  PasswordResetCode   |
- | reset de senha       |
- +----------------------+
-          |
-          | 1 ----- N
-          v
- +------------------+
- |     LoginLog     |
- | auditoria login  |
- +------------------+
-          |
-          | 1 ----- N
-          v
- +------------------+          N ----- 1      +----------------------+
- |  UserAchievement |-------------------------|   BonusAchievement   |
- | conquista user   |                         | catalogo conquista   |
- +------------------+                         +----------------------+
-          |
-          | 1 ----- N
-          v
- +------------------+
- |  UserBonusPoint  |
- | lancamento ponto |
- +------------------+
+          +---------------------------> RefreshToken
+          +---------------------------> PasswordResetCode
+          +---------------------------> LoginLog
+          +---------------------------> UserBonusPoint
+          +---------------------------> UserAchievement ---- N:1 ---- BonusAchievement
+          +---------------------------> TaskItem ---------- 1:1 ---- TaskRecurrence
+          |                                   |
+          |                                   +---- 1:N ---- TaskItem (filhas geradas)
+          +---------------------------> Goal
+          +---------------------------> ShoppingList ------ 1:N ---- ShoppingListItem
+          +---------------------------> NoteItem
+          +---------------------------> ReadingItem
+          +---------------------------> FinanceEntry
 ```
 
 Observacao:
 
-- o diagrama acima representa dependencias de dominio e mapeamentos atuais, nao necessariamente limites ideais de modulo
+- o diagrama acima representa ownership e mapeamentos atuais, nao necessariamente os limites ideais de modulo
 
-## Analise por Entidade
+## Analise por Bloco
 
-### `eTasksVersion`
+### `Configuracao Global`
 
-Papel atual:
-
-- registro singleton com dados da versao distribuida para clientes
+`eTasksVersion` continua sendo uma entidade singleton usada como configuracao persistida da versao do app.
 
 Leitura arquitetural:
 
-- nao se comporta como entidade de negocio rica
-- funciona mais como configuracao persistida
-- o fato de ter `Id = 1` reforca que o modelo e singleton, nao catalogo
+- baixa complexidade
+- baixo risco
+- nao e agregado de negocio rico
 
-Risco estrutural:
+### `Identidade e Conta`
 
-- baixo
-
-Oportunidade futura:
-
-- migrar para um modulo de `ApplicationSettings` ou `ReleaseManagement` se o dominio de publicacao crescer
-
-### `User`
-
-Papel atual:
-
-- agregado central do sistema
+`User` continua sendo o agregado central do sistema.
 
 Concentra hoje:
 
@@ -127,163 +117,133 @@ Concentra hoje:
 - credencial
 - autorizacao
 - estado da conta
-- metadados de ciclo de vida
-- relacoes com configuracoes, tokens e gamificacao
+- ownership dos recursos pessoais
 
 Forca do modelo:
 
-- simples de entender
-- reduz dispersao para um sistema ainda pequeno ou medio
+- simples de consultar
+- ownership claro
+- facilita filtros por usuario autenticado
 
 Risco estrutural:
 
 - alto acoplamento
-- tendencia a crescimento do agregado com regras heterogeneas
+- crescimento excessivo do papel de `User`
 
-Sinais de que pode crescer demais:
+### `Autenticacao e Auditoria`
 
-- auth, admin, perfil e bonus dependem todos de `User`
-- qualquer mudanca transversal tende a tocar o mesmo agregado
-
-### `RefreshToken`
-
-Papel atual:
-
-- persistencia de sessao renovavel para JWT
+`RefreshToken`, `PasswordResetCode` e `LoginLog` continuam formando um bloco bastante coerente.
 
 Pontos positivos:
 
-- modela explicitamente revogacao
-- guarda `UserAgent`, o que ajuda no controle por cliente
-- e um bom artefato de seguranca operacional
-
-Risco estrutural:
-
-- baixo
-
-Observacao:
-
-- compoe bem um subdominio de autenticacao
-
-### `PasswordResetCode`
-
-Papel atual:
-
-- token de recuperacao com expiracao e uso unico
-
-Pontos positivos:
-
-- estado simples
-- finalidade clara
-- bom encaixe transacional
-
-Risco estrutural:
-
-- baixo
-
-Observacao:
-
-- junto com `RefreshToken`, ja sugere um modulo de credenciais/sessao
-
-### `LoginLog`
-
-Papel atual:
-
-- trilha de auditoria para login e bloqueio
-
-Pontos positivos:
-
-- permite rastreabilidade de falhas e acessos
-- aceita tentativas sem usuario identificado
-
-Atencao arquitetural:
-
-- a entidade possui relacao opcional com `User`
-- essa relacao nao esta explicitamente configurada no `OnModelCreating`
-
-Risco estrutural:
-
-- medio
-
-Motivo:
-
-- em geral, auditoria tende a crescer rapido em volume e consulta
-- vale decidir cedo se esse historico continuara no mesmo contexto transacional ou se no futuro deve ir para armazenamento mais especializado
-
-### `UserSettings`
-
-Papel atual:
-
-- preferencias 1:1 do usuario
-
-Pontos positivos:
-
-- separa configuracoes do corpo principal de `User`
-- reduz poluicao do agregado central
-
-Risco estrutural:
-
-- baixo
-
-Observacao:
-
-- esse tipo de separacao e um bom padrao para continuar seguindo
-
-### `UserBonusPoint`
-
-Papel atual:
-
-- ledger de pontos do usuario
-
-Pontos positivos:
-
-- historico preservado
-- saldo derivado, nao sobrescrito
-- bom para auditoria
-
-Risco estrutural:
-
-- medio
-
-Motivo:
-
-- se o volume crescer, somas frequentes podem pressionar consultas
-- talvez surja necessidade de snapshot/agregado de saldo
-
-### `BonusAchievement`
-
-Papel atual:
-
-- catalogo mestre de conquistas
-
-Pontos positivos:
-
-- codigo unico
-- separacao clara entre definicao de conquista e conquista adquirida
-
-Risco estrutural:
-
-- baixo
-
-### `UserAchievement`
-
-Papel atual:
-
-- associacao historica entre usuario e conquista
-
-Pontos positivos:
-
-- indice unico por usuario + conquista
-- preserva `PointsAtAchievement` como snapshot historico
+- escopo claro
+- responsabilidade operacional bem definida
+- candidato natural a modularizacao futura
 
 Risco estrutural:
 
 - baixo a medio
+- `LoginLog` pode crescer em volume mais rapidamente do que o restante do dominio
 
-Motivo:
+### `Perfil`
 
-- cresce conforme a gamificacao cresce
-- ainda assim, o modelo atual esta correto e previsivel
+`UserSettings` segue como boa extensao 1:1 do usuario.
+
+Pontos positivos:
+
+- evita poluir `User` com preferencias
+- e um bom padrao para futuras separacoes
+
+### `Gamificacao`
+
+O bloco de gamificacao ficou mais maduro com a inclusao de `BonusPointRule`.
+
+Papeis:
+
+- `BonusPointRule`: regra central por origem
+- `UserBonusPoint`: ledger de pontos
+- `BonusAchievement`: catalogo de conquistas
+- `UserAchievement`: historico de conquista adquirida
+
+Pontos positivos:
+
+- fronteira de subdominio mais clara
+- boa rastreabilidade
+- melhor base para trocar valores de pontuacao sem hardcode espalhado
+
+Risco estrutural:
+
+- medio
+- se o volume de pontos crescer muito, pode surgir necessidade de saldo materializado
+
+### `Produtividade`
+
+Este bloco cobre tarefas e metas.
+
+`TaskItem`:
+
+- representa a tarefa concreta mostrada ao usuario
+- suporta autorrelacao para tarefas filhas geradas
+
+`TaskRecurrence`:
+
+- isola a configuracao de recorrencia da tarefa base
+- mantem a entidade de tarefa mais limpa para casos nao recorrentes
+
+`Goal`:
+
+- modela objetivos simples com resumo, descricao, tipo, prioridade, pontuacao opcional e status
+
+Pontos positivos:
+
+- boa separacao entre instancia de tarefa e regra de recorrencia
+- metas entram como recurso proprio, sem acoplamento direto com tarefas
+- o recurso foi mantido propositalmente simples, sem prazo, progresso numerico ou estrutura de subtarefas
+
+Risco estrutural:
+
+- medio
+- pode surgir debate futuro sobre unificar motor de recorrencia entre tarefas e financas
+
+### `Organizacao Pessoal`
+
+Este bloco cobre compras, anotacoes e leituras.
+
+`ShoppingList` + `ShoppingListItem`:
+
+- bom desenho agregado pai-filho
+- ownership e status de conclusao estao claros
+
+`NoteItem`:
+
+- entidade simples e coesa
+- sem mistura indevida com gamificacao
+- hoje foi reduzida ao essencial: assunto, texto e datas de criacao/edicao
+
+`ReadingItem`:
+
+- combina progresso, status e recompensa opcional
+- encaixa bem entre conhecimento pessoal e gamificacao
+
+Risco estrutural:
+
+- baixo
+
+### `Financas`
+
+`FinanceEntry` concentra entradas e saidas financeiras no mesmo modelo.
+
+Pontos positivos:
+
+- leitura simples
+- cobre recorrencia sem tabela adicional
+- pronto para calcular saldo por periodo
+- agora tambem distingue forma de pagamento no proprio lançamento
+
+Risco estrutural:
+
+- medio
+- dependendo do crescimento, pode valer separar no futuro categorias, contas ou recorrencias em entidades proprias
 
 ## Analise de Acoplamento
 
@@ -293,25 +253,29 @@ Hoje `User` e o centro gravitacional do banco.
 
 Impactos disso:
 
-- regras de autenticacao dependem de `User`
-- regras administrativas dependem de `User`
-- regras de perfil dependem de `User`
-- regras de bonus dependem de `User`
+- auth depende de `User`
+- gamificacao depende de `User`
+- tarefas dependem de `User`
+- metas dependem de `User`
+- compras dependem de `User`
+- notas dependem de `User`
+- leituras dependem de `User`
+- financas dependem de `User`
 
-Isso nao e necessariamente um erro, mas indica um desenho muito centrado em identidade.
+Isso nao e necessariamente um erro, mas confirma um desenho fortemente orientado a dados pessoais por conta.
 
 ### Coesao dos blocos
 
 Blocos com boa coesao interna:
 
 - `RefreshToken` + `PasswordResetCode` + `LoginLog`
-- `UserBonusPoint` + `BonusAchievement` + `UserAchievement`
+- `BonusPointRule` + `UserBonusPoint` + `BonusAchievement` + `UserAchievement`
+- `TaskItem` + `TaskRecurrence`
+- `ShoppingList` + `ShoppingListItem`
 
-Blocos ainda muito fundidos no agregado central:
+Bloco com maior risco de centralidade:
 
-- estado da conta
-- perfil base
-- privilegios administrativos
+- `User`
 
 ## Sugestoes de Modularizacao
 
@@ -328,106 +292,81 @@ Direcao:
 
 - modulo `Identity`
 - modulo `Auth`
-- modulo `UserProfile`
-- modulo `Bonus`
+- modulo `Profile`
+- modulo `Gamification`
+- modulo `Tasks`
+- modulo `Goals`
+- modulo `Shopping`
+- modulo `Notes`
+- modulo `Readings`
+- modulo `Finances`
 - modulo `AppConfig`
 
-Vantagens:
-
-- baixo risco
-- menor custo imediato
-- prepara o terreno para mudancas maiores
-
-Quando faz sentido:
-
-- se o projeto ainda esta evoluindo rapido e voce nao quer assumir migracoes estruturais agora
-
-### Opcao 2. Transformar `User` em agregado mais enxuto
+### Opcao 2. Preservar `User` como owner, mas nao como concentrador de regras
 
 Objetivo:
 
-- reduzir o peso conceitual de `User`
+- manter a relacao por `UserUid`
+- impedir que toda regra nova caia no agregado central
 
 Direcao:
 
 - `User` fica mais focado em identidade e estado da conta
-- preferencias continuam em `UserSettings`
-- auth operacional fica conceitualmente em modulo proprio
-- bonus fica tratado como subdominio independente referenciando `UserUid`
+- regras de negocio passam a viver nos subdominios correspondentes
 
-Vantagens:
-
-- melhora legibilidade
-- reduz pressao para jogar toda regra em `User`
-
-Risco:
-
-- exige disciplina de camada, mesmo sem alterar o schema
-
-### Opcao 3. Separar contexto de auditoria
+### Opcao 3. Padronizar a ideia de recorrencia no futuro
 
 Objetivo:
 
-- desacoplar historico operacional de login do nucleo transacional
+- avaliar se o sistema deve ter um modelo unico de recorrencia
 
-Direcao:
+Cenario atual:
 
-- tratar `LoginLog` como contexto de auditoria
-- futuramente mover para armazenamento separado, se volume ou observabilidade exigirem
+- tarefas usam `TaskRecurrence`
+- financas usam recorrencia embutida em `FinanceEntry`
 
-Vantagens:
+Comentario:
 
-- melhor escalabilidade de historico
-- melhor clareza entre dado operacional e dado de negocio
+- a diferenca faz sentido agora
+- pode deixar de fazer sentido se mais recursos recorrentes surgirem
 
-Risco:
-
-- aumenta complexidade operacional cedo demais se o sistema ainda for pequeno
-
-### Opcao 4. Evoluir bonus para subdominio proprio
+### Opcao 4. Preparar recursos compartilhados sem alterar o desenho atual prematuramente
 
 Objetivo:
 
-- preparar crescimento de gamificacao sem poluir identidade
+- manter a simplicidade atual
+- admitir evolucao futura para ownership multiplo
 
-Direcao:
+Comentario:
 
-- manter referencia por `UserUid`
-- encapsular regras de pontos e conquista em modulo dedicado
-- decidir depois se precisa saldo materializado
-
-Vantagens:
-
-- bonus ja esta relativamente bem separado no modelo
-- boa chance de evoluir sem romper o resto do sistema
+- hoje quase tudo e pessoal
+- se surgirem listas compartilhadas, tarefas colaborativas ou metas em grupo, o caminho natural sera criar entidades associativas especificas
 
 ## Recomendacao Pragmatica
 
 Se o objetivo for tomar decisoes estruturais sem refactor excessivo agora, a melhor sequencia parece ser:
 
-1. modularizar logicamente em codigo antes de modularizar fisicamente o banco
-2. manter `User` como agregado central por enquanto, mas impedir que novas responsabilidades caiam nele por padrao
-3. tratar `Auth` e `Bonus` como dois subdominios candidatos naturais a separacao
-4. considerar `eTasksVersion` como configuracao singleton, nao como entidade de negocio central
-5. explicitar no mapeamento EF a relacao de `LoginLog` com `User` para reduzir ambiguidade
+1. manter o schema atual como base do produto
+2. modularizar a camada de negocio por subdominio antes de modularizar fisicamente o banco
+3. impedir que novas regras de tarefas, metas, compras, leituras e financas entrem diretamente em `User`
+4. tratar `Gamification`, `Tasks` e `Finances` como candidatos naturais a crescimento independente
+5. revisar mais adiante se ownership individual continua suficiente para todos os recursos
 
 ## Decisoes Estruturais que Valem Discussao
 
-Perguntas que este modelo atual sugere:
-
-1. `User` deve continuar sendo o unico centro do dominio ou o projeto ja chegou no ponto de separar identidade de perfil?
-2. `LoginLog` vai continuar servindo apenas apoio operacional ou deve evoluir para trilha de auditoria mais robusta?
-3. o modulo de bonus e parte central do produto ou apenas um recurso acessorio?
-4. `eTasksVersion` pertence ao dominio principal ou a um modulo de configuracao do sistema?
-5. existe expectativa de crescimento em volume para tokens, logs ou pontos que justifique pensar em estrategia de persistencia separada?
+1. `User` deve continuar sendo o unico owner de quase todo o dominio?
+2. o sistema deve unificar a estrategia de recorrencia entre subdominios?
+3. `BonusPointRule` sera apenas configuracao interna ou tera administracao explicita?
+4. compras e leituras devem continuar com pontos opcionais ou migrar para regra central obrigatoria?
+5. financas deve continuar em um unico agregado simples ou crescer para contas, categorias e centros de custo?
 
 ## Resumo Executivo
 
-O modelo atual esta coerente, simples e funcional. O principal risco nao esta em entidades mal desenhadas individualmente, mas no fato de `User` concentrar demais o dominio.
+O modelo atual esta coerente com o produto descrito: um sistema pessoal de organizacao e produtividade com gamificacao. O principal risco nao esta em entidades individuais mal desenhadas, mas na centralidade excessiva de `User` e na necessidade futura de modularizar melhor os subdominios.
 
 Se eu tivesse que resumir a recomendacao em uma linha:
 
-> O proximo passo mais valioso nao e quebrar o banco imediatamente, e sim separar melhor os subdominios em torno de `User`, especialmente `Auth` e `Bonus`.
+> O proximo passo mais valioso nao e quebrar o banco imediatamente, e sim consolidar os subdominios do produto em torno de ownership por usuario, evitando que `User` vire o lugar onde toda regra nova passa a morar.
 
 ## Arquivos de Referencia
 
@@ -437,7 +376,16 @@ Se eu tivesse que resumir a recomendacao em uma linha:
 - `eTasks-server.Models/Entities/Users/PasswordResetCode.cs`
 - `eTasks-server.Models/Entities/Users/LoginLog.cs`
 - `eTasks-server.Models/Entities/Users/UserSettings.cs`
+- `eTasks-server.Models/Entities/Gamification/BonusPointRule.cs`
 - `eTasks-server.Models/Entities/Users/UserBonusPoint.cs`
 - `eTasks-server.Models/Entities/Users/BonusAchievement.cs`
 - `eTasks-server.Models/Entities/Users/UserAchievement.cs`
+- `eTasks-server.Models/Entities/Productivity/TaskItem.cs`
+- `eTasks-server.Models/Entities/Productivity/TaskRecurrence.cs`
+- `eTasks-server.Models/Entities/Goals/Goal.cs`
+- `eTasks-server.Models/Entities/Shopping/ShoppingList.cs`
+- `eTasks-server.Models/Entities/Shopping/ShoppingListItem.cs`
+- `eTasks-server.Models/Entities/Notes/NoteItem.cs`
+- `eTasks-server.Models/Entities/Readings/ReadingItem.cs`
+- `eTasks-server.Models/Entities/Finances/FinanceEntry.cs`
 - `eTasks-server.Core/Data/AppDbContext.cs`

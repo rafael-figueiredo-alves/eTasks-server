@@ -19,20 +19,21 @@
 </head>
 <body>
   <h1>Resumo Atual das Entidades do Banco</h1>
-  <p class="meta">Data de referencia: 2026-04-05<br/>Projeto fonte: <code>eTasks-server.Models/Entities</code><br/>Contexto de mapeamento: <code>eTasks-server.Core/Data/AppDbContext.cs</code></p>
+  <p class="meta">Data de referencia: 2026-04-08<br/>Projeto fonte: <code>eTasks-server.Models/Entities</code><br/>Contexto de mapeamento: <code>eTasks-server.Core/Data/AppDbContext.cs</code></p>
 
   <div class="box">
-    <p>Hoje o modelo persistido do sistema possui 9 entidades mapeadas no <code>AppDbContext</code>: <code>eTasksVersion</code>, <code>User</code>, <code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code>, <code>UserSettings</code>, <code>UserBonusPoint</code>, <code>BonusAchievement</code> e <code>UserAchievement</code>.</p>
-    <p>O dominio persistido e fortemente centrado em <code>User</code>, com tres blocos principais: autenticacao e ciclo de conta, configuracao/perfil do usuario e sistema de pontuacao/conquistas.</p>
+    <p>Hoje o modelo persistido do sistema possui 18 entidades mapeadas no <code>AppDbContext</code>, cobrindo configuracao global, autenticacao, perfil, gamificacao, tarefas, metas, compras, anotacoes, leituras e financas.</p>
+    <p>O dominio continua centrado em <code>User</code>, que atua como owner dos recursos pessoais do aplicativo.</p>
   </div>
 
-  <h2>Leitura Arquitetural Rapida</h2>
+  <h2>Blocos do Dominio</h2>
   <ul>
-    <li><strong>Nucleo de identidade:</strong> <code>User</code> concentra identidade, credenciais, estado da conta e os principais relacionamentos.</li>
-    <li><strong>Seguranca:</strong> <code>RefreshToken</code>, <code>PasswordResetCode</code> e <code>LoginLog</code> formam o bloco operacional de autenticacao.</li>
-    <li><strong>Perfil:</strong> <code>UserSettings</code> modela preferencias 1:1 do usuario.</li>
-    <li><strong>Gamificacao:</strong> <code>UserBonusPoint</code>, <code>BonusAchievement</code> e <code>UserAchievement</code> compoem o modulo de bonus.</li>
-    <li><strong>Configuracao global:</strong> <code>eTasksVersion</code> funciona como singleton persistido de versao da aplicacao.</li>
+    <li><strong>Configuracao global:</strong> <code>eTasksVersion</code>.</li>
+    <li><strong>Identidade e autenticacao:</strong> <code>User</code>, <code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code>, <code>UserSettings</code>.</li>
+    <li><strong>Gamificacao:</strong> <code>BonusPointRule</code>, <code>UserBonusPoint</code>, <code>BonusAchievement</code>, <code>UserAchievement</code>.</li>
+    <li><strong>Tarefas e metas:</strong> <code>TaskItem</code>, <code>TaskRecurrence</code>, <code>Goal</code>.</li>
+    <li><strong>Compras e conhecimento pessoal:</strong> <code>ShoppingList</code>, <code>ShoppingListItem</code>, <code>NoteItem</code>, <code>ReadingItem</code>.</li>
+    <li><strong>Financas:</strong> <code>FinanceEntry</code>.</li>
   </ul>
 
   <h2>Entidades</h2>
@@ -41,84 +42,119 @@
     <h3>eTasksVersion</h3>
     <p><strong>Tabela:</strong> <code>version</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>Natureza:</strong> configuracao singleton</p>
     <p>Campos principais: <code>Id</code>, <code>AppVersion</code>, <code>DisplayVersion</code>, <code>URL_APK</code>, <code>URL_Win</code>.</p>
-    <p>Observacao: o sistema assume um unico registro; estruturalmente se comporta mais como configuracao persistida do que como agregado de negocio.</p>
   </div>
 
   <div class="entity">
     <h3>User</h3>
     <p><strong>Tabela:</strong> <code>users</code><br/><strong>PK:</strong> <code>Uid</code><br/><strong>Indice unico:</strong> <code>Email</code></p>
-    <p>Campos principais: identidade (<code>Uid</code>, <code>Name</code>, <code>Email</code>), autenticacao (<code>PasswordHash</code>), perfil (<code>PhotoPath</code>), acesso (<code>IsConfirmed</code>, <code>IsAdmin</code>, <code>IsBlocked</code>) e ciclo de vida (<code>CreatedAt</code>, <code>LastAccessAt</code>, <code>IsDeleted</code>, <code>DeletedAt</code>).</p>
-    <p>Relacionamentos: 1:N com <code>RefreshToken</code>, 1:N com <code>PasswordResetCode</code>, 1:1 com <code>UserSettings</code>, 1:N com <code>UserBonusPoint</code> e 1:N com <code>UserAchievement</code>.</p>
-    <p>Observacao estrutural: <code>User</code> concentra muitas responsabilidades e e o principal ponto de acoplamento do modelo atual.</p>
+    <p>Owner principal do dominio pessoal. Relacionamentos: 1:N com <code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code>, <code>UserBonusPoint</code>, <code>UserAchievement</code>, <code>TaskItem</code>, <code>Goal</code>, <code>ShoppingList</code>, <code>NoteItem</code>, <code>ReadingItem</code> e <code>FinanceEntry</code>; 1:1 com <code>UserSettings</code>.</p>
   </div>
 
   <div class="entity">
     <h3>RefreshToken</h3>
-    <p><strong>Tabela:</strong> <code>refresh_tokens</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>FK:</strong> <code>UserUid -> User.Uid</code></p>
-    <p>Representa sessao renovavel de autenticacao. Campos centrais: <code>Token</code>, <code>UserAgent</code>, <code>ExpiresAt</code>, <code>IsRevoked</code>, <code>CreatedAt</code>.</p>
+    <p><strong>Tabela:</strong> <code>refresh_tokens</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Sessao renovavel de autenticacao com <code>Token</code>, <code>UserAgent</code>, <code>ExpiresAt</code> e <code>IsRevoked</code>.</p>
   </div>
 
   <div class="entity">
     <h3>PasswordResetCode</h3>
-    <p><strong>Tabela:</strong> <code>password_reset_codes</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>FK:</strong> <code>UserUid -> User.Uid</code></p>
-    <p>Token de recuperacao de senha com expiracao e uso unico. Campos centrais: <code>Code</code>, <code>ExpiresAt</code>, <code>IsUsed</code>, <code>CreatedAt</code>.</p>
+    <p><strong>Tabela:</strong> <code>password_reset_codes</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Token de recuperacao de senha com expiracao e uso unico.</p>
   </div>
 
   <div class="entity">
     <h3>LoginLog</h3>
-    <p><strong>Tabela:</strong> <code>login_logs</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>Referencia opcional:</strong> <code>UserUid -> User.Uid</code></p>
-    <p>Auditoria de login com <code>Status</code>, <code>IpAddress</code>, <code>UserAgent</code> e <code>CreatedAt</code>. Aceita <code>UserUid</code> nulo para tentativas sem usuario identificado.</p>
-    <p>Observacao: a navegacao existe, mas o relacionamento nao esta explicitamente configurado no <code>OnModelCreating</code>.</p>
+    <p><strong>Tabela:</strong> <code>login_logs</code><br/><strong>Referencia opcional:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Auditoria de tentativas de login com <code>Status</code>, <code>IpAddress</code>, <code>UserAgent</code> e <code>CreatedAt</code>.</p>
   </div>
 
   <div class="entity">
     <h3>UserSettings</h3>
-    <p><strong>Tabela:</strong> <code>user_settings</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>FK unica:</strong> <code>UserUid -> User.Uid</code></p>
-    <p>Extensao 1:1 de preferencias do usuario. Campos centrais: <code>Theme</code>, <code>Language</code>, <code>UseCamera</code>, <code>EnableBonusSystem</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>.</p>
+    <p><strong>Tabela:</strong> <code>user_settings</code><br/><strong>FK unica:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Preferencias 1:1 do usuario, com tema, idioma e opcoes do app.</p>
+  </div>
+
+  <div class="entity">
+    <h3>BonusPointRule</h3>
+    <p><strong>Tabela:</strong> <code>bonus_point_rules</code><br/><strong>Indice unico:</strong> <code>Source</code></p>
+    <p>Catalogo central das regras padrao de pontuacao por origem.</p>
   </div>
 
   <div class="entity">
     <h3>UserBonusPoint</h3>
-    <p><strong>Tabela:</strong> <code>user_bonus_points</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>FK:</strong> <code>UserUid -> User.Uid</code></p>
-    <p>Lancamento de pontos por usuario. Campos centrais: <code>Points</code>, <code>Source</code>, <code>Description</code>, <code>CreatedAt</code>.</p>
-    <p>Observacao: o saldo e derivado por soma, nao armazenado diretamente.</p>
+    <p><strong>Tabela:</strong> <code>user_bonus_points</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Ledger de pontos do usuario com <code>Points</code>, <code>Source</code>, <code>Description</code>, <code>SourceReferenceId</code> e <code>CreatedAt</code>.</p>
   </div>
 
   <div class="entity">
     <h3>BonusAchievement</h3>
-    <p><strong>Tabela:</strong> <code>bonus_achievements</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>Indice unico:</strong> <code>Code</code></p>
-    <p>Catalogo mestre de conquistas. Campos centrais: <code>Code</code>, <code>Name</code>, <code>Description</code>, <code>PointsRequired</code>, <code>IsActive</code>, <code>CreatedAt</code>.</p>
+    <p><strong>Tabela:</strong> <code>bonus_achievements</code><br/><strong>Indice unico:</strong> <code>Code</code></p>
+    <p>Catalogo mestre de conquistas.</p>
   </div>
 
   <div class="entity">
     <h3>UserAchievement</h3>
-    <p><strong>Tabela:</strong> <code>user_achievements</code><br/><strong>PK:</strong> <code>Id</code><br/><strong>FKs:</strong> <code>UserUid -> User.Uid</code> e <code>BonusAchievementId -> BonusAchievement.Id</code></p>
-    <p><strong>Indice unico composto:</strong> <code>(UserUid, BonusAchievementId)</code></p>
-    <p>Registro de conquista adquirida. Campos centrais: <code>PointsAtAchievement</code> e <code>AchievedAt</code>.</p>
-    <p>Observacao: preserva snapshot historico do contexto da conquista.</p>
+    <p><strong>Tabela:</strong> <code>user_achievements</code><br/><strong>FKs:</strong> <code>UserUid -&gt; User.Uid</code> e <code>BonusAchievementId -&gt; BonusAchievement.Id</code></p>
+    <p>Registro historico de conquistas adquiridas pelo usuario.</p>
   </div>
 
-  <h2>Pontos Estruturais Relevantes</h2>
-  <ul>
-    <li><code>User</code> e o principal agregado do banco e concentra autenticacao, administracao, perfil e ganchos de gamificacao.</li>
-    <li>O bloco de autenticacao (<code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code>) ja e um candidato natural a modularizacao futura.</li>
-    <li>O bloco de bonus tambem ja tem uma fronteira util: catalogo (<code>BonusAchievement</code>) + lancamentos (<code>UserBonusPoint</code>) + historico de conquista (<code>UserAchievement</code>).</li>
-    <li><code>eTasksVersion</code> parece mais configuracao singleton persistida do que entidade de negocio tradicional.</li>
-    <li>Vale explicitar no mapeamento a relacao de <code>LoginLog</code> com <code>User</code> se essa trilha de auditoria continuar relevante para o projeto.</li>
-  </ul>
+  <div class="entity">
+    <h3>TaskItem</h3>
+    <p><strong>Tabela:</strong> <code>task_items</code><br/><strong>FKs:</strong> <code>UserUid -&gt; User.Uid</code> e <code>GeneratedFromTaskId -&gt; TaskItem.Id</code> opcional</p>
+    <p>Tarefa concreta do usuario, simples ou gerada por recorrencia.</p>
+  </div>
 
-  <h2>Arquivos de Referencia</h2>
+  <div class="entity">
+    <h3>TaskRecurrence</h3>
+    <p><strong>Tabela:</strong> <code>task_recurrences</code><br/><strong>FK unica:</strong> <code>TaskItemId -&gt; TaskItem.Id</code></p>
+    <p>Configuracao de recorrencia da tarefa base.</p>
+  </div>
+
+  <div class="entity">
+    <h3>Goal</h3>
+    <p><strong>Tabela:</strong> <code>goals</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Meta do usuario com <code>Summary</code>, <code>Description</code>, <code>Type</code>, <code>Priority</code>, <code>RewardPoints</code>, <code>Status</code>, <code>CreatedAt</code> e <code>UpdatedAt</code>.</p>
+  </div>
+
+  <div class="entity">
+    <h3>ShoppingList</h3>
+    <p><strong>Tabela:</strong> <code>shopping_lists</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Lista de compras principal do usuario.</p>
+  </div>
+
+  <div class="entity">
+    <h3>ShoppingListItem</h3>
+    <p><strong>Tabela:</strong> <code>shopping_list_items</code><br/><strong>FK:</strong> <code>ShoppingListId -&gt; ShoppingList.Id</code></p>
+    <p>Itens da lista de compras, com marca, quantidade, preco e status.</p>
+  </div>
+
+  <div class="entity">
+    <h3>NoteItem</h3>
+    <p><strong>Tabela:</strong> <code>notes</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Anotacao livre do usuario com <code>Subject</code>, <code>Content</code>, <code>CreatedAt</code> e <code>UpdatedAt</code>, sem integracao direta com pontuacao.</p>
+  </div>
+
+  <div class="entity">
+    <h3>ReadingItem</h3>
+    <p><strong>Tabela:</strong> <code>reading_items</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Registro de leitura com progresso, status, avaliacao e pontos opcionais.</p>
+  </div>
+
+  <div class="entity">
+    <h3>FinanceEntry</h3>
+    <p><strong>Tabela:</strong> <code>finance_entries</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
+    <p>Lancamento financeiro de entrada ou saida, recorrente ou nao, com <code>EntryType</code>, <code>PaymentMethod</code>, <code>Amount</code>, <code>OccursOn</code>, <code>IsPaid</code> e <code>PaidAt</code>.</p>
+  </div>
+
+  <h2>Relacionamentos Consolidados</h2>
   <ul>
-    <li><code>eTasks-server.Models/Entities/Version/eTasksVersion.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/User.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/RefreshToken.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/PasswordResetCode.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/LoginLog.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/UserSettings.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/UserBonusPoint.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/BonusAchievement.cs</code></li>
-    <li><code>eTasks-server.Models/Entities/Users/UserAchievement.cs</code></li>
-    <li><code>eTasks-server.Core/Data/AppDbContext.cs</code></li>
+    <li><code>User</code> 1:N <code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code>, <code>UserBonusPoint</code>, <code>UserAchievement</code>, <code>TaskItem</code>, <code>Goal</code>, <code>ShoppingList</code>, <code>NoteItem</code>, <code>ReadingItem</code> e <code>FinanceEntry</code>.</li>
+    <li><code>User</code> 1:1 <code>UserSettings</code>.</li>
+    <li><code>BonusAchievement</code> 1:N <code>UserAchievement</code>.</li>
+    <li><code>TaskItem</code> 1:1 <code>TaskRecurrence</code>.</li>
+    <li><code>TaskItem</code> 1:N <code>TaskItem</code> via <code>GeneratedFromTaskId</code>.</li>
+    <li><code>ShoppingList</code> 1:N <code>ShoppingListItem</code>.</li>
+    <li><code>eTasksVersion</code> e <code>BonusPointRule</code> nao dependem de outras entidades.</li>
   </ul>
 </body>
 </html>

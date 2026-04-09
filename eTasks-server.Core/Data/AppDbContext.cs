@@ -1,3 +1,10 @@
+using eTasks_server.Models.Entities.Finances;
+using eTasks_server.Models.Entities.Gamification;
+using eTasks_server.Models.Entities.Goals;
+using eTasks_server.Models.Entities.Notes;
+using eTasks_server.Models.Entities.Productivity;
+using eTasks_server.Models.Entities.Readings;
+using eTasks_server.Models.Entities.Shopping;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Entities.Version;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +30,15 @@ namespace eTasks_server.Core.Data
         public DbSet<UserBonusPoint> UserBonusPoints { get; set; }
         public DbSet<BonusAchievement> BonusAchievements { get; set; }
         public DbSet<UserAchievement> UserAchievements { get; set; }
+        public DbSet<BonusPointRule> BonusPointRules { get; set; }
+        public DbSet<TaskItem> TaskItems { get; set; }
+        public DbSet<TaskRecurrence> TaskRecurrences { get; set; }
+        public DbSet<Goal> Goals { get; set; }
+        public DbSet<ShoppingList> ShoppingLists { get; set; }
+        public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
+        public DbSet<NoteItem> Notes { get; set; }
+        public DbSet<ReadingItem> ReadingItems { get; set; }
+        public DbSet<FinanceEntry> FinanceEntries { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +52,15 @@ namespace eTasks_server.Core.Data
             UserBonusPoint.Configure(modelBuilder);
             BonusAchievement.Configure(modelBuilder);
             UserAchievement.Configure(modelBuilder);
+            BonusPointRule.Configure(modelBuilder);
+            TaskItem.Configure(modelBuilder);
+            TaskRecurrence.Configure(modelBuilder);
+            Goal.Configure(modelBuilder);
+            ShoppingList.Configure(modelBuilder);
+            ShoppingListItem.Configure(modelBuilder);
+            NoteItem.Configure(modelBuilder);
+            ReadingItem.Configure(modelBuilder);
+            FinanceEntry.Configure(modelBuilder);
 
             base.OnModelCreating(modelBuilder);
         }
