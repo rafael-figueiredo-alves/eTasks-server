@@ -1,11 +1,10 @@
-using eTasks_server.Models.Utils;
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Finances;
 using eTasks_server.Models.Entities.Goals;
 using eTasks_server.Models.Entities.Notes;
 using eTasks_server.Models.Entities.Productivity;
 using eTasks_server.Models.Entities.Readings;
 using eTasks_server.Models.Entities.Shopping;
+using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 

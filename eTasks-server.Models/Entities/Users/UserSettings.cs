@@ -60,8 +60,8 @@ namespace eTasks_server.Models.Entities.Users
         public static void Configure(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserSettings>()
-                                .ToTable("user_settings")
-                                .HasKey(x => x.Id);
+                                    .ToTable("user_settings")
+                                    .HasKey(x => x.Id);
 
             modelBuilder.Entity<UserSettings>()
                                     .HasIndex(x => x.UserUid)
