@@ -30,8 +30,7 @@ namespace eTasks_server.Client.Pages
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Erro ao carregar a versao: {ex.Message}");
-                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versao: {ex.Message}", Severity.Error);
+                Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versão: {ex.Message}", Severity.Error);
             }
             finally
             {
@@ -54,12 +53,12 @@ namespace eTasks_server.Client.Pages
 
             if (await VersionService.SaveVersionAsync(_model))
             {
-                Snackbar.Add("Versao salva com sucesso!", Severity.Success);
-                Navigation.NavigateTo("/version");
+                Snackbar.Add("Versão salva com sucesso!", Severity.Success);
+                GoBack();
             }
             else
             {
-                Snackbar.Add("Erro ao salvar a versao. Tente novamente.", Severity.Error);
+                Snackbar.Add("Erro ao salvar a versão. Tente novamente.", Severity.Error);
             }
         }
 

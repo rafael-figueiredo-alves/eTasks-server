@@ -23,9 +23,9 @@ namespace eTasks_server.Core.BusinessLogicLayers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
-        private readonly ILogger<AuthBLL> _logger;
+        private readonly ILogger<IAuthBLL> _logger;
 
-        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ILogger<AuthBLL> logger)
+        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ILogger<IAuthBLL> logger)
         {
             _context = context;
             _configuration = configuration;

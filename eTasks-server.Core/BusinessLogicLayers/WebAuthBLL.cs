@@ -16,9 +16,9 @@ namespace eTasks_server.Core.BusinessLogicLayers
     public class WebAuthBLL : IWebAuthBLL
     {
         private readonly AppDbContext _context;
-        private readonly ILogger<WebAuthBLL> _logger;
+        private readonly ILogger<IWebAuthBLL> _logger;
 
-        public WebAuthBLL(AppDbContext context, ILogger<WebAuthBLL> logger)
+        public WebAuthBLL(AppDbContext context, ILogger<IWebAuthBLL> logger)
         {
             _context = context;
             _logger = logger;
