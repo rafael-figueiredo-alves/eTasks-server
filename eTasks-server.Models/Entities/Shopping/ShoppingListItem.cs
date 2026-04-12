@@ -17,29 +17,29 @@ namespace eTasks_server.Models.Entities.Shopping
         /// </summary>
         public Guid ShoppingListId { get; set; }
         /// <summary>
-        /// Nome do item a comprar.
+        /// Descrição do item a comprar.
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         /// <summary>
-        /// Marca do item.
+        /// Unidade usada no item.
         /// </summary>
-        public string? Brand { get; set; }
+        public ShoppingItemUnit Unit { get; set; } = ShoppingItemUnit.Unit;
         /// <summary>
         /// Quantidade desejada do item.
         /// </summary>
         public decimal Quantity { get; set; } = 1;
         /// <summary>
-        /// Preço unitário informado para o item.
+        /// Valor unitario informado para o item.
         /// </summary>
-        public decimal? UnitPrice { get; set; }
+        public decimal UnitPrice { get; set; }
+        /// <summary>
+        /// Valor total do item, calculado por quantidade multiplicada pelo valor unitario.
+        /// </summary>
+        public decimal TotalAmount { get; set; }
         /// <summary>
         /// Indica se o item já foi comprado.
         /// </summary>
         public bool IsCompleted { get; set; }
-        /// <summary>
-        /// Observações adicionais sobre o item.
-        /// </summary>
-        public string? Notes { get; set; }
         /// <summary>
         /// Data de criação do item.
         /// </summary>
@@ -64,7 +64,15 @@ namespace eTasks_server.Models.Entities.Shopping
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<ShoppingListItem>()
+                .Property(x => x.Unit)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<ShoppingListItem>()
                 .Property(x => x.UnitPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ShoppingListItem>()
+                .Property(x => x.TotalAmount)
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<ShoppingListItem>()

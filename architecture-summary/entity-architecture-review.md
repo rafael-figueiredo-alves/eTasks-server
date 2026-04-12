@@ -213,6 +213,7 @@ Este bloco cobre compras, anotacoes e leituras.
 
 - bom desenho agregado pai-filho
 - ownership e status de conclusao estao claros
+- os totais da lista e dos itens podem ser mantidos prontos para exibir a tela com menos custo de consulta
 
 `NoteItem`:
 

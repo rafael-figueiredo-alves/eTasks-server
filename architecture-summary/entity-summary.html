@@ -119,13 +119,13 @@
   <div class="entity">
     <h3>ShoppingList</h3>
     <p><strong>Tabela:</strong> <code>shopping_lists</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
-    <p>Lista de compras principal do usuario.</p>
+    <p>Lista de compras com <code>Name</code>, <code>Place</code>, <code>Type</code>, <code>TotalItems</code>, <code>TotalAmount</code> e <code>IsFinalized</code>.</p>
   </div>
 
   <div class="entity">
     <h3>ShoppingListItem</h3>
     <p><strong>Tabela:</strong> <code>shopping_list_items</code><br/><strong>FK:</strong> <code>ShoppingListId -&gt; ShoppingList.Id</code></p>
-    <p>Itens da lista de compras, com marca, quantidade, preco e status.</p>
+    <p>Itens da lista com <code>Description</code>, <code>Unit</code>, <code>Quantity</code>, <code>UnitPrice</code>, <code>TotalAmount</code> e <code>IsCompleted</code>.</p>
   </div>
 
   <div class="entity">

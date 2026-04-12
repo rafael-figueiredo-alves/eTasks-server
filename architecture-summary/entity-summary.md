@@ -85,6 +85,9 @@ O bloco de compras foi modelado com:
 - `ShoppingList`: lista principal
 - `ShoppingListItem`: itens da lista
 
+As listas agora carregam tipo, lugar, totais e status finalizada.
+Os itens carregam descricao, unidade, quantidade, valor unitario e total do item.
+
 ### 8. Conhecimento pessoal
 
 Dois recursos foram separados:
@@ -368,12 +371,11 @@ Natureza: lista de compras
 Campos principais:
 
 - `Name`
-- `StoreName`
-- `EstimatedTotalAmount`
-- `ActualTotalAmount`
-- `RewardPoints`
-- `IsCompleted`
-- `CompletedAt`
+- `Place`
+- `Type`
+- `TotalItems`
+- `TotalAmount`
+- `IsFinalized`
 
 ### `ShoppingListItem`
 
@@ -384,12 +386,12 @@ Natureza: item de compra
 
 Campos principais:
 
-- `Name`
-- `Brand`
+- `Description`
+- `Unit`
 - `Quantity`
 - `UnitPrice`
+- `TotalAmount`
 - `IsCompleted`
-- `Notes`
 
 ### `NoteItem`
 

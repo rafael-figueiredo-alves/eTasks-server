@@ -23,29 +23,25 @@ namespace eTasks_server.Models.Entities.Shopping
         /// </summary>
         public string Name { get; set; } = string.Empty;
         /// <summary>
-        /// Nome do mercado, loja ou local associado.
+        /// Local onde a compra sera realizada.
         /// </summary>
-        public string? StoreName { get; set; }
+        public string? Place { get; set; }
         /// <summary>
-        /// Valor total estimado da compra.
+        /// Tipo principal da lista.
         /// </summary>
-        public decimal? EstimatedTotalAmount { get; set; }
+        public ShoppingListType Type { get; set; } = ShoppingListType.Grocery;
         /// <summary>
-        /// Valor total efetivamente gasto.
+        /// Quantidade total de itens da lista.
         /// </summary>
-        public decimal? ActualTotalAmount { get; set; }
+        public int TotalItems { get; set; }
         /// <summary>
-        /// Quantidade opcional de pontos ao concluir a lista.
+        /// Valor total da lista, calculado a partir dos itens.
         /// </summary>
-        public int? RewardPoints { get; set; }
+        public decimal TotalAmount { get; set; }
         /// <summary>
-        /// Indica se a lista foi concluída.
+        /// Indica se a lista foi finalizada.
         /// </summary>
-        public bool IsCompleted { get; set; }
-        /// <summary>
-        /// Data de conclusão da lista.
-        /// </summary>
-        public DateTime? CompletedAt { get; set; }
+        public bool IsFinalized { get; set; }
         /// <summary>
         /// Data de criação da lista.
         /// </summary>
@@ -74,15 +70,15 @@ namespace eTasks_server.Models.Entities.Shopping
                 .HasKey(x => x.Id);
 
             modelBuilder.Entity<ShoppingList>()
-                .Property(x => x.EstimatedTotalAmount)
+                .Property(x => x.Type)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<ShoppingList>()
+                .Property(x => x.TotalAmount)
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<ShoppingList>()
-                .Property(x => x.ActualTotalAmount)
-                .HasPrecision(18, 2);
-
-            modelBuilder.Entity<ShoppingList>()
-                .HasIndex(x => new { x.UserUid, x.IsCompleted });
+                .HasIndex(x => new { x.UserUid, x.IsFinalized });
 
             modelBuilder.Entity<ShoppingList>()
                 .HasMany(x => x.Items)
