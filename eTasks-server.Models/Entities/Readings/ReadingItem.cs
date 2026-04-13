@@ -23,33 +23,45 @@ namespace eTasks_server.Models.Entities.Readings
         /// </summary>
         public string Title { get; set; } = string.Empty;
         /// <summary>
-        /// Nome do autor.
+        /// Nome do autor ou autores.
         /// </summary>
-        public string? Author { get; set; }
+        public string? Authors { get; set; }
         /// <summary>
-        /// Descrição ou observações sobre a leitura.
+        /// Assunto principal da leitura.
         /// </summary>
-        public string? Description { get; set; }
+        public string? Subject { get; set; }
         /// <summary>
-        /// Total de páginas do material.
+        /// Resumo do material lido.
         /// </summary>
-        public int? TotalPages { get; set; }
+        public string? Summary { get; set; }
         /// <summary>
-        /// Página atual de progresso.
+        /// Opiniao pessoal sobre a leitura.
         /// </summary>
-        public int CurrentPage { get; set; }
+        public string? Opinion { get; set; }
         /// <summary>
-        /// Avaliação dada pelo usuário.
+        /// Avaliacao de zero a cinco estrelas.
         /// </summary>
         public int? Rating { get; set; }
         /// <summary>
-        /// Pontuação opcional concedida na conclusão.
+        /// Total de paginas do material.
         /// </summary>
-        public int? RewardPoints { get; set; }
+        public int TotalPages { get; set; }
+        /// <summary>
+        /// Pagina atual de progresso.
+        /// </summary>
+        public int CurrentPage { get; set; }
+        /// <summary>
+        /// Genero principal da leitura.
+        /// </summary>
+        public string? Genre { get; set; }
+        /// <summary>
+        /// Tipo de publicacao registrada.
+        /// </summary>
+        public ReadingFormat Format { get; set; } = ReadingFormat.Book;
         /// <summary>
         /// Estado atual da leitura.
         /// </summary>
-        public ReadingStatus Status { get; set; } = ReadingStatus.Planned;
+        public ReadingStatus Status { get; set; } = ReadingStatus.ToRead;
         /// <summary>
         /// Data de início da leitura.
         /// </summary>
@@ -80,6 +92,10 @@ namespace eTasks_server.Models.Entities.Readings
             modelBuilder.Entity<ReadingItem>()
                 .ToTable("reading_items")
                 .HasKey(x => x.Id);
+
+            modelBuilder.Entity<ReadingItem>()
+                .Property(x => x.Format)
+                .HasConversion<int>();
 
             modelBuilder.Entity<ReadingItem>()
                 .Property(x => x.Status)

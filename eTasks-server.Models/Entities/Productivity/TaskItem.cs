@@ -23,25 +23,21 @@ namespace eTasks_server.Models.Entities.Productivity
         /// </summary>
         public Guid? GeneratedFromTaskId { get; set; }
         /// <summary>
-        /// Título principal da tarefa.
+        /// Resumo curto da tarefa.
         /// </summary>
-        public string Title { get; set; } = string.Empty;
+        public string Summary { get; set; } = string.Empty;
         /// <summary>
-        /// Descrição complementar da tarefa.
+        /// Anotação complementar da tarefa.
         /// </summary>
-        public string? Description { get; set; }
+        public string? Notes { get; set; }
         /// <summary>
         /// Nível de prioridade da tarefa.
         /// </summary>
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
         /// <summary>
-        /// Data base em que a tarefa deve aparecer para execução.
+        /// Data em que a tarefa deve aparecer para execução.
         /// </summary>
-        public DateTime ScheduledFor { get; set; } = SaoPauloDateTime.Now();
-        /// <summary>
-        /// Data limite opcional para conclusão.
-        /// </summary>
-        public DateTime? DueAt { get; set; }
+        public DateTime TaskDate { get; set; } = SaoPauloDateTime.Now();
         /// <summary>
         /// Indica se a tarefa foi concluída.
         /// </summary>
@@ -50,10 +46,6 @@ namespace eTasks_server.Models.Entities.Productivity
         /// Data de conclusão da tarefa.
         /// </summary>
         public DateTime? CompletedAt { get; set; }
-        /// <summary>
-        /// Indica se a tarefa foi arquivada.
-        /// </summary>
-        public bool IsArchived { get; set; }
         /// <summary>
         /// Data de criação da tarefa.
         /// </summary>
@@ -94,7 +86,7 @@ namespace eTasks_server.Models.Entities.Productivity
                 .HasConversion<int>();
 
             modelBuilder.Entity<TaskItem>()
-                .HasIndex(x => new { x.UserUid, x.ScheduledFor });
+                .HasIndex(x => new { x.UserUid, x.TaskDate });
 
             modelBuilder.Entity<TaskItem>()
                 .HasIndex(x => new { x.UserUid, x.IsCompleted });

@@ -69,6 +69,11 @@ namespace eTasks_server.Models.Utils
         public const string ApiBaseUrl = "ApiSettings:BaseUrl";
 
         /// <summary>
+        /// Chave de configuracao usada para autorizar o cadastro administrativo no painel web.
+        /// </summary>
+        public const string AdminApiKeyConfig = "APIKEY_ADMIN";
+
+        /// <summary>
         /// Endpoint para a verificação de saúde da aplicação, usado para monitoramento e verificação de status.
         /// </summary>
         public const string HealthCheckEndpoint = "/health";

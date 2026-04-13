@@ -61,12 +61,12 @@ User
 
   <div class="section-box">
     <h3>3. Tarefas e metas formam um bloco de produtividade claro</h3>
-    <p><code>TaskItem</code> e <code>TaskRecurrence</code> cobrem tarefas simples e recorrentes. <code>Goal</code> entra como agregado separado, evitando acoplamento desnecessario com tarefas e permanecendo simples, sem prazo ou progresso numerico, mas com pontuacao opcional.</p>
+    <p><code>TaskItem</code> e <code>TaskRecurrence</code> cobrem tarefas simples e recorrentes. A tarefa agora esta mais aderente a tela, com resumo, anotacao, data, prioridade e conclusao. <code>Goal</code> entra como agregado separado, evitando acoplamento desnecessario com tarefas e permanecendo simples, sem prazo ou progresso numerico, mas com pontuacao opcional.</p>
   </div>
 
   <div class="section-box">
     <h3>4. Organizacao pessoal ficou segmentada por agregado</h3>
-    <p><code>ShoppingList</code>, <code>ShoppingListItem</code>, <code>NoteItem</code> e <code>ReadingItem</code> possuem responsabilidades bem delimitadas e ownership individual claro. Em compras, a lista agora guarda tipo, lugar e totais prontos, enquanto os itens guardam quantidade, unidade e total calculado. Em especial, <code>NoteItem</code> foi mantida propositalmente minima, como um caderno pessoal com assunto, texto e datas.</p>
+    <p><code>ShoppingList</code>, <code>ShoppingListItem</code>, <code>NoteItem</code> e <code>ReadingItem</code> possuem responsabilidades bem delimitadas e ownership individual claro. Em compras, a lista agora guarda tipo, lugar e totais prontos, enquanto os itens guardam quantidade, unidade e total calculado. Em leituras, o registro passou a cobrir autores, assunto, resumo, opiniao, genero e progresso. Em especial, <code>NoteItem</code> foi mantida propositalmente minima, como um caderno pessoal com assunto, texto e datas.</p>
   </div>
 
   <div class="section-box">

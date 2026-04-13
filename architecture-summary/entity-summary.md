@@ -93,7 +93,7 @@ Os itens carregam descricao, unidade, quantidade, valor unitario e total do item
 Dois recursos foram separados:
 
 - `NoteItem`: anotacoes livres sem pontuacao
-- `ReadingItem`: leituras com progresso, avaliacao e recompensa opcional
+- `ReadingItem`: leituras com progresso, autores, assunto, resumo, opiniao, genero e status
 
 ### 9. Financas
 
@@ -209,7 +209,7 @@ Campos principais:
 
 - `Theme`
 - `Language`
-- `UseCamera`
+- `InitialScreen`
 - `EnableBonusSystem`
 - `CreatedAt`
 - `UpdatedAt`
@@ -305,20 +305,19 @@ Natureza: tarefa concreta do usuario
 
 Campos principais:
 
-- `Title`
-- `Description`
+- `Summary`
+- `Notes`
 - `Priority`
-- `ScheduledFor`
-- `DueAt`
+- `TaskDate`
 - `IsCompleted`
 - `CompletedAt`
-- `IsArchived`
 - `CreatedAt`
 
 Observacoes:
 
 - suporta tarefas simples e tarefas geradas por recorrencia
 - a autorrelacao permite encadear tarefas filhas a partir de uma tarefa de origem
+- o status pode ser tratado como concluida ou nao pela combinacao de `IsCompleted` e `CompletedAt`
 
 ### `TaskRecurrence`
 
@@ -422,12 +421,15 @@ Natureza: registro de leitura
 Campos principais:
 
 - `Title`
-- `Author`
-- `Description`
+- `Authors`
+- `Subject`
+- `Summary`
+- `Opinion`
+- `Genre`
+- `Format`
 - `TotalPages`
 - `CurrentPage`
 - `Rating`
-- `RewardPoints`
 - `Status`
 - `StartedAt`
 - `FinishedAt`

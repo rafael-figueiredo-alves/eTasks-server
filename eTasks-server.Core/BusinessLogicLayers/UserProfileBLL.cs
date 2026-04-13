@@ -85,9 +85,10 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 settings.Language = request.Language.Trim().ToLowerInvariant();
             }
 
-            if (request.UseCamera.HasValue)
+            if (request.InitialScreen.HasValue)
             {
-                settings.UseCamera = request.UseCamera.Value;
+                ValidateInitialScreen(request.InitialScreen.Value);
+                settings.InitialScreen = request.InitialScreen.Value;
             }
 
             if (request.EnableBonusSystem.HasValue)
@@ -104,7 +105,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             {
                 Theme = settings.Theme,
                 Language = settings.Language,
-                UseCamera = settings.UseCamera,
+                InitialScreen = settings.InitialScreen,
                 EnableBonusSystem = settings.EnableBonusSystem
             };
         }
@@ -113,7 +114,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
         {
             var profile = await GetProfileAsync(userUid);
             var builder = new StringBuilder();
-            builder.AppendLine("Uid,Name,Email,CreatedAt,LastAccessAt,Theme,Language,UseCamera,EnableBonusSystem,TotalBonusPoints,Achievements");
+            builder.AppendLine("Uid,Name,Email,CreatedAt,LastAccessAt,Theme,Language,InitialScreen,EnableBonusSystem,TotalBonusPoints,Achievements");
             builder.Append(Escape(profile.Uid.ToString())).Append(',');
             builder.Append(Escape(profile.Name)).Append(',');
             builder.Append(Escape(profile.Email)).Append(',');
@@ -121,7 +122,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
             builder.Append(Escape(profile.LastAccessAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty)).Append(',');
             builder.Append(Escape(profile.Settings.Theme)).Append(',');
             builder.Append(Escape(profile.Settings.Language)).Append(',');
-            builder.Append(Escape(profile.Settings.UseCamera.ToString())).Append(',');
+            builder.Append(Escape(profile.Settings.InitialScreen.ToString())).Append(',');
             builder.Append(Escape(profile.Settings.EnableBonusSystem.ToString())).Append(',');
             builder.Append(Escape(profile.Bonus.TotalPoints.ToString())).Append(',');
             builder.Append(Escape(string.Join(" | ", profile.Bonus.Achievements.Select(x => $"{x.Name}:{x.PointsRequired}"))));
@@ -207,7 +208,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 {
                     Theme = user.Settings?.Theme ?? "light",
                     Language = user.Settings?.Language ?? "pt",
-                    UseCamera = user.Settings?.UseCamera ?? false,
+                    InitialScreen = user.Settings?.InitialScreen ?? AppStartScreen.Home,
                     EnableBonusSystem = user.Settings?.EnableBonusSystem ?? false
                 },
                 Bonus = new UserBonusSummaryDTO
@@ -251,6 +252,14 @@ namespace eTasks_server.Core.BusinessLogicLayers
             if (!AllowedLanguages.Contains(language.Trim()))
             {
                 throw new ValidationException("Language", "Idioma invalido. Valores aceitos: pt ou en.");
+            }
+        }
+
+        private static void ValidateInitialScreen(AppStartScreen initialScreen)
+        {
+            if (!Enum.IsDefined(initialScreen))
+            {
+                throw new ValidationException("InitialScreen", "Tela inicial invalida.");
             }
         }
 

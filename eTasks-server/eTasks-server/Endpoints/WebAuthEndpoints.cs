@@ -35,6 +35,27 @@ namespace eTasks_server.Endpoints
             .ExcludeFromDescription()
             .WithName("WebLogin");
 
+            group.MapPost("/register", async (HttpContext context, [FromForm] WebAdminRegisterRequest request, IWebAuthBLL webAuthBLL) =>
+            {
+                try
+                {
+                    var ip = context.Connection.RemoteIpAddress?.ToString();
+                    await webAuthBLL.RegisterAdminAsync(request, ip);
+                    return Results.LocalRedirect("/login?success=" + Uri.EscapeDataString("Administrador cadastrado com sucesso. Faca login para continuar."));
+                }
+                catch (ApiException ex)
+                {
+                    return Results.LocalRedirect(BuildRegisterRedirect(ex.Message));
+                }
+                catch
+                {
+                    return Results.LocalRedirect(BuildRegisterRedirect("Nao foi possivel realizar o cadastro administrativo."));
+                }
+            })
+            .AllowAnonymous()
+            .ExcludeFromDescription()
+            .WithName("WebAdminRegister");
+
             group.MapGet("/logout", async (HttpContext context, [FromQuery] string? returnUrl, IWebAuthBLL webAuthBLL) =>
             {
                 await webAuthBLL.LogoutAsync(context);
@@ -51,6 +72,11 @@ namespace eTasks_server.Endpoints
         {
             var safeReturnUrl = GetSafeReturnUrl(returnUrl);
             return $"/login?returnUrl={Uri.EscapeDataString(safeReturnUrl)}&error={Uri.EscapeDataString(errorMessage)}";
+        }
+
+        private static string BuildRegisterRedirect(string errorMessage)
+        {
+            return $"/register?error={Uri.EscapeDataString(errorMessage)}";
         }
 
         private static string GetSafeReturnUrl(string? returnUrl, string fallback = "/")

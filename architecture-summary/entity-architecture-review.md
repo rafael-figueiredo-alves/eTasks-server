@@ -184,6 +184,7 @@ Este bloco cobre tarefas e metas.
 
 - representa a tarefa concreta mostrada ao usuario
 - suporta autorrelacao para tarefas filhas geradas
+- ficou mais aderente a tela: resumo, anotacao, data, prioridade e estado de conclusao
 
 `TaskRecurrence`:
 
@@ -223,8 +224,9 @@ Este bloco cobre compras, anotacoes e leituras.
 
 `ReadingItem`:
 
-- combina progresso, status e recompensa opcional
+- combina progresso, status, autores, assunto, resumo, opiniao e genero
 - encaixa bem entre conhecimento pessoal e gamificacao
+- a conclusao pode ser inferida quando a pagina atual atingir o total de paginas
 
 Risco estrutural:
 

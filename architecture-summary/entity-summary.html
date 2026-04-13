@@ -71,7 +71,7 @@
   <div class="entity">
     <h3>UserSettings</h3>
     <p><strong>Tabela:</strong> <code>user_settings</code><br/><strong>FK unica:</strong> <code>UserUid -&gt; User.Uid</code></p>
-    <p>Preferencias 1:1 do usuario, com tema, idioma e opcoes do app.</p>
+    <p>Preferencias 1:1 do usuario, com tema, idioma, tela inicial e opcoes do app.</p>
   </div>
 
   <div class="entity">
@@ -101,7 +101,7 @@
   <div class="entity">
     <h3>TaskItem</h3>
     <p><strong>Tabela:</strong> <code>task_items</code><br/><strong>FKs:</strong> <code>UserUid -&gt; User.Uid</code> e <code>GeneratedFromTaskId -&gt; TaskItem.Id</code> opcional</p>
-    <p>Tarefa concreta do usuario, simples ou gerada por recorrencia.</p>
+    <p>Tarefa concreta do usuario com <code>Summary</code>, <code>Notes</code>, <code>Priority</code>, <code>TaskDate</code>, <code>IsCompleted</code> e <code>CompletedAt</code>, simples ou gerada por recorrencia.</p>
   </div>
 
   <div class="entity">
@@ -137,7 +137,7 @@
   <div class="entity">
     <h3>ReadingItem</h3>
     <p><strong>Tabela:</strong> <code>reading_items</code><br/><strong>FK:</strong> <code>UserUid -&gt; User.Uid</code></p>
-    <p>Registro de leitura com progresso, status, avaliacao e pontos opcionais.</p>
+    <p>Registro de leitura com <code>Title</code>, <code>Authors</code>, <code>Subject</code>, <code>Summary</code>, <code>Opinion</code>, <code>Rating</code>, <code>TotalPages</code>, <code>CurrentPage</code>, <code>Genre</code>, <code>Format</code> e <code>Status</code>.</p>
   </div>
 
   <div class="entity">

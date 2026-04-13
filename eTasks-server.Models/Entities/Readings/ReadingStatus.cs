@@ -6,24 +6,16 @@ namespace eTasks_server.Models.Entities.Readings
     public enum ReadingStatus
     {
         /// <summary>
-        /// Leitura planejada.
+        /// Leitura marcada para ler.
         /// </summary>
-        Planned = 0,
+        ToRead = 0,
         /// <summary>
         /// Leitura em andamento.
         /// </summary>
-        InProgress = 1,
+        Reading = 1,
         /// <summary>
         /// Leitura concluída.
         /// </summary>
-        Completed = 2,
-        /// <summary>
-        /// Leitura pausada.
-        /// </summary>
-        Paused = 3,
-        /// <summary>
-        /// Leitura cancelada.
-        /// </summary>
-        Cancelled = 4
+        Completed = 2
     }
 }

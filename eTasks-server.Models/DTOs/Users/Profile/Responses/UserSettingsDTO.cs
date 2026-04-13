@@ -1,27 +1,29 @@
+using eTasks_server.Models.Entities.Users;
+
 namespace eTasks_server.Models.DTOs.Users.Profile.Responses
 {
     /// <summary>
-    /// Entidade de transferência de dados (DTO) para as configurações do usuário, incluindo preferências de tema, idioma, uso da câmera e sistema de bônus.
+    /// DTO com as configuracoes do usuario.
     /// </summary>
     public class UserSettingsDTO
     {
         /// <summary>
-        /// Tema do usuário, com valor padrão "light". Pode ser "light" ou "dark".
+        /// Tema visual preferido.
         /// </summary>
         public string Theme { get; set; } = "light";
 
         /// <summary>
-        /// Idioma preferido do usuário, com valor padrão "pt" (Português). Pode ser "pt", "en", "es", etc.
+        /// Idioma preferido.
         /// </summary>
         public string Language { get; set; } = "pt";
 
         /// <summary>
-        /// Se usa câmera do aplicativo ou nativa do ambiente
+        /// Tela inicial preferida.
         /// </summary>
-        public bool UseCamera { get; set; }
+        public AppStartScreen InitialScreen { get; set; } = AppStartScreen.Home;
 
         /// <summary>
-        /// Se ativa ou não o sistema de bônus, que pode incluir recompensas, pontos ou outras formas de incentivo para os usuários.
+        /// Indica se o sistema de bonus esta habilitado.
         /// </summary>
         public bool EnableBonusSystem { get; set; }
     }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Matriz Funcional do Dominio - eTasks-server</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 36px; color: #1f2937; line-height: 1.45; }
+    h1, h2 { color: #0f172a; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    h2 { font-size: 20px; margin-top: 26px; border-bottom: 1px solid #dbe4f0; padding-bottom: 6px; }
+    p, li, td, th { font-size: 12px; }
+    .meta { color: #475569; margin-bottom: 18px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #dbe4f0; padding: 10px; vertical-align: top; text-align: left; }
+    th { background: #f8fafc; }
+    code { background: #eef2ff; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Matriz Funcional do Dominio</h1>
+  <p class="meta">Data de referencia: 2026-04-12<br/>Projeto fonte: <code>eTasks-server.Models/Entities</code><br/>Contexto de mapeamento: <code>eTasks-server.Core/Data/AppDbContext.cs</code></p>
+
+  <p>Documento operacional para relacionar recursos do produto, entidades persistidas e regras principais de implementacao.</p>
+
+  <h2>Matriz</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Recurso</th>
+        <th>Entidades principais</th>
+        <th>Regras importantes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Configuracao global</td>
+        <td><code>eTasksVersion</code></td>
+        <td>Mantem um unico registro com a versao publicada do app.</td>
+      </tr>
+      <tr>
+        <td>Conta e perfil</td>
+        <td><code>User</code>, <code>UserSettings</code></td>
+        <td><code>User</code> e o owner dos dados pessoais. <code>UserSettings</code> fica em relacao 1:1 e centraliza <code>Theme</code>, <code>Language</code>, <code>InitialScreen</code> e <code>EnableBonusSystem</code>. A tela inicial padrao e <code>Home</code>.</td>
+      </tr>
+      <tr>
+        <td>Autenticacao</td>
+        <td><code>RefreshToken</code>, <code>PasswordResetCode</code>, <code>LoginLog</code></td>
+        <td>JWT externo e cookie web continuam separados na arquitetura. Logs de login servem para auditoria.</td>
+      </tr>
+      <tr>
+        <td>Gamificacao</td>
+        <td><code>BonusPointRule</code>, <code>UserBonusPoint</code>, <code>BonusAchievement</code>, <code>UserAchievement</code></td>
+        <td><code>BonusPointRule</code> centraliza os pontos padrao por origem. <code>UserBonusPoint</code> registra o historico de pontos. <code>SourceReferenceId</code> permite rastrear o recurso que originou a pontuacao.</td>
+      </tr>
+      <tr>
+        <td>Tarefas</td>
+        <td><code>TaskItem</code>, <code>TaskRecurrence</code></td>
+        <td>Tarefa pode ser unica ou recorrente. <code>TaskItem</code> representa a ocorrencia concreta. <code>TaskRecurrence</code> define repeticao diaria, semanal, mensal e afins. <code>GeneratedFromTaskId</code> liga ocorrencias geradas a uma tarefa base.</td>
+      </tr>
+      <tr>
+        <td>Metas</td>
+        <td><code>Goal</code></td>
+        <td>Meta tem resumo, descricao, tipo, prioridade, status e <code>RewardPoints</code> opcional. A obrigatoriedade de pontos deve depender da regra de negocio quando a gamificacao estiver ativa.</td>
+      </tr>
+      <tr>
+        <td>Compras</td>
+        <td><code>ShoppingList</code>, <code>ShoppingListItem</code></td>
+        <td>Lista tem nome, lugar, tipo, totais e status finalizado. Item tem descricao, unidade, quantidade, valor unitario, total e status comprado. Se todos os itens estiverem comprados, a lista deve ser finalizada.</td>
+      </tr>
+      <tr>
+        <td>Anotacoes</td>
+        <td><code>NoteItem</code></td>
+        <td>Recurso simples de caderno pessoal. Persistir apenas assunto, texto, data de criacao e data de edicao. Nao gera pontos.</td>
+      </tr>
+      <tr>
+        <td>Leituras</td>
+        <td><code>ReadingItem</code></td>
+        <td>Registra titulo, autores, assunto, resumo, opiniao, rank, paginas, genero, formato, datas e status. Quando <code>CurrentPage</code> atingir <code>TotalPages</code>, a leitura deve poder ser concluida e gerar pontos conforme regra central.</td>
+      </tr>
+      <tr>
+        <td>Financas</td>
+        <td><code>FinanceEntry</code></td>
+        <td>Registra credito ou debito, forma de pagamento, valor, data e recorrencia opcional. Permite saldo mensal por competencia usando <code>OccursOn</code>, ou por caixa usando <code>PaidAt</code> e <code>IsPaid</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Enums Estrategicos</h2>
+  <ul>
+    <li><code>BonusPointSource</code>: origem da pontuacao no sistema.</li>
+    <li><code>AppStartScreen</code>: tela inicial preferida do app.</li>
+    <li><code>TaskPriority</code>: prioridade visual e funcional para tarefas e metas.</li>
+    <li><code>RecurrenceType</code> e <code>WeekDays</code>: base da recorrencia em tarefas e financas.</li>
+    <li><code>GoalType</code> e <code>GoalStatus</code>: classificacao e estado das metas.</li>
+    <li><code>ShoppingListType</code> e <code>ShoppingItemUnit</code>: tipificacao das compras.</li>
+    <li><code>ReadingStatus</code> e <code>ReadingFormat</code>: estado e formato das leituras.</li>
+    <li><code>FinanceEntryType</code> e <code>FinancePaymentMethod</code>: classificacao dos lancamentos financeiros.</li>
+  </ul>
+
+  <h2>Regras Transversais</h2>
+  <ul>
+    <li>Quase todo o dominio pessoal pertence a um <code>User</code>.</li>
+    <li>Pontos nao devem ficar hardcoded nas entidades de negocio quando houver regra central equivalente.</li>
+    <li>Recorrencia exige geracao de ocorrencias concretas para a agenda do usuario.</li>
+    <li>Campos de totalizacao devem ser mantidos sincronizados pela camada de negocio.</li>
+    <li>Regras condicionais de obrigatoriedade devem ficar na validacao de negocio, nao apenas no banco.</li>
+  </ul>
+</body>
+</html>

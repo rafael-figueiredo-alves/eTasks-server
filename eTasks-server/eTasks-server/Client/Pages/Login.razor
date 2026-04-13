@@ -335,6 +335,7 @@
 @code {
     [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
     [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? Success { get; set; }
 
     protected string _email = string.Empty;
     protected string _password = string.Empty;
@@ -343,7 +344,9 @@
     protected bool _isLoading;
 
     private bool _errorSnackShown;
+    private bool _successSnackShown;
     private string ErrorMessage => string.IsNullOrWhiteSpace(Error) ? string.Empty : Error;
+    private string SuccessMessage => string.IsNullOrWhiteSpace(Success) ? string.Empty : Success;
     private string LoginAction => $"/api/v2/web-auth/login?returnUrl={Uri.EscapeDataString(GetSafeReturnUrl())}";
 
     protected override async Task OnInitializedAsync()
@@ -357,13 +360,17 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (!firstRender || _errorSnackShown || string.IsNullOrWhiteSpace(ErrorMessage))
+        if (firstRender && !_errorSnackShown && !string.IsNullOrWhiteSpace(ErrorMessage))
         {
-            return;
+            _errorSnackShown = true;
+            Snackbar.Add(ErrorMessage, Severity.Error);
         }
 
-        _errorSnackShown = true;
-        Snackbar.Add(ErrorMessage, Severity.Error);
+        if (firstRender && !_successSnackShown && !string.IsNullOrWhiteSpace(SuccessMessage))
+        {
+            _successSnackShown = true;
+            Snackbar.Add(SuccessMessage, Severity.Success);
+        }
     }
 
     private void BeginSubmit()

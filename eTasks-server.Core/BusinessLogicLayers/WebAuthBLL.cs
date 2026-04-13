@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
@@ -16,11 +17,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
     public class WebAuthBLL : IWebAuthBLL
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<IWebAuthBLL> _logger;
 
-        public WebAuthBLL(AppDbContext context, ILogger<IWebAuthBLL> logger)
+        public WebAuthBLL(AppDbContext context, IConfiguration configuration, ILogger<IWebAuthBLL> logger)
         {
             _context = context;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -127,6 +130,66 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 UserAgent = Constants.WebAdminUserAgent
             });
             user.LastAccessAt = SaoPauloDateTime.Now();
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RegisterAdminAsync(WebAdminRegisterRequest request, string? ipAddress)
+        {
+            _logger.LogInformation("Iniciando cadastro web administrativo para o e-mail: {Email}", request.Email);
+
+            if (string.IsNullOrWhiteSpace(request.Email)
+                || string.IsNullOrWhiteSpace(request.Password)
+                || string.IsNullOrWhiteSpace(request.DisplayName)
+                || string.IsNullOrWhiteSpace(request.AdminKey))
+            {
+                throw new ValidationException("Geral", "Usuario, senha, nome de exibicao e chave administrativa sao obrigatorios.");
+            }
+
+            var configuredAdminKey = _configuration[Constants.AdminApiKeyConfig];
+            if (string.IsNullOrWhiteSpace(configuredAdminKey))
+            {
+                throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "A chave administrativa nao foi configurada no servidor.");
+            }
+
+            if (!string.Equals(request.AdminKey.Trim(), configuredAdminKey.Trim(), StringComparison.Ordinal))
+            {
+                await _context.LoginLogs.AddAsync(new LoginLog
+                {
+                    UserUid = null,
+                    Status = "Failed",
+                    IpAddress = ipAddress,
+                    UserAgent = Constants.WebAdminUserAgent
+                });
+                await _context.SaveChangesAsync();
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Chave administrativa invalida.");
+            }
+
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            var emailAlreadyInUse = await _context.Users.AnyAsync(x => x.Email == normalizedEmail);
+            if (emailAlreadyInUse)
+            {
+                throw new ValidationException("Email", "Ja existe um usuario cadastrado com esse identificador.");
+            }
+
+            var user = new User
+            {
+                Name = request.DisplayName.Trim(),
+                Email = normalizedEmail,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                IsAdmin = true,
+                IsConfirmed = true
+            };
+
+            await _context.Users.AddAsync(user);
+            await _context.UserSettings.AddAsync(new UserSettings { UserUid = user.Uid });
+            await _context.LoginLogs.AddAsync(new LoginLog
+            {
+                UserUid = user.Uid,
+                Status = "Success",
+                IpAddress = ipAddress,
+                UserAgent = Constants.WebAdminUserAgent
+            });
+
             await _context.SaveChangesAsync();
         }
 
