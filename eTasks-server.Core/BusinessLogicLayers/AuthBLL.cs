@@ -18,19 +18,15 @@ using System.Text;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class AuthBLL : IAuthBLL
+    public class AuthBLL : BaseBLL<IAuthBLL>, IAuthBLL
     {
-        private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
-        private readonly ILogger<IAuthBLL> _logger;
 
-        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ILogger<IAuthBLL> logger)
+        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ILogger<IAuthBLL> logger) : base(context, logger)
         {
-            _context = context;
             _configuration = configuration;
             _emailService = emailService;
-            _logger = logger;
         }
 
         public async Task<LoginResponse> RegisterAsync(RegisterRequest request)

@@ -1,6 +1,6 @@
-﻿using eTasks_server.Client.Services;
+using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
-using eTasks_server.Core.BusinessLayers;
+
 using eTasks_server.Core.BusinessLogicLayers;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
@@ -119,7 +119,7 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IWebAuthBLL, WebAuthBLL>();
                 services.AddScoped<IUserProfileBLL, UserProfileBLL>();
 
-                services.AddScoped<VersionBLL>();
+                services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();

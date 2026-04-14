@@ -13,18 +13,13 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class UserProfileBLL : IUserProfileBLL
+    public class UserProfileBLL : BaseBLL<IUserProfileBLL>, IUserProfileBLL
     {
         private static readonly HashSet<string> AllowedThemes = new(StringComparer.OrdinalIgnoreCase) { "light", "dark" };
         private static readonly HashSet<string> AllowedLanguages = new(StringComparer.OrdinalIgnoreCase) { "pt", "en" };
 
-        private readonly AppDbContext _context;
-        private readonly ILogger<UserProfileBLL> _logger;
-
-        public UserProfileBLL(AppDbContext context, ILogger<UserProfileBLL> logger)
+        public UserProfileBLL(AppDbContext context, ILogger<IUserProfileBLL> logger) : base(context, logger)
         {
-            _context = context;
-            _logger = logger;
         }
 
         public async Task<UserProfileResponse> GetProfileAsync(Guid userUid)
@@ -157,21 +152,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
             _logger.LogInformation("Usuario {Uid} removido logicamente.", userUid);
         }
 
-        private async Task<User> GetActiveUserAsync(Guid userUid)
+        private Task<User> GetActiveUserAsync(Guid userUid)
         {
-            var user = await _context.Users
+            return GetAndValidateActiveUserAsync(userUid, query => query
                 .Include(x => x.Settings)
                 .Include(x => x.BonusPoints)
                 .Include(x => x.Achievements)
-                    .ThenInclude(x => x.BonusAchievement)
-                .FirstOrDefaultAsync(x => x.Uid == userUid && !x.IsDeleted);
-
-            if (user is null)
-            {
-                throw new ApiException(HttpStatusCode.NotFound, "Usuario nao encontrado.");
-            }
-
-            return user;
+                    .ThenInclude(x => x.BonusAchievement));
         }
 
         private async Task<UserSettings> EnsureSettingsAsync(User user)

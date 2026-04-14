@@ -5,18 +5,17 @@ using eTasks_server.Models.DTOs.Users.Admin.Responses;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class UserAdminBLL : IUserAdminBLL
+    public class UserAdminBLL : BaseBLL<IUserAdminBLL>, IUserAdminBLL
     {
-        private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
 
-        public UserAdminBLL(AppDbContext context, IEmailService emailService)
+        public UserAdminBLL(AppDbContext context, IEmailService emailService, ILogger<IUserAdminBLL> logger) : base(context, logger)
         {
-            _context = context;
             _emailService = emailService;
         }
 

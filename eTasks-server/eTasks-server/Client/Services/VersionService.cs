@@ -1,5 +1,5 @@
 using eTasks_server.Client.Services.Interfaces;
-using eTasks_server.Core.BusinessLayers;
+using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
 using eTasks_server.Models.Entities.Version;
 
@@ -7,21 +7,21 @@ namespace eTasks_server.Client.Services
 {
     public class VersionService : IVersionService
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IVersionBLL _versionBLL;
 
-        public VersionService(AppDbContext dbContext)
+        public VersionService(IVersionBLL versionBLL)
         {
-            _dbContext = dbContext;
+            _versionBLL = versionBLL;
         }
 
         public async Task<eTasksVersion> GetVersionAsync()
         {
-            return await VersionBLL.GetVersionAsync(_dbContext);
+            return await _versionBLL.GetVersionAsync();
         }
 
         public async Task<bool> SaveVersionAsync(eTasksVersion version)
         {
-            return await VersionBLL.SaveNewVersionAsync(_dbContext, version);
+            return await _versionBLL.SaveNewVersionAsync(version);
         }
     }
 }

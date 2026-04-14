@@ -1,36 +1,40 @@
-﻿using eTasks_server.Core.Data;
+using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Core.Data;
 using eTasks_server.Models.Entities.Version;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace eTasks_server.Core.BusinessLayers
+namespace eTasks_server.Core.BusinessLogicLayers
 {
     /// <summary>
     /// Regras de negócio relacionadas à versão do aplicativo eTasks (Mobile e Web).
     /// </summary>
-    public class VersionBLL
+    public class VersionBLL : BaseBLL<IVersionBLL>, IVersionBLL
     {
+        public VersionBLL(AppDbContext context, ILogger<IVersionBLL> logger) : base(context, logger)
+        {
+        }
+
         /// <summary>
         /// Retornar informaões sobre a versão atual do aplicativo eTasks (Mobile e Web) armazenada no banco de dados.
         /// </summary>
-        /// <param name="dbContext">Contexto do banco de dados</param>
         /// <returns>Objeto eTasksVersion</returns>
-        public static async Task<eTasksVersion> GetVersionAsync(AppDbContext dbContext)
+        public async Task<eTasksVersion> GetVersionAsync()
         {
-            return await dbContext.DbVersion.OrderBy(v => v.Id).FirstAsync();
+            return await _context.DbVersion.OrderBy(v => v.Id).FirstAsync();
         }
 
         /// <summary>
         /// Salva alterações na versão do aplicativo eTasks (Mobile e Web) no banco de dados. Retorna true se a operação for bem-sucedida, ou false em caso de falha.
         /// </summary>
-        /// <param name="dbContext">Contexto de dados</param>
         /// <param name="version">objeto eTasksVerion</param>
         /// <returns>True/False</returns>
-        public static async Task<bool> SaveNewVersionAsync(AppDbContext dbContext, eTasksVersion version)
+        public async Task<bool> SaveNewVersionAsync(eTasksVersion version)
         {
             try
             {
-                dbContext.DbVersion.Update(version);
-                await dbContext.SaveChangesAsync();
+                _context.DbVersion.Update(version);
+                await SaveChangesContextAsync();
                 return true;
             }
             catch

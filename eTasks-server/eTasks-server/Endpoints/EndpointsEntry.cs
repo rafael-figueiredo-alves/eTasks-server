@@ -9,7 +9,7 @@ namespace eTasks_server.Endpoints
                 var API_V2 = app.MapGroup("/api")
                                     .MapGroup("/v2");
 
-                await API_V2.MapVersionEndpoints();
+                API_V2.MapVersionEndpoints();
                 API_V2.MapUtilsEndpoints();
                 API_V2.MapAuthEndpoints();
                 API_V2.MapWebAuthEndpoints();

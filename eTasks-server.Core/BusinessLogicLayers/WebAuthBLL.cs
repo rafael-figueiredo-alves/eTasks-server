@@ -14,17 +14,13 @@ using System.Security.Claims;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class WebAuthBLL : IWebAuthBLL
+    public class WebAuthBLL : BaseBLL<IWebAuthBLL>, IWebAuthBLL
     {
-        private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<IWebAuthBLL> _logger;
 
-        public WebAuthBLL(AppDbContext context, IConfiguration configuration, ILogger<IWebAuthBLL> logger)
+        public WebAuthBLL(AppDbContext context, IConfiguration configuration, ILogger<IWebAuthBLL> logger) : base(context, logger)
         {
-            _context = context;
             _configuration = configuration;
-            _logger = logger;
         }
 
         public async Task LoginAsync(HttpContext httpContext, WebLoginRequest request, string? ipAddress)
