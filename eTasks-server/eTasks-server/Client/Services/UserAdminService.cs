@@ -42,5 +42,15 @@ namespace eTasks_server.Client.Services
         {
             return _userAdminBLL.GetLoginLogsAsync(uid);
         }
+
+        public Task DeletePermanentlyAsync(Guid uid)
+        {
+            return _userAdminBLL.DeletePermanentlyAsync(uid);
+        }
+
+        public Task<int> PurgeDeletedUsersAsync()
+        {
+            return _userAdminBLL.PurgeDeletedUsersAsync();
+        }
     }
 }

@@ -121,8 +121,10 @@ namespace eTasks_server.Extensions
 
                 services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
+                services.AddScoped<IBonusAdminBLL, BonusAdminBLL>();
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
+                services.AddScoped<IBonusAdminService, BonusAdminService>();
                 services.AddScoped<UserLogsDrawerService>();
 
                 return services;

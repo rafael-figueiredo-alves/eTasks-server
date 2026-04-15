@@ -61,6 +61,22 @@ namespace eTasks_server.Endpoints
             .WithName("GetUserLoginLogs")
             .WithSummary("Obtém o histórico de logins de um usuário.");
 
+            group.MapDelete("/{uid}", async (Guid uid, IUserAdminBLL userAdminBLL) =>
+            {
+                await userAdminBLL.DeletePermanentlyAsync(uid);
+                return Results.Ok(new { Message = "Conta removida permanentemente." });
+            })
+            .WithName("DeleteUserPermanently")
+            .WithSummary("Remove permanentemente um usuário e todos os seus dados do banco.");
+
+            group.MapDelete("/purge-deleted", async (IUserAdminBLL userAdminBLL) =>
+            {
+                var count = await userAdminBLL.PurgeDeletedUsersAsync();
+                return Results.Ok(new { Message = $"{count} conta(s) removida(s) permanentemente.", Count = count });
+            })
+            .WithName("PurgeDeletedUsers")
+            .WithSummary("Remove permanentemente todos os usuários com soft-delete ativo.");
+
             return app;
         }
     }

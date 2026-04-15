@@ -127,5 +127,31 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 })
                 .ToListAsync();
         }
+
+        public async Task DeletePermanentlyAsync(Guid uid)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
+            if (user is null)
+                throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
+            if (user.IsAdmin)
+                throw new ApiException(HttpStatusCode.Forbidden, "Não é permitido remover contas administrativas.");
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> PurgeDeletedUsersAsync()
+        {
+            var deletedUsers = await _context.Users
+                .Where(u => u.IsDeleted && !u.IsAdmin)
+                .ToListAsync();
+
+            if (deletedUsers.Count == 0)
+                return 0;
+
+            _context.Users.RemoveRange(deletedUsers);
+            await _context.SaveChangesAsync();
+            return deletedUsers.Count;
+        }
     }
 }

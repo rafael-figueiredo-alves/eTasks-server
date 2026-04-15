@@ -1,0 +1,97 @@
+@page "/admin/bonus/achievements"
+@using eTasks_server.Models.DTOs.Gamification.BonusAchievement.Requests
+@using eTasks_server.Models.DTOs.Gamification.BonusAchievement.Responses
+@using eTasks_server.Models.Entities.Users
+@rendermode InteractiveServer
+
+<PageTitle>Conquistas de Bônus</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Gerenciar Conquistas</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-5" />
+}
+else
+{
+    <MudDataGrid T="BonusAchievementDTO" Items="@_achievements" ReadOnly="false" EditMode="DataGridEditMode.Form"
+                 StartedEditingItem="@(item => StartedEditingItem(item))" CanceledEditingItem="@(item => CanceledEditingItem(item))" CommittedItemChanges="@(async item => await CommittedItemChanges(item))"
+                 Bordered="true" Dense="true" Hover="true" Striped="true" Filterable="true" Loading="@_isProcessing">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Conquistas</MudText>
+            <MudSpacer />
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick="OpenCreateDialog" Class="mr-3">Nova Conquista</MudButton>
+            <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+
+        <Columns>
+            <PropertyColumn Property="x => x.Code" Title="Código" Editable="false" />
+            <PropertyColumn Property="x => x.Name" Title="Nome" />
+            <PropertyColumn Property="x => x.PointsRequired" Title="Pontos Necessários" />
+            <PropertyColumn Property="x => x.DisplayType" Title="Exibição">
+                <CellTemplate>
+                    <MudIcon Icon="@(context.Item.DisplayType == (int)AchievementDisplayType.Trophy ? Icons.Material.Filled.EmojiEvents : Icons.Material.Filled.Stars)"
+                             Color="Color.Warning" Class="mr-2" />
+                    @((AchievementDisplayType)context.Item.DisplayType)
+                </CellTemplate>
+                <EditTemplate>
+                    <MudSelect T="int" @bind-Value="context.Item.DisplayType" Label="Exibição" Dense="true" Required="true">
+                        @foreach (AchievementDisplayType dt in Enum.GetValues(typeof(AchievementDisplayType)))
+                        {
+                            <MudSelectItem Value="@((int)dt)">@dt.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.IsActive" Title="Ativa">
+                <CellTemplate>
+                    <MudIcon Icon="@(context.Item.IsActive ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                             Color="@(context.Item.IsActive ? Color.Success : Color.Default)" />
+                </CellTemplate>
+                <EditTemplate>
+                    <MudSwitch @bind-Value="context.Item.IsActive" Color="Color.Primary">Conquista Ativa</MudSwitch>
+                </EditTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteAchievement(context.Item))" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+
+        <PagerContent>
+            <MudDataGridPager T="BonusAchievementDTO" />
+        </PagerContent>
+    </MudDataGrid>
+}
+
+<MudDialog @bind-Visible="_isCreateDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="mr-3" /> Nova Conquista
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isFormValid">
+            <MudTextField @bind-Value="_createRequest.Code" Label="Código" Required="true" RequiredError="Código é obrigatório." MaxLength="50" HelperText="Ex: 'HERO_100', único no sistema." />
+            <MudTextField @bind-Value="_createRequest.Name" Label="Nome" Required="true" RequiredError="Nome é obrigatório." MaxLength="100" />
+            <MudTextField @bind-Value="_createRequest.Description" Label="Descrição" Lines="3" MaxLength="255" />
+            <MudNumericField @bind-Value="_createRequest.PointsRequired" Label="Pontos Necessários" Required="true" Min="1" />
+            
+            <MudSelect T="int" Label="Tipo de Exibição" @bind-Value="_createRequest.DisplayType" Required="true">
+                @foreach (AchievementDisplayType dt in Enum.GetValues(typeof(AchievementDisplayType)))
+                {
+                    <MudSelectItem Value="@((int)dt)">@dt.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSwitch @bind-Value="_createRequest.IsActive" Color="Color.Primary">Ativa</MudSwitch>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SubmitCreateAchievement" Disabled="@(!_isFormValid)">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>

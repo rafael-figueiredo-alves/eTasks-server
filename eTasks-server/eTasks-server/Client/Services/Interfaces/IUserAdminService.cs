@@ -10,5 +10,7 @@ namespace eTasks_server.Client.Services.Interfaces
         Task<bool> ConfirmAccountAsync(Guid uid);
         Task<bool> SendPasswordResetEmailAsync(Guid uid);
         Task<List<UserLoginLogDTO>> GetLoginLogsAsync(Guid uid);
+        Task DeletePermanentlyAsync(Guid uid);
+        Task<int> PurgeDeletedUsersAsync();
     }
 }

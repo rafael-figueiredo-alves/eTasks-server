@@ -1,0 +1,89 @@
+@page "/admin/bonus/rules"
+@using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Requests
+@using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Responses
+@using eTasks_server.Models.Entities.Gamification
+@rendermode InteractiveServer
+
+<PageTitle>Regras de Bônus</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Regras de Pontuação de Bônus</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-5" />
+}
+else
+{
+    <MudDataGrid T="BonusPointRuleDTO" Items="@_rules" ReadOnly="false" EditMode="DataGridEditMode.Form"
+                 StartedEditingItem="@(item => StartedEditingItem(item))" CanceledEditingItem="@(item => CanceledEditingItem(item))" CommittedItemChanges="@(async item => await CommittedItemChanges(item))"
+                 Bordered="true" Dense="true" Hover="true" Striped="true" Filterable="true" Loading="@_isProcessing">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Regras</MudText>
+            <MudSpacer />
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="mr-3">Nova Regra</MudButton>
+            <MudTextField @bind-Value="_searchString" Placeholder="Buscar..." Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+
+        <Columns>
+            <PropertyColumn Property="x => ((BonusPointSource)x.Source).ToString()" Title="Origem (Source)" Editable="false" />
+            <PropertyColumn Property="x => x.Name" Title="Nome" />
+            <PropertyColumn Property="x => x.DefaultPoints" Title="Pontos Padrão" />
+            <PropertyColumn Property="x => x.AllowCustomPoints" Title="Permite Valor Cust.?">
+                <CellTemplate>
+                    <MudIcon Icon="@(context.Item.AllowCustomPoints ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                             Color="@(context.Item.AllowCustomPoints ? Color.Success : Color.Error)" />
+                </CellTemplate>
+                <EditTemplate>
+                    <MudSwitch @bind-Value="context.Item.AllowCustomPoints" Color="Color.Primary">Permitir valor customizado</MudSwitch>
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.IsActive" Title="Ativa">
+                <CellTemplate>
+                    <MudIcon Icon="@(context.Item.IsActive ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                             Color="@(context.Item.IsActive ? Color.Success : Color.Default)" />
+                </CellTemplate>
+                <EditTemplate>
+                    <MudSwitch @bind-Value="context.Item.IsActive" Color="Color.Primary">Regra Ativa</MudSwitch>
+                </EditTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false">
+                <CellTemplate>
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteRule(context.Item))" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        
+        <PagerContent>
+            <MudDataGridPager T="BonusPointRuleDTO" />
+        </PagerContent>
+    </MudDataGrid>
+}
+
+<MudDialog @bind-Visible="_isCreateDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3" /> Nova Regra de Bônus
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isFormValid">
+            <MudSelect T="int" Label="Origem da Pontuação" @bind-Value="_createRequest.Source" Required="true" RequiredError="Origem é obrigatória.">
+                @foreach (BonusPointSource source in Enum.GetValues(typeof(BonusPointSource)))
+                {
+                    <MudSelectItem Value="@((int)source)">@source.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="_createRequest.Name" Label="Nome" Required="true" RequiredError="Nome é obrigatório." MaxLength="100" />
+            <MudTextField @bind-Value="_createRequest.Description" Label="Descrição" Lines="3" MaxLength="255" />
+            <MudNumericField @bind-Value="_createRequest.DefaultPoints" Label="Pontos Padrão" Required="true" Min="1" />
+            <MudSwitch @bind-Value="_createRequest.AllowCustomPoints" Color="Color.Primary">Permitir edição de valor ao pontuar</MudSwitch>
+            <MudSwitch @bind-Value="_createRequest.IsActive" Color="Color.Primary">Ativo</MudSwitch>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SubmitCreateRule" Disabled="@(!_isFormValid)">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>

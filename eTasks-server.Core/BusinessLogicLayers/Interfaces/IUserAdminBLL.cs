@@ -48,5 +48,19 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <param name="uid">UID do usuário a exibir log</param>
         /// <returns>Retorna lista de Logs do usuário</returns>
         Task<List<UserLoginLogDTO>> GetLoginLogsAsync(Guid uid);
+
+        /// <summary>
+        /// Remove permanentemente um usuário do banco de dados (hard delete).
+        /// Todas as entidades relacionadas serão removidas via ON DELETE CASCADE.
+        /// Não é permitido remover administradores.
+        /// </summary>
+        /// <param name="uid">UID do usuário a remover definitivamente</param>
+        Task DeletePermanentlyAsync(Guid uid);
+
+        /// <summary>
+        /// Remove permanentemente todos os usuários com IsDeleted = true.
+        /// </summary>
+        /// <returns>Quantidade de contas removidas</returns>
+        Task<int> PurgeDeletedUsersAsync();
     }
 }

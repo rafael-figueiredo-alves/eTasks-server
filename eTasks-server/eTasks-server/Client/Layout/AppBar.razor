@@ -1,4 +1,4 @@
-﻿@rendermode InteractiveServer
+@rendermode InteractiveServer
 @inject NavigationManager Navigation
 
 <MudAppBar Elevation="3">
@@ -53,6 +53,15 @@
                     Icon="@Icons.Material.Filled.People">
             Gerenciar Usuários
         </MudNavLink>
+
+        <MudNavGroup Title="🎮 Gamificação" Expanded="false">
+            <MudNavLink Href="/admin/bonus/rules" Icon="@Icons.Material.Filled.Rule">
+                Regras de Bônus
+            </MudNavLink>
+            <MudNavLink Href="/admin/bonus/achievements" Icon="@Icons.Material.Filled.EmojiEvents">
+                Conquistas
+            </MudNavLink>
+        </MudNavGroup>
 
         <MudDivider Class="my-2" />
 

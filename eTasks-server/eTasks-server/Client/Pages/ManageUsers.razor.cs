@@ -129,5 +129,50 @@ namespace eTasks_server.Client.Pages
             SelectedUser = null;
             SelectedUserLogs.Clear();
         }
+
+        protected async Task DeletePermanently(AdminUserDTO user)
+        {
+            bool? confirm = await DialogService.ShowMessageBoxAsync(
+                "⚠️ Remover conta permanentemente",
+                $"Esta ação é irreversível. A conta de {user.Name} ({user.Email}) e todos os seus dados serão removidos permanentemente do banco de dados. Deseja continuar?",
+                yesText: "Sim, remover", cancelText: "Cancelar");
+
+            if (confirm != true) return;
+
+            try
+            {
+                await UserAdminService.DeletePermanentlyAsync(user.Uid);
+                Snackbar.Add($"Conta de {user.Name} removida permanentemente.", Severity.Success);
+                await LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao remover conta: {ex.Message}", Severity.Error);
+            }
+        }
+
+        protected async Task PurgeDeleted()
+        {
+            bool? confirm = await DialogService.ShowMessageBoxAsync(
+                "⚠️ Purgar contas excluídas",
+                "Remover permanentemente todas as contas marcadas como excluídas? Esta ação não pode ser desfeita.",
+                yesText: "Sim, purgar", cancelText: "Cancelar");
+
+            if (confirm != true) return;
+
+            try
+            {
+                var count = await UserAdminService.PurgeDeletedUsersAsync();
+                var msg = count == 0
+                    ? "Nenhuma conta excluída encontrada."
+                    : $"{count} conta(s) removida(s) permanentemente.";
+                Snackbar.Add(msg, count == 0 ? Severity.Info : Severity.Success);
+                await LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao purgar contas: {ex.Message}", Severity.Error);
+            }
+        }
     }
 }

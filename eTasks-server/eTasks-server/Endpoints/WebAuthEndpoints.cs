@@ -1,4 +1,4 @@
-﻿using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +32,7 @@ namespace eTasks_server.Endpoints
                 }
             })
             .AllowAnonymous()
+            .DisableAntiforgery()
             .ExcludeFromDescription()
             .WithName("WebLogin");
 

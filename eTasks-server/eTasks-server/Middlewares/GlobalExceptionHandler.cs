@@ -1,4 +1,5 @@
 using eTasks_server.Models.Exceptions;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Diagnostics;
 using MySqlConnector;
 
@@ -42,6 +43,22 @@ namespace eTasks_server.Middlewares
             {
                 statusCode = (int)apiExc.StatusCode;
                 message = apiExc.UserMessage ?? apiExc.Message;
+            }
+            else if (exception is AntiforgeryValidationException)
+            {
+                // Token antiforgery inválido: redireciona ao login com mensagem amigável
+                // em vez de exibir JSON bruto no browser
+                var path = httpContext.Request.Path.Value ?? string.Empty;
+                if (path.Contains("/web-auth/", StringComparison.OrdinalIgnoreCase))
+                {
+                    var returnUrl = httpContext.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+                    var safeReturn = Uri.IsWellFormedUriString(returnUrl, UriKind.Relative) ? returnUrl : "/";
+                    var location = $"/login?returnUrl={Uri.EscapeDataString(safeReturn)}&error={Uri.EscapeDataString("Sessão expirada. Tente novamente.")}"; 
+                    httpContext.Response.Redirect(location);
+                    return true;
+                }
+                statusCode = StatusCodes.Status400BadRequest;
+                message = "Requisição inválida. Recarregue a página e tente novamente.";
             }
             else if (exception is MySqlException)
             {

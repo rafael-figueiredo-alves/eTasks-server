@@ -41,6 +41,23 @@ namespace eTasks_server.Core.BusinessLogicLayers
             return entity;
         }
 
+        /// <summary>
+        /// Lança <see cref="ValidationException"/> se o campo informado já existe no banco,
+        /// evitando duplicação de registros únicos.
+        /// </summary>
+        /// <param name="alreadyExists">Resultado da verificação de existência (true = duplicado).</param>
+        /// <param name="fieldName">Nome do campo sendo validado (usado na mensagem e no log).</param>
+        /// <param name="errorMessage">Mensagem exibida ao usuário. Se nulo, usa mensagem padrão.</param>
+        protected void EnsureUnique(bool alreadyExists, string fieldName, string? errorMessage = null)
+        {
+            if (alreadyExists)
+            {
+                var msg = errorMessage ?? $"Já existe um registro com esse valor para o campo '{fieldName}'.";
+                _logger.LogWarning("Tentativa de criação com {Field} duplicado.", fieldName);
+                throw new ValidationException(fieldName, msg);
+            }
+        }
+
         protected void EnsureOwnership(Guid entityUserUid, Guid currentUserUid)
         {
             if (entityUserUid != currentUserUid)

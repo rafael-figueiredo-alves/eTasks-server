@@ -1,4 +1,4 @@
-﻿@attribute [Authorize]
+@attribute [Authorize]
 @rendermode InteractiveServer
 @inherits ManageUsersBase
 
@@ -11,6 +11,16 @@
         <ToolBarContent>
             <MudText Typo="Typo.h6">Usuários do Sistema</MudText>
             <MudSpacer />
+            <MudTooltip Text="Remove permanentemente todas as contas marcadas como excluídas (soft-delete)" Placement="Placement.Bottom">
+                <MudButton OnClick="PurgeDeleted"
+                           StartIcon="@Icons.Material.Filled.DeleteSweep"
+                           Color="Color.Error"
+                           Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           Class="mr-3">
+                    Purgar Excluídos
+                </MudButton>
+            </MudTooltip>
             <MudTextField @bind-Value="SearchString" Placeholder="Buscar por nome ou e-mail..." Adornment="Adornment.Start"
                 Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
@@ -81,6 +91,14 @@
 
                         <MudMenuItem OnClick="@(() => ViewLogs(context.Item))" Icon="@Icons.Material.Filled.History">
                             Ver Log de Logins
+                        </MudMenuItem>
+
+                        <MudDivider />
+
+                        <MudMenuItem OnClick="@(() => DeletePermanently(context.Item))"
+                                     Icon="@Icons.Material.Filled.DeleteForever"
+                                     IconColor="Color.Error">
+                            <MudText Color="Color.Error">Remover Conta</MudText>
                         </MudMenuItem>
                     </MudMenu>
                 </CellTemplate>
