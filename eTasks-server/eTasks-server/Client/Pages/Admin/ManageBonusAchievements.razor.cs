@@ -91,7 +91,7 @@ namespace eTasks_server.Client.Pages.Admin
             // Opcional
         }
 
-        private async Task CommittedItemChanges(BonusAchievementDTO item)
+        private async Task<DataGridEditFormAction> CommittedItemChanges(BonusAchievementDTO item)
         {
             try
             {
@@ -107,11 +107,13 @@ namespace eTasks_server.Client.Pages.Admin
 
                 await BonusAdminService.UpdateAchievementAsync(item.Id, updateRequest);
                 Snackbar.Add("Conquista atualizada com sucesso!", Severity.Success);
+                return DataGridEditFormAction.Close;
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Erro ao atualizar: {ex.Message}", Severity.Error);
                 await LoadData(); // Reverte alterações locais
+                return DataGridEditFormAction.KeepOpen;
             }
         }
 

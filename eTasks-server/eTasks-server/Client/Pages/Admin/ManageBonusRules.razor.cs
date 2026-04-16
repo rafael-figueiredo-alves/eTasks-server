@@ -25,6 +25,10 @@ namespace eTasks_server.Client.Pages.Admin
 
         private DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
 
+        protected void CommittedItemChangesHandler(BonusPointRuleDTO item)
+        {
+            _ = CommittedItemChanges(item);
+        }
         protected override async Task OnInitializedAsync()
         {
             await LoadData();
@@ -91,7 +95,7 @@ namespace eTasks_server.Client.Pages.Admin
             // Opcional: Ação ao cancelar
         }
 
-        private async Task CommittedItemChanges(BonusPointRuleDTO item)
+        private async Task<DataGridEditFormAction> CommittedItemChanges(BonusPointRuleDTO item)
         {
             try
             {
@@ -106,11 +110,13 @@ namespace eTasks_server.Client.Pages.Admin
 
                 await BonusAdminService.UpdateRuleAsync(item.Id, updateRequest);
                 Snackbar.Add("Regra atualizada com sucesso!", Severity.Success);
+                return DataGridEditFormAction.Close;
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Erro ao atualizar: {ex.Message}", Severity.Error);
                 await LoadData(); // Reverte alterações locais recarregando
+                return DataGridEditFormAction.KeepOpen;
             }
         }
 

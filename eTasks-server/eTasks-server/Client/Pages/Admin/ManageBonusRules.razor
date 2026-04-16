@@ -15,7 +15,7 @@
 else
 {
     <MudDataGrid T="BonusPointRuleDTO" Items="@_rules" ReadOnly="false" EditMode="DataGridEditMode.Form"
-                 StartedEditingItem="@(item => StartedEditingItem(item))" CanceledEditingItem="@(item => CanceledEditingItem(item))" CommittedItemChanges="@(async item => await CommittedItemChanges(item))"
+                 StartedEditingItem="@(item => StartedEditingItem(item))" CanceledEditingItem="@(item => CanceledEditingItem(item))" CommittedItemChanges="@(async item => _ = await CommittedItemChanges(item))"
                  Bordered="true" Dense="true" Hover="true" Striped="true" Filterable="true" Loading="@_isProcessing">
         <ToolBarContent>
             <MudText Typo="Typo.h6">Regras</MudText>
