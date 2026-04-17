@@ -16,7 +16,7 @@ namespace eTasks_server.Core.BusinessLogicLayers
     public class UserProfileBLL : BaseBLL<IUserProfileBLL>, IUserProfileBLL
     {
         private static readonly HashSet<string> AllowedThemes = new(StringComparer.OrdinalIgnoreCase) { "light", "dark" };
-        private static readonly HashSet<string> AllowedLanguages = new(StringComparer.OrdinalIgnoreCase) { "pt", "en" };
+        private static readonly HashSet<string> AllowedLanguages = new(StringComparer.OrdinalIgnoreCase) { "pt-BR", "en-US" };
 
         public UserProfileBLL(AppDbContext context, ILogger<IUserProfileBLL> logger) : base(context, logger)
         {

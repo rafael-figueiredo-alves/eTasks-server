@@ -15,7 +15,7 @@ namespace eTasks_server.Models.DTOs.Users.Profile.Responses
         /// <summary>
         /// Idioma preferido.
         /// </summary>
-        public string Language { get; set; } = "pt";
+        public string Language { get; set; } = "pt-BR";
 
         /// <summary>
         /// Tela inicial preferida.

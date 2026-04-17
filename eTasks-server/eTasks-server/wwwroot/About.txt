@@ -1,2 +1,6 @@
-Versão 0.0.1 - 2026-06-01 (Alpha)
-=> Release da versão Alpha do servidor do eTasks.
+Versão 1.0.0 - 31/05/2026 (API v2 - 2.0.0)
+=> Desenvolvido painel administrativo para gerenciamento de tarefas, usuários e configurações do sistema.
+=> Implementado sistema de autenticação e autorização para garantir a segurança do acesso ao painel administrativo.
+=> Criado funcionalidades para criação, edição e exclusão de regras e conquistas para gamificação do sistema.
+=> Implementada estrutura básica de banco de dados para armazenar informações de usuários, tarefas, regras e conquistas.
+=> Implementada versão inicial da API v2 do eTasks.

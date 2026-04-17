@@ -26,7 +26,7 @@ namespace eTasks_server.Models.Entities.Users
         /// <summary>
         /// Idioma preferido.
         /// </summary>
-        public string Language { get; set; } = "pt";
+        public string Language { get; set; } = "pt-BR";
 
         /// <summary>
         /// Tela inicial preferida ao abrir o aplicativo.
