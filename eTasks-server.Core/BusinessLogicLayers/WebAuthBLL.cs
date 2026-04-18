@@ -100,6 +100,11 @@ namespace eTasks_server.Core.BusinessLogicLayers
                 new Claim(Constants.UserAgentClaimType, Constants.WebAdminUserAgent)
             };
 
+            if (!string.IsNullOrWhiteSpace(user.PhotoPath))
+            {
+                claims.Add(new Claim(Constants.PhotoPathClaimType, user.PhotoPath));
+            }
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 

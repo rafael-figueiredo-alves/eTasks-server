@@ -106,7 +106,7 @@ namespace eTasks_server.Models.Utils
         public const string JwtIssuerConfig = "Jwt:Issuer";
 
         /// <summary>
-        /// Público-alvo (audience) dos tokens JWT, que deve ser configurado no arquivo appsettings.json ou em variáveis de ambiente, e é usado para identificar os destinatários pretendidos dos tokens de autenticação, permitindo que os sistemas consumidores verifiquem se os tokens recebidos são destinados a eles e, assim, garantir um controle de acesso mais seguro e eficiente.
+        /// Público-alvo (audience) dos tokens JWT, que deve ser configurado no arquivo appsettings.json ou em variáveis de ambiente, e é usado para identificar os destinatários pretendidos dos tokens de autenticação, permitindo que os sistemas consumidores verifiquem se los tokens recebidos são destinados a eles e, assim, garantir um controle de acesso mais seguro e eficiente.
         /// </summary>
         public const string JwtAudienceConfig = "Jwt:Audience";
 
@@ -116,6 +116,11 @@ namespace eTasks_server.Models.Utils
         public const string UserAgentClaimType = "user_agent";
 
         /// <summary>
+        /// Claim customizado para armazenar o caminho da foto de perfil do usuário.
+        /// </summary>
+        public const string PhotoPathClaimType = "photo_path";
+
+        /// <summary>
         /// Nome do cookie HttpOnly usado para transportar o refresh token nas chamadas da API.
         /// </summary>
         public const string RefreshTokenCookieName = "refresh_token";
@@ -123,7 +128,7 @@ namespace eTasks_server.Models.Utils
 
         #region UserAgents da aplicação
         /// <summary>
-        /// UserAgent aceito pela aplicaÃ§Ã£o WebAssembly/PWA consumindo a API.
+        /// UserAgent aceito pela aplicação WebAssembly/PWA consumindo a API.
         /// </summary>
         public const string WebUserAgent = "web";
 
@@ -178,7 +183,7 @@ namespace eTasks_server.Models.Utils
         /// <summary>
         /// Versão do servidor eTasks, usada para controle de versão e comunicação com os clientes sobre a versão atual da API e funcionalidades disponíveis.
         /// </summary>
-        public const string ServerVersion = "1.0.0";
+        public const string ServerVersion = "1.1.0";
         #endregion
     }
 }

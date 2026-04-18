@@ -64,6 +64,7 @@ namespace eTasks_server.Extensions
                     options.SnackbarConfiguration.HideTransitionDuration = 500;
                     options.SnackbarConfiguration.ShowTransitionDuration = 500;
                 });
+                services.AddLocalization();
 
                 return services;
             }
@@ -125,6 +126,8 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
                 services.AddScoped<IBonusAdminService, BonusAdminService>();
+                services.AddScoped<IUserProfileService, UserProfileService>();
+                services.AddScoped<UserState>();
                 services.AddScoped<UserLogsDrawerService>();
 
                 return services;

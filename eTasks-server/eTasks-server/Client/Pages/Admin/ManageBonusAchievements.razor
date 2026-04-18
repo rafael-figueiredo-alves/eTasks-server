@@ -26,14 +26,16 @@ else
         </ToolBarContent>
 
         <Columns>
-            <PropertyColumn Property="x => x.Code" Title="Código" Editable="false" />
-            <PropertyColumn Property="x => x.Name" Title="Nome" />
-            <PropertyColumn Property="x => x.PointsRequired" Title="Pontos Necessários" />
-            <PropertyColumn Property="x => x.DisplayType" Title="Exibição">
+            <PropertyColumn Property="x => x.Code" Title="Código" Editable="false" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.Name" Title="Nome" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.PointsRequired" Title="Pontos Necessários" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.DisplayType" Title="Exibição" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIcon Icon="@(context.Item.DisplayType == (int)AchievementDisplayType.Trophy ? Icons.Material.Filled.EmojiEvents : Icons.Material.Filled.Stars)"
-                             Color="Color.Warning" Class="mr-2" />
-                    @((AchievementDisplayType)context.Item.DisplayType)
+                    <div class="d-flex justify-center align-center w-100">
+                        <MudIcon Icon="@(context.Item.DisplayType == (int)AchievementDisplayType.Trophy ? Icons.Material.Filled.EmojiEvents : Icons.Material.Filled.Stars)"
+                                 Color="Color.Warning" Class="mr-2" />
+                        @((AchievementDisplayType)context.Item.DisplayType)
+                    </div>
                 </CellTemplate>
                 <EditTemplate>
                     <MudSelect T="int" @bind-Value="context.Item.DisplayType" Label="Exibição" Dense="true" Required="true">
@@ -44,19 +46,22 @@ else
                     </MudSelect>
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.IsActive" Title="Ativa">
+            <PropertyColumn Property="x => x.IsActive" Title="Ativa" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIcon Icon="@(context.Item.IsActive ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
-                             Color="@(context.Item.IsActive ? Color.Success : Color.Default)" />
+                    <div class="d-flex justify-center w-100">
+                        <MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="@(val => ToggleAchievementStatus(context.Item, val))" Color="Color.Success" />
+                    </div>
                 </CellTemplate>
                 <EditTemplate>
                     <MudSwitch @bind-Value="context.Item.IsActive" Color="Color.Primary">Conquista Ativa</MudSwitch>
                 </EditTemplate>
             </PropertyColumn>
-            <TemplateColumn Title="Ações" Sortable="false" Filterable="false">
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteAchievement(context.Item))" />
+                    <div class="d-flex justify-center w-100">
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteAchievement(context.Item))" />
+                    </div>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

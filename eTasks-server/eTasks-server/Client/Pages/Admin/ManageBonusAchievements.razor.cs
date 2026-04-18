@@ -117,6 +117,40 @@ namespace eTasks_server.Client.Pages.Admin
             }
         }
 
+        private async Task ToggleAchievementStatus(BonusAchievementDTO item, bool newValue)
+        {
+            if (item.IsActive == newValue) return;
+
+            try
+            {
+                _isProcessing = true;
+                item.IsActive = newValue;
+
+                var updateRequest = new BonusAchievementRequest
+                {
+                    Code = item.Code,
+                    Name = item.Name,
+                    Description = item.Description,
+                    PointsRequired = item.PointsRequired,
+                    DisplayType = item.DisplayType,
+                    IsActive = item.IsActive
+                };
+
+                await BonusAdminService.UpdateAchievementAsync(item.Id, updateRequest);
+                Snackbar.Add($"Conquista '{(item.IsActive ? "ativada" : "desativada")}' com sucesso!", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                item.IsActive = !newValue;
+                Snackbar.Add($"Erro ao alterar status: {ex.Message}", Severity.Error);
+                await LoadData();
+            }
+            finally
+            {
+                _isProcessing = false;
+            }
+        }
+
         private async Task DeleteAchievement(BonusAchievementDTO item)
         {
             var confirm = await DialogService.ShowMessageBoxAsync(

@@ -1,0 +1,144 @@
+@page "/admin/profile"
+@using Microsoft.AspNetCore.Components.Authorization
+@using eTasks_server.Client.Services
+@using eTasks_server.Client.Services.Interfaces
+@using eTasks_server.Models.DTOs.Users.Profile.Requests
+@using eTasks_server.Models.DTOs.Users.Profile.Responses
+@using System.Security.Claims
+
+@inject IUserProfileService ProfileService
+@inject UserState UserState
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Meu Perfil | eTasks Server</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Meu Perfil</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (_profile != null)
+{
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="3" Class="py-6">
+                <MudCardContent>
+                    <div class="d-flex flex-column align-center">
+                        <MudAvatar Color="Color.Secondary" Style="height:150px; width:150px; font-size:4rem;" Class="mb-4">
+                            @if (!string.IsNullOrEmpty(_profile.PhotoBase64))
+                            {
+                                <MudImage Src="@($"data:image/png;base64,{_profile.PhotoBase64}")" />
+                            }
+                            else
+                            {
+                                @(_profile.Name[0].ToString().ToUpper())
+                            }
+                        </MudAvatar>
+                        
+                        <MudText Typo="Typo.h6">@_profile.Name</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">@_profile.Email</MudText>
+                        
+                        <div class="mt-6 d-flex gap-2">
+                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadPhoto" Accept=".jpg,.jpeg,.png,.webp">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PhotoCamera">
+                                        Alterar Foto
+                                    </MudButton>
+                            </MudFileUpload>
+                            
+                            @if (!string.IsNullOrEmpty(_profile.PhotoBase64))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="RemovePhoto" />
+                            }
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+            
+            <MudCard Elevation="3" Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Informações da Conta</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" ReadOnly="true">
+                        <MudListItem Icon="@Icons.Material.Filled.CalendarToday">
+                            Membro desde: @_profile.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.AccessTime">
+                            Último acesso: @_profile.LastAccessAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A"
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Dados Pessoais</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudForm @ref="_form" @bind-IsValid="@_success">
+                        <MudTextField T="string" Label="Nome" @bind-Value="_profile.Name" 
+                                      Required="true" RequiredError="O nome é obrigatório"
+                                      Validation="@(new Func<string, string?>(s => s.Length < 3 ? "Mínimo 3 caracteres" : null))" />
+                        
+                        <MudTextField T="string" Label="E-mail" @bind-Value="_profile.Email" 
+                                      Required="true" RequiredError="O e-mail é obrigatório"
+                                      InputType="InputType.Email" Class="mt-4" />
+                    </MudForm>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProfile" Disabled="@(!_success || _saving)" Class="ml-auto">
+                        @if (_saving)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Salvando...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Salvar Alterações</MudText>
+                        }
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+
+            <MudCard Elevation="3" Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Resumo de Bônus</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex align-center gap-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Stars" Color="Color.Warning" Size="Size.Large" />
+                        <div>
+                            <MudText Typo="Typo.h5">@_profile.Bonus.TotalPoints pontos</MudText>
+                            <MudText Typo="Typo.body2">Total acumulado em tarefas e conquistas</MudText>
+                        </div>
+                    </div>
+                    
+                    @if (_profile.Bonus.Achievements.Any())
+                    {
+                        <MudText Typo="Typo.subtitle1" Class="mt-6 mb-2">Últimas Conquistas</MudText>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var achievement in _profile.Bonus.Achievements.Take(5))
+                            {
+                                <MudTooltip Text="@($"{achievement.PointsRequired} pontos")">
+                                    <MudChip T="string" Color="Color.Info" Variant="Variant.Text" Icon="@Icons.Material.Filled.EmojiEvents">
+                                        @achievement.Name
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}

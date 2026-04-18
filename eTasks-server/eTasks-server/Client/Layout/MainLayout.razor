@@ -1,14 +1,18 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+
+@inject IConfiguration Configuration
+@inject UserState UserState
+@implements IDisposable
 
 @* Required *@
-<MudThemeProvider Theme="MyCustomTheme" />
-<MudPopoverProvider @rendermode="InteractiveServer" />
+<MudThemeProvider Theme="MyCustomTheme" IsDarkMode="@UserState.IsDarkTheme" />
+<MudPopoverProvider />
 
 @* Needed for dialogs *@
-<MudDialogProvider @rendermode="InteractiveServer" />
+<MudDialogProvider />
 
 @* Needed for snackbars *@
-<MudSnackbarProvider @rendermode="InteractiveServer" />
+<MudSnackbarProvider />
 
 <UserLogsDrawer />
 
@@ -51,5 +55,18 @@
             DrawerWidthRight = "300px"
         }
     };
-}
 
+    protected override void OnInitialized()
+    {
+        var culture = new System.Globalization.CultureInfo("pt-BR");
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+        UserState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
+    }
+}

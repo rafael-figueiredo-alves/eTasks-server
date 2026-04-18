@@ -26,31 +26,35 @@ else
         </ToolBarContent>
 
         <Columns>
-            <PropertyColumn Property="x => ((BonusPointSource)x.Source).ToString()" Title="Origem (Source)" Editable="false" />
-            <PropertyColumn Property="x => x.Name" Title="Nome" />
-            <PropertyColumn Property="x => x.DefaultPoints" Title="Pontos Padrão" />
-            <PropertyColumn Property="x => x.AllowCustomPoints" Title="Permite Valor Cust.?">
+            <PropertyColumn Property="x => ((BonusPointSource)x.Source).ToString()" Title="Origem (Source)" Editable="false" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.Name" Title="Nome" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.DefaultPoints" Title="Pontos Padrão" HeaderClass="justify-center" CellClass="justify-center" />
+            <PropertyColumn Property="x => x.AllowCustomPoints" Title="Permite Valor Cust.?" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIcon Icon="@(context.Item.AllowCustomPoints ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
-                             Color="@(context.Item.AllowCustomPoints ? Color.Success : Color.Error)" />
+                    <div class="d-flex justify-center w-100">
+                        <MudSwitch T="bool" Value="@context.Item.AllowCustomPoints" ValueChanged="@(val => ToggleRuleCustomPoints(context.Item, val))" Color="Color.Primary" />
+                    </div>
                 </CellTemplate>
                 <EditTemplate>
                     <MudSwitch @bind-Value="context.Item.AllowCustomPoints" Color="Color.Primary">Permitir valor customizado</MudSwitch>
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.IsActive" Title="Ativa">
+            <PropertyColumn Property="x => x.IsActive" Title="Ativa" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIcon Icon="@(context.Item.IsActive ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
-                             Color="@(context.Item.IsActive ? Color.Success : Color.Default)" />
+                    <div class="d-flex justify-center w-100">
+                        <MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="@(val => ToggleRuleStatus(context.Item, val))" Color="Color.Success" />
+                    </div>
                 </CellTemplate>
                 <EditTemplate>
                     <MudSwitch @bind-Value="context.Item.IsActive" Color="Color.Primary">Regra Ativa</MudSwitch>
                 </EditTemplate>
             </PropertyColumn>
-            <TemplateColumn Title="Ações" Sortable="false" Filterable="false">
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false" HeaderClass="justify-center" CellClass="justify-center">
                 <CellTemplate>
-                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteRule(context.Item))" />
+                    <div class="d-flex justify-center w-100">
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@context.Actions.StartEditingItemAsync" />
+                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteRule(context.Item))" />
+                    </div>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

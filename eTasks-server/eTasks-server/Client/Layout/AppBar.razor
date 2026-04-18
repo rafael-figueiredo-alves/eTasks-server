@@ -1,5 +1,17 @@
-@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using eTasks_server.Client.Services
+@using eTasks_server.Client.Services.Interfaces
+@using eTasks_server.Models.DTOs.Users.Profile.Requests
+@using eTasks_server.Models.Utils
+@using eTasks_server.Client.Components
+@using System.Security.Claims
+
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject IUserProfileService ProfileService
+@inject IUserAdminService UserAdminService
+@inject UserState UserState
+@inject ISnackbar Snackbar
 
 <MudAppBar Elevation="3">
     <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -13,15 +25,50 @@
 
     <MudButton Variant="Variant.Text"
                Color="Color.Inherit"
-               OnClick="@(() => NavigateTo("/docs"))">
+               OnClick="@(() => NavigateTo("/docs"))"
+               Class="d-none d-md-inline-flex">
         Docs
     </MudButton>
 
     <MudButton Variant="Variant.Text"
                Color="Color.Inherit"
-               OnClick="@(() => NavigateTo("/about"))">
+               OnClick="@(() => NavigateTo("/about"))"
+               Class="d-none d-md-inline-flex">
         Sobre
     </MudButton>
+
+    <MudIconButton Icon="@(UserState.IsDarkTheme ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                   Color="Color.Inherit"
+                   OnClick="ToggleTheme"
+                   Class="mx-2"
+                   Title="@(UserState.IsDarkTheme ? "Mudar para modo claro" : "Mudar para modo escuro")" />
+
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true" Class="ml-4">
+        <ActivatorContent>
+            <div @onclick="@context.ToggleAsync" style="cursor: pointer; display: flex; align-items: center; color: white;">
+                <MudAvatar Color="Color.Secondary" Size="Size.Small" Class="mr-2">
+                    @if (!string.IsNullOrEmpty(UserState.PhotoBase64))
+                    {
+                        <MudImage Src="@($"data:image/png;base64,{UserState.PhotoBase64}")" />
+                    }
+                    else
+                    {
+                        @(UserState.Name?[0].ToString().ToUpper() ?? "?")
+                    }
+                </MudAvatar>
+                <MudText Typo="Typo.body2" Class="d-none d-sm-inline" Style="color: white !important;">
+                    @(UserState.Name ?? "Usuário")
+                </MudText>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" Style="color: white;" />
+            </div>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => NavigateTo("/admin/profile"))">Ver Perfil</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.LockReset" OnClick="ChangePassword">Trocar Senha</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.Logout" IconColor="Color.Error" OnClick="Logout">Sair</MudMenuItem>
+        </ChildContent>
+    </MudMenu>
 </MudAppBar>
 
 <MudDrawer @bind-Open="_drawerOpen"
@@ -74,7 +121,88 @@
 </MudDrawer>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
     private bool _drawerOpen;
+
+    protected override void OnInitialized()
+    {
+        UserState.OnChange += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadUserDataAsync();
+        }
+    }
+
+    private async Task LoadUserDataAsync()
+    {
+        var authState = await AuthState;
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var name = user.Identity.Name;
+            var uidStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(UserState.Name))
+            {
+                UserState.UpdateName(name);
+            }
+
+            if (Guid.TryParse(uidStr, out var uid))
+            {
+                try 
+                {
+                    // Pequeno delay para garantir que a página principal (que usa o mesmo DbContext) 
+                    // já tenha iniciado/terminado sua própria consulta durante o pre-render/load.
+                    await Task.Delay(10); 
+                    
+                    var profile = await ProfileService.GetProfileAsync(uid);
+                    UserState.UpdatePhoto(profile.PhotoBase64);
+                    UserState.UpdateName(profile.Name);
+                    UserState.UpdateTheme(profile.Settings.Theme.Equals("dark", StringComparison.OrdinalIgnoreCase));
+                }
+                catch
+                {
+                    // Se falhar por concorrência, o Estado manterá apenas o nome vindo do cookie
+                }
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        var newIsDark = !UserState.IsDarkTheme;
+        UserState.UpdateTheme(newIsDark);
+
+        var authState = await AuthState;
+        var uidStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(uidStr, out var uid))
+        {
+            try
+            {
+                await ProfileService.UpdateSettingsAsync(uid, new PatchUserSettingsRequest
+                {
+                    Theme = newIsDark ? "dark" : "light"
+                });
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao salvar preferência de tema: {ex.Message}", Severity.Warning);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
+    }
 
     private void ToggleDrawer()
     {
@@ -84,5 +212,45 @@
     private void NavigateTo(string url)
     {
         Navigation.NavigateTo(url);
+    }
+
+    private async Task ChangePassword()
+    {
+        var authState = await AuthState;
+        var uidStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(uidStr, out var uid))
+        {
+            var parameters = new DialogParameters();
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+            
+            var dialog = await DialogService.ShowAsync<SetPasswordDialog>("Alterar Minha Senha", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is string newPassword)
+            {
+                try 
+                {
+                    var success = await UserAdminService.SetPasswordAsync(uid, newPassword);
+                    if (success)
+                    {
+                        Snackbar.Add("Senha alterada com sucesso!", Severity.Success);
+                    }
+                    else
+                    {
+                        Snackbar.Add("Não foi possível alterar a senha.", Severity.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Erro ao alterar senha: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/api/v2/web-auth/logout?returnUrl=%2Flogin", forceLoad: true);
     }
 }
