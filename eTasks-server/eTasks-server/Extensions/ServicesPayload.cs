@@ -71,6 +71,11 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupHttpClient(ConfigurationManager configuration)
             {
+                services.AddHttpClient("LocalApi", client =>
+                {
+                    var baseUrl = configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
+                    client.BaseAddress = new Uri(baseUrl);
+                });
                 return services;
             }
 
@@ -128,6 +133,14 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IBonusAdminService, BonusAdminService>();
                 services.AddScoped<IUserProfileService, UserProfileService>();
                 services.AddScoped<UserState>();
+                services.AddScoped<IDashboardBLL, DashboardBLL>();
+                services.AddScoped<IDashboardService, DashboardService>(sp =>
+                {
+                    var bll = sp.GetRequiredService<IDashboardBLL>();
+                    var factory = sp.GetRequiredService<IHttpClientFactory>();
+                    var client = factory.CreateClient("LocalApi");
+                    return new DashboardService(bll, client);
+                });
                 services.AddScoped<UserLogsDrawerService>();
 
                 return services;

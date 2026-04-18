@@ -1,4 +1,4 @@
-﻿@using eTasks_server.Models.Utils
+@using eTasks_server.Models.Utils
 @attribute [Authorize]
 
 @page "/"
@@ -6,11 +6,179 @@
 @rendermode InteractiveServer
 @inherits HomeBase
 
-<PageTitle>Bem vindo ao @Constants.AppTitle</PageTitle>
+<PageTitle>Dashboard - @Constants.AppTitle</PageTitle>
 
-<h1>Bem vindo ao @Constants.AppTitle</h1>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudGrid>
+        @* Header Section *@
+        <MudItem xs="12">
+            <div class="d-flex align-center justify-space-between mb-4">
+                <div>
+                    <MudText Typo="Typo.h4" GutterBottom="true" Style="font-weight: 700; color: var(--mud-palette-primary);">Dashboard Administrativo</MudText>
+                    <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Bem-vindo de volta! Aqui está um resumo do que está acontecendo no @Constants.AppTitle.</MudText>
+                </div>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadDataAsync" Disabled="Loading">
+                    Atualizar Dados
+                </MudButton>
+            </div>
+        </MudItem>
 
-<MudButton OnClick="Teste">Teste</MudButton>
+        @* Metric Cards *@
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">Total de Usuários</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" />
+                    </div>
+                    @if (Loading) { <MudSkeleton Width="60%" Height="40px" /> }
+                    else { <MudText Typo="Typo.h3" Style="font-weight: 800;">@DashboardData?.TotalUsers</MudText> }
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">Usuários ativos na base</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">Novos (7 dias)</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Success" />
+                    </div>
+                    @if (Loading) { <MudSkeleton Width="60%" Height="40px" /> }
+                    else { <MudText Typo="Typo.h3" Style="font-weight: 800;">@DashboardData?.NewUsersLast7Days</MudText> }
+                    <MudText Typo="Typo.caption" Color="Color.Success" Class="mt-2">+ @DashboardData?.NewUsersLast7Days novos registros</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">Falhas de Login (Hoje)</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />
+                    </div>
+                    @if (Loading) { <MudSkeleton Width="60%" Height="40px" /> }
+                    else { <MudText Typo="Typo.h3" Style="font-weight: 800;">@DashboardData?.FailedLoginsToday</MudText> }
+                    <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-2">Tentativas não autorizadas hoje</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">Saúde do Sistema</MudText>
+                        <div class="pulse-container">
+                            <div class="pulse-dot @(HealthStatus == "Saudável" ? "bg-success" : "bg-error")"></div>
+                        </div>
+                    </div>
+                    @if (Loading) { <MudSkeleton Width="60%" Height="40px" /> }
+                    else { <MudText Typo="Typo.h3" Color="@HealthColor" Style="font-weight: 800;">@HealthStatus</MudText> }
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">Status do Banco de Dados</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        @* Chart Section *@
+        <MudItem xs="12" md="8">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card" Style="height: 100%;">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Tendência de Logins (Últimos 7 dias)</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Default" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (Loading)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+                    }
+                    else
+                    {
+                        <MudChart ChartType="ChartType.Line" ChartSeries="@SeriesData" XAxisLabels="@ChartLabels" Width="100%" Height="300px" ChartOptions="@ChartOptions" />
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        @* Shortcuts Section *@
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="4" Class="rounded-lg dashboard-card" Style="height: 100%;">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Atalhos Rápidos</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex flex-column gap-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ManageAccounts" OnClick='() => NavigateTo("admin/users")' FullWidth="true" Class="rounded-pill py-3">
+                            Gerenciar Usuários
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("admin/version")' FullWidth="true" Class="rounded-pill py-3">
+                            Controle de Versão
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick='() => NavigateTo("admin/gamification")' FullWidth="true" Class="rounded-pill py-3">
+                            Gamificação
+                        </MudButton>
+                        <MudDivider Class="my-2" />
+                        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Code" OnClick='() => NavigateTo("docs")' FullWidth="true" Class="rounded-pill">
+                            Documentação API (Scalar)
+                        </MudButton>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .dashboard-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+    }
+
+    .pulse-container {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pulse-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        position: relative;
+    }
+
+    .bg-success { background-color: var(--mud-palette-success); }
+    .bg-error { background-color: var(--mud-palette-error); }
+
+    .pulse-dot::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: inherit;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(2.5); opacity: 0; }
+    }
+</style>
