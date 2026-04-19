@@ -1,8 +1,5 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using System.Threading.Tasks;
+using Scalar.AspNetCore;
 
 namespace eTasks_server.Endpoints
 {
@@ -12,15 +9,15 @@ namespace eTasks_server.Endpoints
         {
             var group = endpoints.MapGroup("/api/v2/dashboard")
                 .WithTags("Dashboard")
-                .RequireAuthorization("WebAdmin");
+                .RequireAuthorization("WebAdmin")
+                .ExcludeFromDescription();
 
             group.MapGet("/", async (IDashboardBLL dashboardBLL) =>
             {
                 var response = await dashboardBLL.GetDashboardMetricsAsync();
                 return Results.Ok(response);
             })
-            .WithName("GetDashboardMetrics")
-            .WithOpenApi();
+            .WithName("GetDashboardMetrics");
         }
     }
 }

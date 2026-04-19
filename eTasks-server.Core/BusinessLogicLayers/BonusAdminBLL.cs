@@ -13,12 +13,8 @@ using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class BonusAdminBLL : BaseBLL<IBonusAdminBLL>, IBonusAdminBLL
+    public class BonusAdminBLL(AppDbContext context, ILogger<IBonusAdminBLL> logger) : BaseBLL<IBonusAdminBLL>(context, logger), IBonusAdminBLL
     {
-        public BonusAdminBLL(AppDbContext context, ILogger<IBonusAdminBLL> logger) : base(context, logger)
-        {
-        }
-
         #region Bonus Achievements
 
         public async Task<List<BonusAchievementDTO>> GetAchievementsAsync()

@@ -10,16 +10,11 @@ using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class TaskBLL : BaseBLL<ITaskBLL>, ITaskBLL
+    public class TaskBLL(AppDbContext context, ILogger<ITaskBLL> logger) : BaseBLL<ITaskBLL>(context, logger), ITaskBLL
     {
-        public TaskBLL(AppDbContext context, ILogger<ITaskBLL> logger) : base(context, logger)
-        {
-        }
-
         public async Task<List<TaskListItemResponse>> ListAsync(Guid userUid, ListTasksRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);

@@ -13,14 +13,10 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class UserProfileBLL : BaseBLL<IUserProfileBLL>, IUserProfileBLL
+    public class UserProfileBLL(AppDbContext context, ILogger<IUserProfileBLL> logger) : BaseBLL<IUserProfileBLL>(context, logger), IUserProfileBLL
     {
         private static readonly HashSet<string> AllowedThemes = new(StringComparer.OrdinalIgnoreCase) { "light", "dark" };
         private static readonly HashSet<string> AllowedLanguages = new(StringComparer.OrdinalIgnoreCase) { "pt-BR", "en-US" };
-
-        public UserProfileBLL(AppDbContext context, ILogger<IUserProfileBLL> logger) : base(context, logger)
-        {
-        }
 
         public async Task<UserProfileResponse> GetProfileAsync(Guid userUid)
         {

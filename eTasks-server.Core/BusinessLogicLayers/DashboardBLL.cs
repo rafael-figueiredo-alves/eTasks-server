@@ -4,19 +4,11 @@ using eTasks_server.Models.DTOs.Dashboard.Responses;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
-    public class DashboardBLL : BaseBLL<IDashboardBLL>, IDashboardBLL
+    public class DashboardBLL(AppDbContext context, ILogger<IDashboardBLL> logger) : BaseBLL<IDashboardBLL>(context, logger), IDashboardBLL
     {
-        public DashboardBLL(AppDbContext context, ILogger<IDashboardBLL> logger) : base(context, logger)
-        {
-        }
-
         public async Task<DashboardResponse> GetDashboardMetricsAsync()
         {
             var now = SaoPauloDateTime.Now();

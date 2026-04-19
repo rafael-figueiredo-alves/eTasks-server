@@ -9,12 +9,8 @@ namespace eTasks_server.Core.BusinessLogicLayers
     /// <summary>
     /// Regras de negócio relacionadas à versão do aplicativo eTasks (Mobile e Web).
     /// </summary>
-    public class VersionBLL : BaseBLL<IVersionBLL>, IVersionBLL
+    public class VersionBLL(AppDbContext context, ILogger<IVersionBLL> logger) : BaseBLL<IVersionBLL>(context, logger), IVersionBLL
     {
-        public VersionBLL(AppDbContext context, ILogger<IVersionBLL> logger) : base(context, logger)
-        {
-        }
-
         /// <summary>
         /// Retornar informaões sobre a versão atual do aplicativo eTasks (Mobile e Web) armazenada no banco de dados.
         /// </summary>
