@@ -1,7 +1,7 @@
 namespace eTasks_server.Models.Entities.Productivity
 {
     /// <summary>
-    /// Define o nível de prioridade da tarefa.
+    /// Define o nivel de prioridade da tarefa.
     /// </summary>
     public enum TaskPriority
     {
@@ -10,16 +10,16 @@ namespace eTasks_server.Models.Entities.Productivity
         /// </summary>
         Low = 0,
         /// <summary>
-        /// Prioridade média.
+        /// Prioridade normal.
         /// </summary>
-        Medium = 1,
+        Normal = 1,
         /// <summary>
-        /// Prioridade alta.
+        /// Prioridade media.
         /// </summary>
-        High = 2,
+        Medium = 2,
         /// <summary>
-        /// Prioridade crítica.
+        /// Prioridade urgente.
         /// </summary>
-        Critical = 3
+        Urgent = 3
     }
 }

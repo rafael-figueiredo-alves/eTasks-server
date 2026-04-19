@@ -16,6 +16,7 @@ namespace eTasks_server.Endpoints
                 API_V2.MapUserAdminEndpoints();
                 API_V2.MapBonusAdminEndpoints();
                 API_V2.MapUsuariosEndpoints();
+                API_V2.MapTasksEndpoints();
                 API_V2.MapDashboardEndpoints();
             }
         }

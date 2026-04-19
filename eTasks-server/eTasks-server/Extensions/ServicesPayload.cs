@@ -124,6 +124,7 @@ namespace eTasks_server.Extensions
                 services.AddAuthorizationCore();
                 services.AddScoped<IWebAuthBLL, WebAuthBLL>();
                 services.AddScoped<IUserProfileBLL, UserProfileBLL>();
+                services.AddScoped<ITaskBLL, TaskBLL>();
 
                 services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();

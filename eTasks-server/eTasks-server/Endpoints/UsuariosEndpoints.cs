@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Users.Profile.Requests;
 using eTasks_server.Models.DTOs.Users.Profile.Responses;
 using eTasks_server.Models.Utils;
@@ -18,44 +19,33 @@ namespace eTasks_server.Endpoints
 
             group.MapGet("/", async (ClaimsPrincipal user, IUserProfileBLL userProfileBLL) =>
             {
-                var userUid = GetUserUid(user);
-                return userUid is null
-                    ? Results.Unauthorized()
-                    : Results.Ok(await userProfileBLL.GetProfileAsync(userUid.Value));
+                var userUid = user.GetRequiredUserUid();
+                return Results.Ok(await userProfileBLL.GetProfileAsync(userUid));
             })
             .WithName("GetCurrentUserProfile")
             .WithSummary("Obtem o perfil do usuario autenticado.");
 
             group.MapPut("/", async (ClaimsPrincipal user, [FromBody] UpdateUserProfileRequest request, IUserProfileBLL userProfileBLL, CancellationToken cancellationToken) =>
             {
-                var userUid = GetUserUid(user);
-                return userUid is null
-                    ? Results.Unauthorized()
-                    : Results.Ok(await userProfileBLL.UpdateProfileAsync(userUid.Value, request, cancellationToken));
+                var userUid = user.GetRequiredUserUid();
+                return Results.Ok(await userProfileBLL.UpdateProfileAsync(userUid, request, cancellationToken));
             })
             .WithName("UpdateCurrentUserProfile")
             .WithSummary("Atualiza nome, e-mail e foto do usuario autenticado.");
 
             group.MapPatch("/", async (ClaimsPrincipal user, [FromBody] PatchUserSettingsRequest request, IUserProfileBLL userProfileBLL) =>
             {
-                var userUid = GetUserUid(user);
-                return userUid is null
-                    ? Results.Unauthorized()
-                    : Results.Ok(await userProfileBLL.PatchSettingsAsync(userUid.Value, request));
+                var userUid = user.GetRequiredUserUid();
+                return Results.Ok(await userProfileBLL.PatchSettingsAsync(userUid, request));
             })
             .WithName("PatchCurrentUserSettings")
             .WithSummary("Atualiza parcialmente as configuracoes do usuario autenticado.");
 
             group.MapPost("/exportar-csv", async (ClaimsPrincipal user, IUserProfileBLL userProfileBLL) =>
             {
-                var userUid = GetUserUid(user);
-                if (userUid is null)
-                {
-                    return Results.Unauthorized();
-                }
-
-                var csv = await userProfileBLL.ExportProfileCsvAsync(userUid.Value);
-                var fileName = $"usuario-{userUid.Value:N}.csv";
+                var userUid = user.GetRequiredUserUid();
+                var csv = await userProfileBLL.ExportProfileCsvAsync(userUid);
+                var fileName = $"usuario-{userUid:N}.csv";
                 return Results.File(Encoding.UTF8.GetBytes(csv), "text/csv", fileName);
             })
             .WithName("ExportCurrentUserProfileCsv")
@@ -63,13 +53,8 @@ namespace eTasks_server.Endpoints
 
             group.MapDelete("/", async (HttpContext context, ClaimsPrincipal user, IUserProfileBLL userProfileBLL) =>
             {
-                var userUid = GetUserUid(user);
-                if (userUid is null)
-                {
-                    return Results.Unauthorized();
-                }
-
-                await userProfileBLL.SoftDeleteAsync(userUid.Value);
+                var userUid = user.GetRequiredUserUid();
+                await userProfileBLL.SoftDeleteAsync(userUid);
                 context.Response.Cookies.Delete(Constants.RefreshTokenCookieName, new CookieOptions
                 {
                     HttpOnly = true,
@@ -84,12 +69,6 @@ namespace eTasks_server.Endpoints
             .WithSummary("Remove logicamente a conta do usuario autenticado e revoga suas sessoes.");
 
             return app;
-        }
-
-        private static Guid? GetUserUid(ClaimsPrincipal user)
-        {
-            var rawUid = user.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.TryParse(rawUid, out var userUid) ? userUid : null;
         }
     }
 }
