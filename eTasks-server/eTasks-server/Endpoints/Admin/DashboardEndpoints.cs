@@ -1,7 +1,7 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using Scalar.AspNetCore;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Admin
 {
     public static class DashboardEndpoints
     {

@@ -5,7 +5,7 @@ using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
     public class DashboardBLL(AppDbContext context, ILogger<IDashboardBLL> logger) : BaseBLL<IDashboardBLL>(context, logger), IDashboardBLL
     {

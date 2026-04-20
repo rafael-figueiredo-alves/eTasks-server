@@ -1,4 +1,4 @@
-﻿namespace eTasks_server.Endpoints
+﻿namespace eTasks_server.Endpoints.Utils
 {
     public static class UtilsEndpoint
     {

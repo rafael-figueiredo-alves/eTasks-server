@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Auth
 {
     public class WebAuthBLL : BaseBLL<IWebAuthBLL>, IWebAuthBLL
     {

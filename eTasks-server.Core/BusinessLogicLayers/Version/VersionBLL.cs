@@ -4,7 +4,7 @@ using eTasks_server.Models.Entities.Version;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Version
 {
     /// <summary>
     /// Regras de negócio relacionadas à versão do aplicativo eTasks (Mobile e Web).

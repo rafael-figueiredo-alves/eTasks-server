@@ -4,7 +4,7 @@ using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Entities.Version;
 using Scalar.AspNetCore;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Version
 {
     public static class VersionEndpoint
     {

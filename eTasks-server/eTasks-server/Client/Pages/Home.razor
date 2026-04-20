@@ -119,14 +119,14 @@
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ManageAccounts" OnClick='() => NavigateTo("admin/users")' FullWidth="true" Class="rounded-pill py-3">
                             Gerenciar Usuários
                         </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("admin/version")' FullWidth="true" Class="rounded-pill py-3">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("version")' FullWidth="true" Class="rounded-pill py-3">
                             Controle de Versão
                         </MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick='() => NavigateTo("admin/gamification")' FullWidth="true" Class="rounded-pill py-3">
                             Gamificação
                         </MudButton>
                         <MudDivider Class="my-2" />
-                        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Code" OnClick='() => NavigateTo("docs")' FullWidth="true" Class="rounded-pill">
+                        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Code" OnClick='() => NavigateTo("docs", true)' FullWidth="true" Class="rounded-pill">
                             Documentação API (Scalar)
                         </MudButton>
                     </div>
@@ -135,50 +135,3 @@
         </MudItem>
     </MudGrid>
 </MudContainer>
-
-<style>
-    .dashboard-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 20px rgba(0,0,0,0.2);
-    }
-
-    .pulse-container {
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .pulse-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        position: relative;
-    }
-
-    .bg-success { background-color: var(--mud-palette-success); }
-    .bg-error { background-color: var(--mud-palette-error); }
-
-    .pulse-dot::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: inherit;
-        animation: pulse 2s infinite;
-    }
-
-    @@keyframes pulse {
-        0% { transform: scale(1); opacity: 0.8; }
-        100% { transform: scale(2.5); opacity: 0; }
-    }
-</style>

@@ -1,8 +1,11 @@
 using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
-
-using eTasks_server.Core.BusinessLogicLayers;
+using eTasks_server.Core.BusinessLogicLayers.Admin;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks;
+using eTasks_server.Core.BusinessLogicLayers.Auth;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Core.BusinessLogicLayers.Usuarios;
+using eTasks_server.Core.BusinessLogicLayers.Version;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
@@ -12,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Serilog;
@@ -112,7 +116,8 @@ namespace eTasks_server.Extensions
                                                         configuration.GetConnectionString(Constants.DatabaseConnection),
                                                         ServerVersion.AutoDetect(configuration.GetConnectionString(Constants.DatabaseConnection)),
                                                         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
-                                                        )
+                                                        .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                                                        )                                                     
                                                     );
 
                 return services;

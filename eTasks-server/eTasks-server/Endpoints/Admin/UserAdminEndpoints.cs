@@ -2,7 +2,7 @@ using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Users.Admin.Requests;
 using Microsoft.AspNetCore.Mvc;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Admin
 {
     public static class UserAdminEndpoints
     {

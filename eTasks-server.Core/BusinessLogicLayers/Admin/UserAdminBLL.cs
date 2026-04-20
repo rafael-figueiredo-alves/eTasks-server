@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
     public class UserAdminBLL : BaseBLL<IUserAdminBLL>, IUserAdminBLL
     {

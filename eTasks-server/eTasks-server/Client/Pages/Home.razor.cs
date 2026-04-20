@@ -22,13 +22,15 @@ namespace eTasks_server.Client.Pages
         protected List<ChartSeries<double>> SeriesData { get; set; } = new();
         protected ChartOptions ChartOptions = new ChartOptions();
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+        private bool _dataLoaded = false;
+
+        protected override async Task OnInitializedAsync()
         {
-            if (firstRender)
+            if (!_dataLoaded)
             {
+                _dataLoaded = true;
                 await LoadDataAsync();
             }
-            await base.OnAfterRenderAsync(firstRender);
         }
 
         protected async Task LoadDataAsync()
@@ -54,7 +56,7 @@ namespace eTasks_server.Client.Pages
             finally
             {
                 Loading = false;
-                StateHasChanged();
+                //StateHasChanged();
             }
         }
 

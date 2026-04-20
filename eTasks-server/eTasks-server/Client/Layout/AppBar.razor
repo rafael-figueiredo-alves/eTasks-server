@@ -25,7 +25,7 @@
 
     <MudButton Variant="Variant.Text"
                Color="Color.Inherit"
-               OnClick="@(() => NavigateTo("/docs"))"
+               OnClick="@(() => NavigateTo("/docs", true))"
                Class="d-none d-md-inline-flex">
         Docs
     </MudButton>
@@ -209,9 +209,9 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    private void NavigateTo(string url)
+    private void NavigateTo(string url, bool forceLoad = false)
     {
-        Navigation.NavigateTo(url);
+        Navigation.NavigateTo(url, forceLoad);
     }
 
     private async Task ChangePassword()

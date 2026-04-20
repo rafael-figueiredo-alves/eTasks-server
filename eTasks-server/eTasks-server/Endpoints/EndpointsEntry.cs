@@ -1,3 +1,10 @@
+using eTasks_server.Endpoints.Admin;
+using eTasks_server.Endpoints.API_Resourcers.Tasks;
+using eTasks_server.Endpoints.Auth;
+using eTasks_server.Endpoints.Usuarios;
+using eTasks_server.Endpoints.Utils;
+using eTasks_server.Endpoints.Version;
+
 namespace eTasks_server.Endpoints
 {
     public static class EndpointsEntry

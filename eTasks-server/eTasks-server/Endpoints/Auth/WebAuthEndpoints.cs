@@ -4,7 +4,7 @@ using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Auth
 {
     public static class WebAuthEndpoints
     {

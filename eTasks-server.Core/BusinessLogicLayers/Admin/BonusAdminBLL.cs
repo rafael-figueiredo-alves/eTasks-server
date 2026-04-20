@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
     public class BonusAdminBLL(AppDbContext context, ILogger<IBonusAdminBLL> logger) : BaseBLL<IBonusAdminBLL>(context, logger), IBonusAdminBLL
     {

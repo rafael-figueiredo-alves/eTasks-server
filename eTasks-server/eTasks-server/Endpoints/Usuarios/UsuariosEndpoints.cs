@@ -7,7 +7,7 @@ using eTasks_server.Models.DTOs.Users.Profile.Responses;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Mvc;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Usuarios
 {
     public static class UsuariosEndpoints
     {

@@ -11,7 +11,7 @@ using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
 {
     public class TaskBLL(AppDbContext context, ILogger<ITaskBLL> logger) : BaseBLL<ITaskBLL>(context, logger), ITaskBLL
     {

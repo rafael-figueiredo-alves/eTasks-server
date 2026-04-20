@@ -10,7 +10,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.API_Resourcers.Tasks
 {
     public static class TasksEndpoints
     {
@@ -43,8 +43,7 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status200OK, typeof(List<TaskListItemResponse>))
             .Produces(StatusCodes.Status304NotModified)
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
-            .Produces(StatusCodes.Status401Unauthorized)
-            .WithOpenApi();
+            .Produces(StatusCodes.Status401Unauthorized);
 
             group.MapGet("/{taskId:guid}", async (HttpContext httpContext, Guid taskId, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
@@ -65,8 +64,7 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status200OK, typeof(TaskDetailsResponse))
             .Produces(StatusCodes.Status304NotModified)
             .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
-            .WithOpenApi();
+            .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse));
 
             group.MapPost("/", async (HttpContext httpContext, [FromBody] CreateTaskRequest request, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
@@ -80,8 +78,7 @@ namespace eTasks_server.Endpoints
             .WithDescription("Permite cadastrar tarefa simples ou recorrente. Se a tarefa ja nascer concluida, a regra de pontuacao de TaskCompletion pode ser aplicada.")
             .Produces(StatusCodes.Status201Created, typeof(TaskDetailsResponse))
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
-            .Produces(StatusCodes.Status401Unauthorized)
-            .WithOpenApi();
+            .Produces(StatusCodes.Status401Unauthorized);
 
             group.MapPut("/{taskId:guid}", async (HttpContext httpContext, Guid taskId, [FromBody] UpdateTaskRequest request, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
@@ -100,8 +97,7 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
-            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse))
-            .WithOpenApi();
+            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse));
 
             group.MapPatch("/{taskId:guid}/completion", async (HttpContext httpContext, Guid taskId, [FromBody] SetTaskCompletionRequest request, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
@@ -120,8 +116,7 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
-            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse))
-            .WithOpenApi();
+            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse));
 
             group.MapDelete("/{taskId:guid}", async (HttpContext httpContext, Guid taskId, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
@@ -138,8 +133,7 @@ namespace eTasks_server.Endpoints
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
-            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse))
-            .WithOpenApi();
+            .Produces(StatusCodes.Status412PreconditionFailed, typeof(ErrorResponse));
 
             return app;
         }

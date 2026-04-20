@@ -3,7 +3,7 @@ using eTasks_server.Models.DTOs.Gamification.BonusAchievement.Requests;
 using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Requests;
 using Microsoft.AspNetCore.Mvc;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Admin
 {
     public static class BonusAdminEndpoints
     {

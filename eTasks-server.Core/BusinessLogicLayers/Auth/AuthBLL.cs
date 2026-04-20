@@ -16,7 +16,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace eTasks_server.Core.BusinessLogicLayers
+namespace eTasks_server.Core.BusinessLogicLayers.Auth
 {
     public class AuthBLL : BaseBLL<IAuthBLL>, IAuthBLL
     {

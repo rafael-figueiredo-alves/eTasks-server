@@ -7,7 +7,7 @@ using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 
-namespace eTasks_server.Endpoints
+namespace eTasks_server.Endpoints.Auth
 {
     public static class AuthEndpoints
     {
