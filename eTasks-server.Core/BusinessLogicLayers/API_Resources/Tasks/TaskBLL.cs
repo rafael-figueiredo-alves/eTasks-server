@@ -30,7 +30,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
             var query = _context.TaskItems
                 .AsNoTracking()
                 .Include(x => x.Recurrence)
-                .Where(x => x.UserUid == userUid);
+                .Where(x => x.UserUid == userUid && !x.IsDeleted);
 
             if (!effectiveRequest.IncludeRecurring)
             {
@@ -102,7 +102,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
             var task = await _context.TaskItems
                 .AsNoTracking()
                 .Include(x => x.Recurrence)
-                .FirstOrDefaultAsync(x => x.Id == taskId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == taskId && !x.IsDeleted, cancellationToken);
 
             task = EnsureFound(task, "Tarefa nao encontrada.");
             EnsureOwnership(task.UserUid, userUid);
@@ -114,9 +114,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
         {
             await GetAndValidateActiveUserAsync(userUid);
             ValidateCreateRequest(request);
+            await ValidateClientGeneratedIdAsync(request.ClientGeneratedId, cancellationToken);
 
             var task = new TaskItem
             {
+                Id = request.ClientGeneratedId ?? Guid.CreateVersion7(),
                 UserUid = userUid,
                 Summary = request.Summary.Trim(),
                 Notes = NormalizeNotes(request.Notes),
@@ -155,7 +157,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
 
             var task = await _context.TaskItems
                 .Include(x => x.Recurrence)
-                .FirstOrDefaultAsync(x => x.Id == taskId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == taskId && !x.IsDeleted, cancellationToken);
 
             task = EnsureFound(task, "Tarefa nao encontrada.");
             EnsureOwnership(task.UserUid, userUid);
@@ -197,7 +199,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
 
             var task = await _context.TaskItems
                 .Include(x => x.Recurrence)
-                .FirstOrDefaultAsync(x => x.Id == taskId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == taskId && !x.IsDeleted, cancellationToken);
 
             task = EnsureFound(task, "Tarefa nao encontrada.");
             EnsureOwnership(task.UserUid, userUid);
@@ -234,7 +236,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
 
             var task = await _context.TaskItems
                 .Include(x => x.Recurrence)
-                .FirstOrDefaultAsync(x => x.Id == taskId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == taskId && !x.IsDeleted, cancellationToken);
 
             task = EnsureFound(task, "Tarefa nao encontrada.");
             EnsureOwnership(task.UserUid, userUid);
@@ -246,7 +248,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
                 if (task.GeneratedFromTaskId is null)
                 {
                     var generatedTasks = await _context.TaskItems
-                        .Where(x => x.GeneratedFromTaskId == task.Id)
+                        .Where(x => x.GeneratedFromTaskId == task.Id && !x.IsDeleted)
                         .ToListAsync(cancellationToken);
 
                     tasksToDelete.AddRange(generatedTasks);
@@ -267,9 +269,68 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
                     _context.UserBonusPoints.RemoveRange(bonusEntries);
                 }
 
-                _context.TaskItems.RemoveRange(tasksToDelete);
+                var deletedAt = SaoPauloDateTime.Now();
+                foreach (var currentTask in tasksToDelete)
+                {
+                    currentTask.IsDeleted = true;
+                    currentTask.DeletedAt = deletedAt;
+                    currentTask.UpdatedAt = deletedAt;
+                }
+
                 await SaveChangesContextAsync(cancellationToken);
             });
+        }
+
+        public async Task<TaskSyncResponse> SyncAsync(Guid userUid, SyncTasksRequest request, CancellationToken cancellationToken = default)
+        {
+            await GetAndValidateActiveUserAsync(userUid);
+            ValidateSyncRequest(request);
+
+            if (request.IncludeRecurring && request.WindowStart.HasValue && request.WindowEnd.HasValue)
+            {
+                await MaterializeRecurringTasksInRangeAsync(userUid, request.WindowStart.Value.Date, request.WindowEnd.Value.Date, cancellationToken);
+            }
+
+            var since = request.Since;
+            var serverTime = SaoPauloDateTime.Now();
+
+            var upsertsQuery = _context.TaskItems
+                .AsNoTracking()
+                .Include(x => x.Recurrence)
+                .Where(x => x.UserUid == userUid && !x.IsDeleted);
+
+            var deletedQuery = _context.TaskItems
+                .AsNoTracking()
+                .Where(x => x.UserUid == userUid && x.IsDeleted && x.DeletedAt.HasValue);
+
+            if (since.HasValue)
+            {
+                upsertsQuery = upsertsQuery.Where(x => (x.UpdatedAt ?? x.CreatedAt) > since.Value);
+                deletedQuery = deletedQuery.Where(x => x.DeletedAt!.Value > since.Value);
+            }
+
+            var upserts = await upsertsQuery
+                .OrderBy(x => x.TaskDate)
+                .ThenBy(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            var deleted = await deletedQuery
+                .OrderBy(x => x.DeletedAt)
+                .ThenBy(x => x.Id)
+                .Select(x => new DeletedTaskResponse
+                {
+                    Id = x.Id,
+                    GeneratedFromTaskId = x.GeneratedFromTaskId,
+                    DeletedAt = x.DeletedAt!.Value
+                })
+                .ToListAsync(cancellationToken);
+
+            return new TaskSyncResponse
+            {
+                ServerTime = serverTime,
+                Upserts = upserts.Select(MapDetails).ToList(),
+                Deleted = deleted
+            };
         }
 
         private static ListTasksRequest NormalizeListRequest(ListTasksRequest request)
@@ -348,6 +409,33 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
             }
 
             ValidateRecurrence(recurrence, taskDate.Date);
+        }
+
+        private async Task ValidateClientGeneratedIdAsync(Guid? clientGeneratedId, CancellationToken cancellationToken)
+        {
+            if (!clientGeneratedId.HasValue)
+            {
+                return;
+            }
+
+            var idAlreadyExists = await _context.TaskItems.AnyAsync(x => x.Id == clientGeneratedId.Value, cancellationToken);
+            if (idAlreadyExists)
+            {
+                throw new ValidationException("ClientGeneratedId", "Ja existe uma tarefa com o identificador informado pelo cliente.");
+            }
+        }
+
+        private static void ValidateSyncRequest(SyncTasksRequest request)
+        {
+            if (request.WindowStart.HasValue ^ request.WindowEnd.HasValue)
+            {
+                throw new ValidationException("WindowStart", "Informe WindowStart e WindowEnd juntos para sincronizacao com recorrencias.");
+            }
+
+            if (request.WindowStart.HasValue && request.WindowEnd.HasValue && request.WindowStart.Value.Date > request.WindowEnd.Value.Date)
+            {
+                throw new ValidationException("WindowEnd", "A janela final da sincronizacao deve ser maior ou igual a inicial.");
+            }
         }
 
         private static void ValidateRecurrence(TaskRecurrenceRequest? recurrence, DateTime taskDate)
@@ -490,12 +578,21 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks
             }
         }
 
+        private async Task MaterializeRecurringTasksInRangeAsync(Guid userUid, DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+        {
+            for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+            {
+                await MaterializeRecurringTasksForDateAsync(userUid, date, cancellationToken);
+            }
+        }
+
         private async Task MaterializeRecurringTasksForDateAsync(Guid userUid, DateTime targetDate, CancellationToken cancellationToken)
         {
             var baseTasks = await _context.TaskItems
                 .Include(x => x.Recurrence)
                 .Where(x =>
                     x.UserUid == userUid &&
+                    !x.IsDeleted &&
                     x.GeneratedFromTaskId == null &&
                     x.Recurrence != null &&
                     x.Recurrence.IsActive)

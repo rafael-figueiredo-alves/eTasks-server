@@ -34,9 +34,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         Task<TaskDetailsResponse> SetCompletionAsync(Guid userUid, Guid taskId, bool isCompleted, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Remove uma tarefa do usuario autenticado.
+        /// Remove logicamente uma tarefa do usuario autenticado.
         /// Quando a tarefa for recorrente base, remove tambem as ocorrencias geradas.
         /// </summary>
         Task DeleteAsync(Guid userUid, Guid taskId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Retorna alteracoes incrementais de tarefas para sincronizacao offline-first.
+        /// </summary>
+        Task<TaskSyncResponse> SyncAsync(Guid userUid, SyncTasksRequest request, CancellationToken cancellationToken = default);
     }
 }

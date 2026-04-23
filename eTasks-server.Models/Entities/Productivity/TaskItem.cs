@@ -6,69 +6,92 @@ using Microsoft.EntityFrameworkCore;
 namespace eTasks_server.Models.Entities.Productivity
 {
     /// <summary>
-    /// Representa uma tarefa do usuário, simples ou gerada por recorrência.
+    /// Representa uma tarefa do usuario, simples ou gerada por recorrencia.
     /// </summary>
     public class TaskItem : IEntityModelConfiguration<TaskItem>
     {
         /// <summary>
-        /// Identificador único da tarefa.
+        /// Identificador unico da tarefa.
         /// </summary>
         public Guid Id { get; set; } = Guid.CreateVersion7();
+
         /// <summary>
-        /// Identificador do usuário dono da tarefa.
+        /// Identificador do usuario dono da tarefa.
         /// </summary>
         public Guid UserUid { get; set; }
+
         /// <summary>
-        /// Identificador da tarefa de origem quando a tarefa foi gerada por recorrência.
+        /// Identificador da tarefa de origem quando a tarefa foi gerada por recorrencia.
         /// </summary>
         public Guid? GeneratedFromTaskId { get; set; }
+
         /// <summary>
         /// Resumo curto da tarefa.
         /// </summary>
         public string Summary { get; set; } = string.Empty;
+
         /// <summary>
-        /// Anotação complementar da tarefa.
+        /// Anotacao complementar da tarefa.
         /// </summary>
         public string? Notes { get; set; }
+
         /// <summary>
-        /// Nível de prioridade da tarefa.
+        /// Nivel de prioridade da tarefa.
         /// </summary>
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+
         /// <summary>
-        /// Data em que a tarefa deve aparecer para execução.
+        /// Data em que a tarefa deve aparecer para execucao.
         /// </summary>
         public DateTime TaskDate { get; set; } = SaoPauloDateTime.Now();
+
         /// <summary>
-        /// Indica se a tarefa foi concluída.
+        /// Indica se a tarefa foi concluida.
         /// </summary>
         public bool IsCompleted { get; set; }
+
         /// <summary>
-        /// Data de conclusão da tarefa.
+        /// Data de conclusao da tarefa.
         /// </summary>
         public DateTime? CompletedAt { get; set; }
+
         /// <summary>
-        /// Data de criação da tarefa.
+        /// Data de criacao da tarefa.
         /// </summary>
         public DateTime CreatedAt { get; set; } = SaoPauloDateTime.Now();
+
         /// <summary>
-        /// Data da última atualização da tarefa.
+        /// Data da ultima atualizacao da tarefa.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
         /// <summary>
-        /// Usuário dono da tarefa.
+        /// Indica se a tarefa foi removida logicamente.
+        /// </summary>
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Data da remocao logica da tarefa.
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+        /// <summary>
+        /// Usuario dono da tarefa.
         /// </summary>
         public User? User { get; set; }
+
         /// <summary>
-        /// Tarefa original que gerou esta instância.
+        /// Tarefa original que gerou esta instancia.
         /// </summary>
         public TaskItem? GeneratedFromTask { get; set; }
+
         /// <summary>
         /// Tarefas geradas a partir desta tarefa.
         /// </summary>
         public ICollection<TaskItem> GeneratedTasks { get; set; } = new List<TaskItem>();
+
         /// <summary>
-        /// Configuração de recorrência associada à tarefa.
+        /// Configuracao de recorrencia associada a tarefa.
         /// </summary>
         public TaskRecurrence? Recurrence { get; set; }
 
@@ -90,6 +113,9 @@ namespace eTasks_server.Models.Entities.Productivity
 
             modelBuilder.Entity<TaskItem>()
                 .HasIndex(x => new { x.UserUid, x.IsCompleted });
+
+            modelBuilder.Entity<TaskItem>()
+                .HasIndex(x => new { x.UserUid, x.IsDeleted });
 
             modelBuilder.Entity<TaskItem>()
                 .HasOne(x => x.GeneratedFromTask)

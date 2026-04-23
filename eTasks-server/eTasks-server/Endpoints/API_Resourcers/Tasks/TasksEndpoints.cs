@@ -1,14 +1,14 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Endpoints.API_Resourcers;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Tasks.Requests;
 using eTasks_server.Models.DTOs.Tasks.Responses;
 using eTasks_server.Models.Exceptions;
+using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace eTasks_server.Endpoints.API_Resourcers.Tasks
 {
@@ -28,8 +28,8 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var tasks = await taskBLL.ListAsync(userUid, request, cancellationToken);
-                var etag = BuildListEtag(tasks, request);
-                if (RequestMatchesIfNoneMatch(httpContext.Request, etag))
+                var etag = TaskEtagHelper.BuildListEtag(tasks, request);
+                if (ApiResourceHttpHelper.RequestMatchesIfNoneMatch(httpContext.Request, etag))
                 {
                     return Results.StatusCode(StatusCodes.Status304NotModified);
                 }
@@ -45,12 +45,47 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
             .Produces(StatusCodes.Status401Unauthorized);
 
+            group.MapPost("/push-sync", async (HttpContext httpContext, [FromBody] TaskPushSyncRequest request, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
+            {
+                var userUid = httpContext.User.GetRequiredUserUid();
+                var response = new TaskPushSyncResponse
+                {
+                    ServerTime = SaoPauloDateTime.Now()
+                };
+
+                foreach (var operation in request.Operations ?? [])
+                {
+                    response.Results.Add(await ProcessPushOperationAsync(userUid, operation, taskBLL, cancellationToken));
+                }
+
+                return Results.Ok(response);
+            })
+            .WithName("PushSyncTasks")
+            .WithSummary("Processa em lote as mutacoes pendentes da outbox de tarefas.")
+            .WithDescription("Recebe operacoes de create, update, conclusao e delete geradas offline pelo cliente. Cada item e processado individualmente com retorno de sucesso, conflito, validacao ou falha.")
+            .Produces(StatusCodes.Status200OK, typeof(TaskPushSyncResponse))
+            .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+            .Produces(StatusCodes.Status401Unauthorized);
+
+            group.MapPost("/sync", async (HttpContext httpContext, [FromBody] SyncTasksRequest request, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
+            {
+                var userUid = httpContext.User.GetRequiredUserUid();
+                var payload = await taskBLL.SyncAsync(userUid, request, cancellationToken);
+                return Results.Ok(payload);
+            })
+            .WithName("SyncTasks")
+            .WithSummary("Retorna alteracoes incrementais de tarefas para sincronizacao offline-first.")
+            .WithDescription("Usa o cursor Since para retornar upserts e tombstones desde a ultima sincronizacao. Quando WindowStart e WindowEnd sao informados com IncludeRecurring=true, a API materializa ocorrencias recorrentes dentro da janela antes de montar a resposta.")
+            .Produces(StatusCodes.Status200OK, typeof(TaskSyncResponse))
+            .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+            .Produces(StatusCodes.Status401Unauthorized);
+
             group.MapGet("/{taskId:guid}", async (HttpContext httpContext, Guid taskId, ITaskBLL taskBLL, CancellationToken cancellationToken) =>
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var task = await taskBLL.GetByIdAsync(userUid, taskId, cancellationToken);
-                var etag = BuildDetailsEtag(task);
-                if (RequestMatchesIfNoneMatch(httpContext.Request, etag))
+                var etag = TaskEtagHelper.BuildDetailsEtag(task);
+                if (ApiResourceHttpHelper.RequestMatchesIfNoneMatch(httpContext.Request, etag))
                 {
                     return Results.StatusCode(StatusCodes.Status304NotModified);
                 }
@@ -70,7 +105,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var task = await taskBLL.CreateAsync(userUid, request, cancellationToken);
-                httpContext.Response.Headers.ETag = BuildDetailsEtag(task);
+                httpContext.Response.Headers.ETag = TaskEtagHelper.BuildDetailsEtag(task);
                 return Results.Created($"/api/v2/tasks/{task.Id}", task);
             })
             .WithName("CreateTask")
@@ -84,10 +119,10 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var currentTask = await taskBLL.GetByIdAsync(userUid, taskId, cancellationToken);
-                EnsureIfMatch(httpContext.Request, BuildDetailsEtag(currentTask));
+                ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, TaskEtagHelper.BuildDetailsEtag(currentTask), "A tarefa foi alterada por outro cliente. Atualize os dados e tente novamente.");
 
                 var updatedTask = await taskBLL.UpdateAsync(userUid, taskId, request, cancellationToken);
-                httpContext.Response.Headers.ETag = BuildDetailsEtag(updatedTask);
+                httpContext.Response.Headers.ETag = TaskEtagHelper.BuildDetailsEtag(updatedTask);
                 return Results.Ok(updatedTask);
             })
             .WithName("UpdateTask")
@@ -103,10 +138,10 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var currentTask = await taskBLL.GetByIdAsync(userUid, taskId, cancellationToken);
-                EnsureIfMatch(httpContext.Request, BuildDetailsEtag(currentTask));
+                ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, TaskEtagHelper.BuildDetailsEtag(currentTask), "A tarefa foi alterada por outro cliente. Atualize os dados e tente novamente.");
 
                 var updatedTask = await taskBLL.SetCompletionAsync(userUid, taskId, request.IsCompleted, cancellationToken);
-                httpContext.Response.Headers.ETag = BuildDetailsEtag(updatedTask);
+                httpContext.Response.Headers.ETag = TaskEtagHelper.BuildDetailsEtag(updatedTask);
                 return Results.Ok(updatedTask);
             })
             .WithName("SetTaskCompletion")
@@ -122,14 +157,14 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             {
                 var userUid = httpContext.User.GetRequiredUserUid();
                 var currentTask = await taskBLL.GetByIdAsync(userUid, taskId, cancellationToken);
-                EnsureIfMatch(httpContext.Request, BuildDetailsEtag(currentTask));
+                ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, TaskEtagHelper.BuildDetailsEtag(currentTask), "A tarefa foi alterada por outro cliente. Atualize os dados e tente novamente.");
 
                 await taskBLL.DeleteAsync(userUid, taskId, cancellationToken);
                 return Results.NoContent();
             })
             .WithName("DeleteTask")
-            .WithSummary("Remove uma tarefa do usuario autenticado.")
-            .WithDescription("Aceita If-Match para concorrencia otimista via ETag. Se a tarefa for a base de uma recorrencia, as ocorrencias geradas da serie tambem sao removidas.")
+            .WithSummary("Remove logicamente uma tarefa do usuario autenticado.")
+            .WithDescription("Aceita If-Match para concorrencia otimista via ETag. A tarefa nao e apagada fisicamente: ela vira um tombstone para sincronizacao offline-first. Se a tarefa for a base de uma recorrencia, as ocorrencias geradas da serie tambem sao removidas logicamente.")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
@@ -138,87 +173,157 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             return app;
         }
 
-        private static string BuildListEtag(IEnumerable<TaskListItemResponse> tasks, ListTasksRequest request)
+        private static async Task<TaskPushSyncItemResponse> ProcessPushOperationAsync(Guid userUid, TaskPushSyncItemRequest operation, ITaskBLL taskBLL, CancellationToken cancellationToken)
         {
-            var builder = new StringBuilder();
-            builder.Append(request.ReferenceDate?.Date.ToString("yyyy-MM-dd") ?? string.Empty).Append('|');
-            builder.Append(request.DateFrom?.Date.ToString("yyyy-MM-dd") ?? string.Empty).Append('|');
-            builder.Append(request.DateTo?.Date.ToString("yyyy-MM-dd") ?? string.Empty).Append('|');
-            builder.Append(request.IsCompleted?.ToString()).Append('|');
-            builder.Append(request.Priority?.ToString()).Append('|');
-            builder.Append(request.SearchTerm ?? string.Empty).Append('|');
-            builder.Append(request.IncludeRecurring).Append('|');
-
-            foreach (var task in tasks.OrderBy(x => x.TaskDate).ThenBy(x => x.Id))
+            try
             {
-                builder.Append(task.Id).Append('|')
-                    .Append(task.TaskDate.ToString("O")).Append('|')
-                    .Append(task.IsCompleted).Append('|')
-                    .Append(task.CompletedAt?.ToString("O")).Append('|')
-                    .Append((int)task.Priority).Append('|')
-                    .Append(task.Summary).Append('|')
-                    .Append(task.HasRecurrence).Append(';');
+                ValidatePushOperation(operation);
+
+                return operation.Operation switch
+                {
+                    TaskPushOperationType.Create => await ApplyCreateAsync(userUid, operation, taskBLL, cancellationToken),
+                    TaskPushOperationType.Update => await ApplyUpdateAsync(userUid, operation, taskBLL, cancellationToken),
+                    TaskPushOperationType.SetCompletion => await ApplyCompletionAsync(userUid, operation, taskBLL, cancellationToken),
+                    TaskPushOperationType.Delete => await ApplyDeleteAsync(userUid, operation, taskBLL, cancellationToken),
+                    _ => BuildFailure(operation, TaskPushSyncItemStatus.ValidationError, "invalid_operation", "Operacao de push sync invalida.")
+                };
+            }
+            catch (ValidationException ex)
+            {
+                return BuildFailure(operation, TaskPushSyncItemStatus.ValidationError, "validation_error", ApiResourceHttpHelper.FlattenValidationErrors(ex));
+            }
+            catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+            {
+                return BuildFailure(operation, TaskPushSyncItemStatus.Conflict, "conflict", ex.UserMessage ?? ex.Message);
+            }
+            catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                if (operation.Operation == TaskPushOperationType.Delete)
+                {
+                    return new TaskPushSyncItemResponse
+                    {
+                        ClientMutationId = operation.ClientMutationId,
+                        Status = TaskPushSyncItemStatus.Applied
+                    };
+                }
+
+                return BuildFailure(operation, TaskPushSyncItemStatus.NotFound, "not_found", ex.UserMessage ?? ex.Message);
+            }
+            catch (ApiException ex)
+            {
+                return BuildFailure(operation, TaskPushSyncItemStatus.Failed, "api_error", ex.UserMessage ?? ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BuildFailure(operation, TaskPushSyncItemStatus.Failed, "unexpected_error", ex.Message);
+            }
+        }
+
+        private static async Task<TaskPushSyncItemResponse> ApplyCreateAsync(Guid userUid, TaskPushSyncItemRequest operation, ITaskBLL taskBLL, CancellationToken cancellationToken)
+        {
+            var task = await taskBLL.CreateAsync(userUid, operation.Create!, cancellationToken);
+            return new TaskPushSyncItemResponse
+            {
+                ClientMutationId = operation.ClientMutationId,
+                Status = TaskPushSyncItemStatus.Applied,
+                Task = task,
+                ServerEtag = TaskEtagHelper.BuildDetailsEtag(task)
+            };
+        }
+
+        private static async Task<TaskPushSyncItemResponse> ApplyUpdateAsync(Guid userUid, TaskPushSyncItemRequest operation, ITaskBLL taskBLL, CancellationToken cancellationToken)
+        {
+            var currentTask = await taskBLL.GetByIdAsync(userUid, operation.TaskId!.Value, cancellationToken);
+            EnsureExpectedEtag(operation.ExpectedEtag, currentTask);
+
+            var task = await taskBLL.UpdateAsync(userUid, operation.TaskId.Value, operation.Update!, cancellationToken);
+            return new TaskPushSyncItemResponse
+            {
+                ClientMutationId = operation.ClientMutationId,
+                Status = TaskPushSyncItemStatus.Applied,
+                Task = task,
+                ServerEtag = TaskEtagHelper.BuildDetailsEtag(task)
+            };
+        }
+
+        private static async Task<TaskPushSyncItemResponse> ApplyCompletionAsync(Guid userUid, TaskPushSyncItemRequest operation, ITaskBLL taskBLL, CancellationToken cancellationToken)
+        {
+            var currentTask = await taskBLL.GetByIdAsync(userUid, operation.TaskId!.Value, cancellationToken);
+            EnsureExpectedEtag(operation.ExpectedEtag, currentTask);
+
+            var task = await taskBLL.SetCompletionAsync(userUid, operation.TaskId.Value, operation.Completion!.IsCompleted, cancellationToken);
+            return new TaskPushSyncItemResponse
+            {
+                ClientMutationId = operation.ClientMutationId,
+                Status = TaskPushSyncItemStatus.Applied,
+                Task = task,
+                ServerEtag = TaskEtagHelper.BuildDetailsEtag(task)
+            };
+        }
+
+        private static async Task<TaskPushSyncItemResponse> ApplyDeleteAsync(Guid userUid, TaskPushSyncItemRequest operation, ITaskBLL taskBLL, CancellationToken cancellationToken)
+        {
+            var currentTask = await taskBLL.GetByIdAsync(userUid, operation.TaskId!.Value, cancellationToken);
+            EnsureExpectedEtag(operation.ExpectedEtag, currentTask);
+
+            await taskBLL.DeleteAsync(userUid, operation.TaskId.Value, cancellationToken);
+            return new TaskPushSyncItemResponse
+            {
+                ClientMutationId = operation.ClientMutationId,
+                Status = TaskPushSyncItemStatus.Applied,
+                Deleted = new DeletedTaskResponse
+                {
+                    Id = currentTask.Id,
+                    GeneratedFromTaskId = currentTask.GeneratedFromTaskId,
+                    DeletedAt = SaoPauloDateTime.Now()
+                }
+            };
+        }
+
+        private static void ValidatePushOperation(TaskPushSyncItemRequest operation)
+        {
+            if (string.IsNullOrWhiteSpace(operation.ClientMutationId))
+            {
+                throw new ValidationException("ClientMutationId", "O identificador da mutacao do cliente e obrigatorio.");
             }
 
-            return BuildQuotedHash(builder.ToString());
-        }
-
-        private static string BuildDetailsEtag(TaskDetailsResponse task)
-        {
-            var payload = string.Join("|",
-                task.Id,
-                task.UserUid,
-                task.GeneratedFromTaskId,
-                task.Summary,
-                task.Notes,
-                (int)task.Priority,
-                task.TaskDate.ToString("O"),
-                task.IsCompleted,
-                task.CompletedAt?.ToString("O"),
-                task.CreatedAt.ToString("O"),
-                task.UpdatedAt?.ToString("O"),
-                task.Recurrence?.Id,
-                task.Recurrence?.RecurrenceType,
-                task.Recurrence?.Interval,
-                task.Recurrence?.WeekDays,
-                task.Recurrence?.DayOfMonth,
-                task.Recurrence?.MonthOfYear,
-                task.Recurrence?.StartsOn.ToString("O") ?? string.Empty,
-                task.Recurrence?.EndsOn?.ToString("O"),
-                task.Recurrence?.LastGeneratedAt?.ToString("O"),
-                task.Recurrence?.IsActive);
-
-            return BuildQuotedHash(payload);
-        }
-
-        private static string BuildQuotedHash(string value)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
-            return $"\"{Convert.ToHexString(bytes)}\"";
-        }
-
-        private static bool RequestMatchesIfNoneMatch(HttpRequest request, string currentEtag)
-        {
-            if (!request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var values))
+            switch (operation.Operation)
             {
-                return false;
+                case TaskPushOperationType.Create when operation.Create is null:
+                    throw new ValidationException("Create", "O payload de criacao e obrigatorio.");
+                case TaskPushOperationType.Update when operation.TaskId is null || operation.Update is null:
+                    throw new ValidationException("Update", "TaskId e payload de atualizacao sao obrigatorios.");
+                case TaskPushOperationType.SetCompletion when operation.TaskId is null || operation.Completion is null:
+                    throw new ValidationException("Completion", "TaskId e payload de conclusao sao obrigatorios.");
+                case TaskPushOperationType.Delete when operation.TaskId is null:
+                    throw new ValidationException("TaskId", "TaskId e obrigatorio para exclusao.");
             }
-
-            return values.Any(value => string.Equals(value.Trim(), currentEtag, StringComparison.Ordinal) || value.Trim() == "*");
         }
 
-        private static void EnsureIfMatch(HttpRequest request, string currentEtag)
+        private static void EnsureExpectedEtag(string? expectedEtag, TaskDetailsResponse currentTask)
         {
-            if (!request.Headers.TryGetValue(HeaderNames.IfMatch, out var values) || values.Count == 0)
+            if (string.IsNullOrWhiteSpace(expectedEtag))
             {
                 return;
             }
 
-            var matched = values.Any(value => string.Equals(value.Trim(), currentEtag, StringComparison.Ordinal) || value.Trim() == "*");
-            if (!matched)
+            var currentEtag = TaskEtagHelper.BuildDetailsEtag(currentTask);
+            if (!string.Equals(expectedEtag.Trim(), currentEtag, StringComparison.Ordinal) && expectedEtag.Trim() != "*")
             {
                 throw new ApiException(HttpStatusCode.PreconditionFailed, "A tarefa foi alterada por outro cliente. Atualize os dados e tente novamente.");
             }
         }
+
+        private static TaskPushSyncItemResponse BuildFailure(TaskPushSyncItemRequest operation, TaskPushSyncItemStatus status, string errorCode, string errorMessage)
+        {
+            return new TaskPushSyncItemResponse
+            {
+                ClientMutationId = operation.ClientMutationId,
+                Status = status,
+                ErrorCode = errorCode,
+                ErrorMessage = errorMessage
+            };
+        }
+
     }
 }

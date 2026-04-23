@@ -6,42 +6,57 @@ using Microsoft.EntityFrameworkCore;
 namespace eTasks_server.Models.Entities.Notes
 {
     /// <summary>
-    /// Representa uma anotação livre do usuário.
+    /// Representa uma anotacao livre do usuario.
     /// </summary>
     public class NoteItem : IEntityModelConfiguration<NoteItem>
     {
         /// <summary>
-        /// Identificador único da anotação.
+        /// Identificador unico da anotacao.
         /// </summary>
         public Guid Id { get; set; } = Guid.CreateVersion7();
+
         /// <summary>
-        /// Identificador do usuário dono da anotação.
+        /// Identificador do usuario dono da anotacao.
         /// </summary>
         public Guid UserUid { get; set; }
+
         /// <summary>
-        /// Assunto principal da anotação.
+        /// Assunto principal da anotacao.
         /// </summary>
         public string Subject { get; set; } = string.Empty;
+
         /// <summary>
-        /// Conteúdo textual da anotação.
+        /// Conteudo textual da anotacao.
         /// </summary>
         public string Content { get; set; } = string.Empty;
+
         /// <summary>
-        /// Data de criação da anotação.
+        /// Data de criacao da anotacao.
         /// </summary>
         public DateTime CreatedAt { get; set; } = SaoPauloDateTime.Now();
+
         /// <summary>
-        /// Data da última atualização da anotação.
+        /// Data da ultima atualizacao da anotacao.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
         /// <summary>
-        /// Usuário dono da anotação.
+        /// Indica se a anotacao foi removida logicamente.
+        /// </summary>
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Data da remocao logica da anotacao.
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+        /// <summary>
+        /// Usuario dono da anotacao.
         /// </summary>
         public User? User { get; set; }
 
         /// <summary>
-        /// Configura o mapeamento da entidade de anotações.
+        /// Configura o mapeamento da entidade de anotacoes.
         /// </summary>
         public static void Configure(ModelBuilder modelBuilder)
         {
@@ -51,6 +66,9 @@ namespace eTasks_server.Models.Entities.Notes
 
             modelBuilder.Entity<NoteItem>()
                 .HasIndex(x => x.UserUid);
+
+            modelBuilder.Entity<NoteItem>()
+                .HasIndex(x => new { x.UserUid, x.IsDeleted });
         }
     }
 }

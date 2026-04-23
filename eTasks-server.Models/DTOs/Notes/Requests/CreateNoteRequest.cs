@@ -6,12 +6,17 @@ namespace eTasks_server.Models.DTOs.Notes.Requests
     public class CreateNoteRequest
     {
         /// <summary>
+        /// Identificador gerado pelo cliente para operacao offline.
+        /// </summary>
+        public Guid? ClientGeneratedId { get; set; }
+
+        /// <summary>
         /// Assunto da anotacao.
         /// </summary>
         public string Subject { get; set; } = string.Empty;
 
         /// <summary>
-        /// Conteúdo da anotacao.
+        /// Conteudo da anotacao.
         /// </summary>
         public string Content { get; set; } = string.Empty;
     }

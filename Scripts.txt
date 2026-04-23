@@ -180,9 +180,12 @@ CREATE TABLE IF NOT EXISTS `task_items` (
     `CompletedAt` DATETIME NULL,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_task_items_useruid_taskdate` (`UserUid` ASC, `TaskDate` ASC),
     INDEX `IX_task_items_useruid_iscompleted` (`UserUid` ASC, `IsCompleted` ASC),
+    INDEX `IX_task_items_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     INDEX `IX_task_items_generatedfromtaskid` (`GeneratedFromTaskId` ASC),
     CONSTRAINT `fk_task_items_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
@@ -226,8 +229,11 @@ CREATE TABLE IF NOT EXISTS `goals` (
     `Status` INT NOT NULL DEFAULT 0,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_goals_useruid_status` (`UserUid` ASC, `Status` ASC),
+    INDEX `IX_goals_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     CONSTRAINT `fk_goals_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
         ON DELETE CASCADE
@@ -281,8 +287,11 @@ CREATE TABLE IF NOT EXISTS `notes` (
     `Content` TEXT NOT NULL,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_notes_useruid` (`UserUid` ASC),
+    INDEX `IX_notes_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     CONSTRAINT `fk_notes_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
         ON DELETE CASCADE

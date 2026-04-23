@@ -1,6 +1,8 @@
 using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLogicLayers.Admin;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks;
 using eTasks_server.Core.BusinessLogicLayers.Auth;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
@@ -130,6 +132,8 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IWebAuthBLL, WebAuthBLL>();
                 services.AddScoped<IUserProfileBLL, UserProfileBLL>();
                 services.AddScoped<ITaskBLL, TaskBLL>();
+                services.AddScoped<IGoalBLL, GoalBLL>();
+                services.AddScoped<INoteBLL, NoteBLL>();
 
                 services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();

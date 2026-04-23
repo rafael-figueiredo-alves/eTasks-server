@@ -1,4 +1,6 @@
 using eTasks_server.Endpoints.Admin;
+using eTasks_server.Endpoints.API_Resourcers.Goals;
+using eTasks_server.Endpoints.API_Resourcers.Notes;
 using eTasks_server.Endpoints.API_Resourcers.Tasks;
 using eTasks_server.Endpoints.Auth;
 using eTasks_server.Endpoints.Usuarios;
@@ -24,6 +26,8 @@ namespace eTasks_server.Endpoints
                 API_V2.MapBonusAdminEndpoints();
                 API_V2.MapUsuariosEndpoints();
                 API_V2.MapTasksEndpoints();
+                API_V2.MapGoalsEndpoints();
+                API_V2.MapNotesEndpoints();
                 API_V2.MapDashboardEndpoints();
             }
         }
