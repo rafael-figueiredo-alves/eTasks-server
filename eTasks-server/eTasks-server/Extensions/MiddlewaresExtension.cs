@@ -1,4 +1,5 @@
 using eTasks_server.Models.Utils;
+using eTasks_server.Middlewares;
 using Scalar.AspNetCore;
 
 namespace eTasks_server.Extensions
@@ -59,6 +60,7 @@ namespace eTasks_server.Extensions
                 
                 webApplication.UseAuthentication();
                 webApplication.UseAuthorization();
+                webApplication.UseMiddleware<OperationAuditMiddleware>();
                 
                 webApplication.UseHttpsRedirection();
                 webApplication.UseAntiforgery();

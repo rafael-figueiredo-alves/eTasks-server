@@ -50,6 +50,8 @@ namespace eTasks_server.Models.Entities.Shopping
         /// Data da última atualização da lista.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         /// <summary>
         /// Usuário dono da lista.

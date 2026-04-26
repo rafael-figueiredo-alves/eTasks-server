@@ -252,8 +252,11 @@ CREATE TABLE IF NOT EXISTS `shopping_lists` (
     `IsFinalized` TINYINT(1) NOT NULL DEFAULT 0,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_shopping_lists_useruid_isfinalized` (`UserUid` ASC, `IsFinalized` ASC),
+    INDEX `IX_shopping_lists_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     CONSTRAINT `fk_shopping_lists_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
         ON DELETE CASCADE
@@ -317,8 +320,11 @@ CREATE TABLE IF NOT EXISTS `reading_items` (
     `FinishedAt` DATETIME NULL,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_reading_items_useruid_status` (`UserUid` ASC, `Status` ASC),
+    INDEX `IX_reading_items_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     CONSTRAINT `fk_reading_items_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
         ON DELETE CASCADE
@@ -347,11 +353,35 @@ CREATE TABLE IF NOT EXISTS `finance_entries` (
     `RecurrenceEndsOn` DATETIME NULL,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` DATETIME NULL,
+    `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
     PRIMARY KEY (`Id`),
     INDEX `IX_finance_entries_useruid_occurson` (`UserUid` ASC, `OccursOn` ASC),
+    INDEX `IX_finance_entries_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
     CONSTRAINT `fk_finance_entries_users`
         FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
         ON DELETE CASCADE
 ) ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
+
+ALTER TABLE `shopping_lists`
+    ADD COLUMN IF NOT EXISTS `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `UpdatedAt`,
+    ADD COLUMN IF NOT EXISTS `DeletedAt` DATETIME NULL AFTER `IsDeleted`;
+
+ALTER TABLE `reading_items`
+    ADD COLUMN IF NOT EXISTS `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `UpdatedAt`,
+    ADD COLUMN IF NOT EXISTS `DeletedAt` DATETIME NULL AFTER `IsDeleted`;
+
+ALTER TABLE `finance_entries`
+    ADD COLUMN IF NOT EXISTS `IsDeleted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `UpdatedAt`,
+    ADD COLUMN IF NOT EXISTS `DeletedAt` DATETIME NULL AFTER `IsDeleted`;
+
+CREATE INDEX IF NOT EXISTS `IX_shopping_lists_useruid_isdeleted`
+    ON `shopping_lists` (`UserUid`, `IsDeleted`);
+
+CREATE INDEX IF NOT EXISTS `IX_reading_items_useruid_isdeleted`
+    ON `reading_items` (`UserUid`, `IsDeleted`);
+
+CREATE INDEX IF NOT EXISTS `IX_finance_entries_useruid_isdeleted`
+    ON `finance_entries` (`UserUid`, `IsDeleted`);

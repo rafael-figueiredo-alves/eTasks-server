@@ -78,6 +78,8 @@ namespace eTasks_server.Models.Entities.Readings
         /// Data da última atualização do registro.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         /// <summary>
         /// Usuário dono da leitura.

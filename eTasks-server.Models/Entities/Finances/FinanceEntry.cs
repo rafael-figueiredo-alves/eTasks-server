@@ -91,6 +91,8 @@ namespace eTasks_server.Models.Entities.Finances
         /// Data da última atualização do lançamento.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         /// <summary>
         /// Usuário dono do lançamento.

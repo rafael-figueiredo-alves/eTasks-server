@@ -7,6 +7,8 @@ namespace eTasks_server.Models.DTOs.Finances.Requests
     /// </summary>
     public class CreateFinanceEntryRequest
     {
+        public Guid? ClientGeneratedId { get; set; }
+
         /// <summary>
         /// Título do lançamento financeiro.
         /// </summary>

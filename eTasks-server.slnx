@@ -2,4 +2,5 @@
   <Project Path="eTasks-server.Core/eTasks-server.Core.csproj" />
   <Project Path="eTasks-server.Models/eTasks-server.Models.csproj" Id="08b58b29-05d3-438d-ac13-86b6f99f5f04" />
   <Project Path="eTasks-server/eTasks-server/eTasks-server.csproj" />
+  <Project Path="eTasks-server.Tests/eTasks-server.Tests.csproj" />
 </Solution>

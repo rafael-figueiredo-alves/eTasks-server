@@ -7,6 +7,8 @@ namespace eTasks_server.Models.DTOs.Shopping.Requests
     /// </summary>
     public class CreateShoppingListRequest
     {
+        public Guid? ClientGeneratedId { get; set; }
+
         /// <summary>
         /// Nome da lista de compras. Exemplo: "Lista de Compras Semanal", "Lista de Compras para Festa", etc.
         /// </summary>

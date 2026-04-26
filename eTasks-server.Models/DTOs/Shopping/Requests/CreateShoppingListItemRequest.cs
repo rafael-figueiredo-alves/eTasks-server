@@ -7,6 +7,8 @@ namespace eTasks_server.Models.DTOs.Shopping.Requests
     /// </summary>
     public class CreateShoppingListItemRequest
     {
+        public Guid? ClientGeneratedId { get; set; }
+
         /// <summary>
         /// Descrição do item a ser adicionado. Exemplo: "Leite", "Pão", "Ovos", etc.
         /// </summary>

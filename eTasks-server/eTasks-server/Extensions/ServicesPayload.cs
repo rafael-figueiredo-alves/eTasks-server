@@ -2,7 +2,10 @@ using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLogicLayers.Admin;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Readings;
+using eTasks_server.Core.BusinessLogicLayers.API_Resources.Shopping;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks;
 using eTasks_server.Core.BusinessLogicLayers.Auth;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
@@ -11,6 +14,7 @@ using eTasks_server.Core.BusinessLogicLayers.Version;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
+using eTasks_server.Core.Services.Options;
 using eTasks_server.Middlewares;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -37,6 +41,7 @@ namespace eTasks_server.Extensions
                         .SetupCors()
                         .SetupMudServices()
                         .SetupHttpClient(configuration)
+                        .SetupInfrastructureOptions(configuration)
                         .SetupHealthChecks(configuration)
                         .SetupGlobalExceptionHandler()
                         .SetupOpenApi()
@@ -82,6 +87,20 @@ namespace eTasks_server.Extensions
                     var baseUrl = configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
                     client.BaseAddress = new Uri(baseUrl);
                 });
+
+                services.AddHttpClient("OpenRouter", client =>
+                {
+                    var baseUrl = configuration.GetSection("OpenRouter").GetValue<string>("BaseUrl") ?? "https://openrouter.ai/api/v1/";
+                    client.BaseAddress = new Uri(baseUrl);
+                    client.Timeout = TimeSpan.FromSeconds(60);
+                });
+                return services;
+            }
+
+            private IServiceCollection SetupInfrastructureOptions(ConfigurationManager configuration)
+            {
+                services.Configure<OpenRouterOptions>(configuration.GetSection("OpenRouter"));
+                services.Configure<MongoAuditOptions>(configuration.GetSection("MongoAudit"));
                 return services;
             }
 
@@ -134,6 +153,9 @@ namespace eTasks_server.Extensions
                 services.AddScoped<ITaskBLL, TaskBLL>();
                 services.AddScoped<IGoalBLL, GoalBLL>();
                 services.AddScoped<INoteBLL, NoteBLL>();
+                services.AddScoped<IReadingBLL, ReadingBLL>();
+                services.AddScoped<IShoppingListBLL, ShoppingListBLL>();
+                services.AddScoped<IFinanceBLL, FinanceBLL>();
 
                 services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
@@ -193,6 +215,10 @@ namespace eTasks_server.Extensions
                 services.AddControllers();
 
                 services.AddScoped<IEmailService, EmailService>();
+                services.AddSingleton<IAiCapabilityCatalog, AiCapabilityCatalog>();
+                services.AddScoped<IAiPromptComposer, AiPromptComposer>();
+                services.AddScoped<IAiAssistantService, OpenRouterAiAssistantService>();
+                services.AddSingleton<IOperationAuditLogger, MongoOperationAuditLogger>();
                 services.AddScoped<IAuthBLL, AuthBLL>();
 
                 services.AddAuthentication(options =>

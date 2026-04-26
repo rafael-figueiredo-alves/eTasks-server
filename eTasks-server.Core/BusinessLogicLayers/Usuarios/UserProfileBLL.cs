@@ -101,6 +101,40 @@ namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
             };
         }
 
+        public async Task<UserSettingsSyncResponse> GetSettingsAsync(Guid userUid)
+        {
+            var user = await GetActiveUserAsync(userUid);
+            var settings = await EnsureSettingsAsync(user);
+            await TouchLastAccessAsync(user);
+            return MapSettings(settings);
+        }
+
+        public async Task<UserBonusSyncResponse> GetBonusAsync(Guid userUid)
+        {
+            var user = await GetActiveUserAsync(userUid);
+            await EnsureSettingsAsync(user);
+            await TouchLastAccessAsync(user);
+            return BuildBonusSync(user);
+        }
+
+        public async Task<UserDataSyncResponse> SyncUserDataAsync(Guid userUid, SyncUserDataRequest request)
+        {
+            var user = await GetActiveUserAsync(userUid);
+            var settings = await EnsureSettingsAsync(user);
+            await TouchLastAccessAsync(user);
+
+            var settingsChanged = !request.Since.HasValue || settings.UpdatedAt > request.Since.Value;
+            var lastBonusUpdateAt = GetLastBonusUpdatedAt(user);
+            var bonusChanged = !request.Since.HasValue || lastBonusUpdateAt > request.Since.Value;
+
+            return new UserDataSyncResponse
+            {
+                ServerTime = SaoPauloDateTime.Now(),
+                Settings = settingsChanged ? MapSettings(settings) : null,
+                Bonus = bonusChanged ? BuildBonusSync(user) : null
+            };
+        }
+
         public async Task<string> ExportProfileCsvAsync(Guid userUid)
         {
             var profile = await GetProfileAsync(userUid);
@@ -173,6 +207,61 @@ namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
             await _context.UserSettings.AddAsync(settings);
             await _context.SaveChangesAsync();
             return settings;
+        }
+
+        private static UserSettingsSyncResponse MapSettings(UserSettings settings)
+        {
+            return new UserSettingsSyncResponse
+            {
+                Id = settings.Id,
+                UserUid = settings.UserUid,
+                Theme = settings.Theme,
+                Language = settings.Language,
+                InitialScreen = settings.InitialScreen,
+                EnableBonusSystem = settings.EnableBonusSystem,
+                CreatedAt = settings.CreatedAt,
+                UpdatedAt = settings.UpdatedAt
+            };
+        }
+
+        private static DateTime GetLastBonusUpdatedAt(User user)
+        {
+            var lastPoint = user.BonusPoints.Count == 0 ? DateTime.MinValue : user.BonusPoints.Max(x => x.CreatedAt);
+            var lastAchievement = user.Achievements.Count == 0 ? DateTime.MinValue : user.Achievements.Max(x => x.AchievedAt);
+            return lastPoint > lastAchievement ? lastPoint : lastAchievement;
+        }
+
+        private static UserBonusSyncResponse BuildBonusSync(User user)
+        {
+            return new UserBonusSyncResponse
+            {
+                TotalPoints = user.BonusPoints.Sum(x => x.Points),
+                LastUpdatedAt = GetLastBonusUpdatedAt(user),
+                PointEntries = user.BonusPoints
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Select(x => new UserBonusPointEntryDTO
+                    {
+                        Id = x.Id,
+                        Points = x.Points,
+                        Source = x.Source,
+                        Description = x.Description,
+                        SourceReferenceId = x.SourceReferenceId,
+                        CreatedAt = x.CreatedAt
+                    })
+                    .ToList(),
+                Achievements = user.Achievements
+                    .Where(x => x.BonusAchievement is not null)
+                    .OrderByDescending(x => x.AchievedAt)
+                    .Select(x => new UserAchievementDTO
+                    {
+                        Code = x.BonusAchievement!.Code,
+                        Name = x.BonusAchievement.Name,
+                        PointsRequired = x.BonusAchievement.PointsRequired,
+                        DisplayType = (int)x.BonusAchievement.DisplayType,
+                        AchievedAt = x.AchievedAt
+                    })
+                    .ToList()
+            };
         }
 
         private async Task<UserProfileResponse> BuildProfileResponseAsync(User user)
