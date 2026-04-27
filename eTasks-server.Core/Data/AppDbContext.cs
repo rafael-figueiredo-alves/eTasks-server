@@ -4,10 +4,12 @@ using eTasks_server.Models.Entities.Goals;
 using eTasks_server.Models.Entities.Notes;
 using eTasks_server.Models.Entities.Productivity;
 using eTasks_server.Models.Entities.Readings;
+using eTasks_server.Models.Entities.Settings;
 using eTasks_server.Models.Entities.Shopping;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Entities.Version;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace eTasks_server.Core.Data
 {
@@ -39,6 +41,8 @@ namespace eTasks_server.Core.Data
         public DbSet<NoteItem> Notes { get; set; }
         public DbSet<ReadingItem> ReadingItems { get; set; }
         public DbSet<FinanceEntry> FinanceEntries { get; set; }
+        public DbSet<FinanceRecurrence> FinanceRecurrences { get; set; }
+        public DbSet<ServerSettings> ServerSettings { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -61,8 +65,43 @@ namespace eTasks_server.Core.Data
             NoteItem.Configure(modelBuilder);
             ReadingItem.Configure(modelBuilder);
             FinanceEntry.Configure(modelBuilder);
+            FinanceRecurrence.Configure(modelBuilder);
+            global::eTasks_server.Models.Entities.Settings.ServerSettings.Configure(modelBuilder);
+            ConfigureGuidColumns(modelBuilder);
 
             base.OnModelCreating(modelBuilder);
+        }
+
+        private static void ConfigureGuidColumns(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(Guid) || property.ClrType == typeof(Guid?))
+                    {
+                        property.SetColumnType("binary(16)");
+                    }
+                }
+
+                var primaryKey = entityType.FindPrimaryKey();
+                if (primaryKey?.Properties.Count != 1)
+                {
+                    continue;
+                }
+
+                var keyProperty = primaryKey.Properties[0];
+                if (keyProperty.ClrType != typeof(Guid))
+                {
+                    continue;
+                }
+
+                if (keyProperty.Name is "Id" or "Uid")
+                {
+                    keyProperty.ValueGenerated = ValueGenerated.OnAdd;
+                    keyProperty.SetDefaultValueSql("UUID_TO_BIN(UUID(), 1)");
+                }
+            }
         }
     }
 }

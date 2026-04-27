@@ -111,6 +111,11 @@ namespace eTasks_server.Models.Utils
         public const string JwtAudienceConfig = "Jwt:Audience";
 
         /// <summary>
+        /// Chave usada para criptografia simetrica de segredos persistidos em banco.
+        /// </summary>
+        public const string DataEncryptionKeyConfig = "Security:DataEncryptionKey";
+
+        /// <summary>
         /// Claim customizado que identifica o tipo de cliente para o qual o token JWT foi emitido.
         /// </summary>
         public const string UserAgentClaimType = "user_agent";

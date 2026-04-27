@@ -13,10 +13,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
     public class UserAdminBLL : BaseBLL<IUserAdminBLL>, IUserAdminBLL
     {
         private readonly IEmailService _emailService;
+        private readonly ISecretProtector _secretProtector;
 
-        public UserAdminBLL(AppDbContext context, IEmailService emailService, ILogger<IUserAdminBLL> logger) : base(context, logger)
+        public UserAdminBLL(AppDbContext context, IEmailService emailService, ISecretProtector secretProtector, ILogger<IUserAdminBLL> logger) : base(context, logger)
         {
             _emailService = emailService;
+            _secretProtector = secretProtector;
         }
 
         public async Task<List<AdminUserDTO>> GetUsersAsync()
@@ -66,7 +68,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
             if (user == null) throw new ApiException(HttpStatusCode.NotFound, "Usuário não encontrado.");
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordHash = _secretProtector.Protect(BCrypt.Net.BCrypt.HashPassword(newPassword));
 
             // Revoga tokens para forçar novo login com a nova senha
             var tokens = await _context.RefreshTokens.Where(t => t.UserUid == uid && !t.IsRevoked).ToListAsync();

@@ -1,6 +1,7 @@
 using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Core.BusinessLogicLayers.Admin;
+using eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes;
@@ -14,15 +15,14 @@ using eTasks_server.Core.BusinessLogicLayers.Version;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
-using eTasks_server.Core.Services.Options;
 using eTasks_server.Middlewares;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MySqlConnector;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
@@ -41,7 +41,6 @@ namespace eTasks_server.Extensions
                         .SetupCors()
                         .SetupMudServices()
                         .SetupHttpClient(configuration)
-                        .SetupInfrastructureOptions(configuration)
                         .SetupHealthChecks(configuration)
                         .SetupGlobalExceptionHandler()
                         .SetupOpenApi()
@@ -90,17 +89,8 @@ namespace eTasks_server.Extensions
 
                 services.AddHttpClient("OpenRouter", client =>
                 {
-                    var baseUrl = configuration.GetSection("OpenRouter").GetValue<string>("BaseUrl") ?? "https://openrouter.ai/api/v1/";
-                    client.BaseAddress = new Uri(baseUrl);
                     client.Timeout = TimeSpan.FromSeconds(60);
                 });
-                return services;
-            }
-
-            private IServiceCollection SetupInfrastructureOptions(ConfigurationManager configuration)
-            {
-                services.Configure<OpenRouterOptions>(configuration.GetSection("OpenRouter"));
-                services.Configure<MongoAuditOptions>(configuration.GetSection("MongoAudit"));
                 return services;
             }
 
@@ -132,10 +122,18 @@ namespace eTasks_server.Extensions
 
             private IServiceCollection SetupDatabase(ConfigurationManager configuration)
             {
+                var rawConnectionString = configuration.GetConnectionString(Constants.DatabaseConnection)
+                    ?? throw new InvalidOperationException("Connection string DefaultConnection nao configurada.");
+                var connectionStringBuilder = new MySqlConnectionStringBuilder(rawConnectionString)
+                {
+                    GuidFormat = MySqlGuidFormat.TimeSwapBinary16
+                };
+                var connectionString = connectionStringBuilder.ConnectionString;
+
                 services.AddDbContext<AppDbContext>(options =>
                                                         options.UseMySql(
-                                                        configuration.GetConnectionString(Constants.DatabaseConnection),
-                                                        ServerVersion.AutoDetect(configuration.GetConnectionString(Constants.DatabaseConnection)),
+                                                        connectionString,
+                                                        ServerVersion.AutoDetect(connectionString),
                                                         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
                                                         .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
                                                         )                                                     
@@ -159,9 +157,11 @@ namespace eTasks_server.Extensions
 
                 services.AddScoped<IVersionBLL, VersionBLL>();
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
+                services.AddScoped<IServerSettingsAdminBLL, ServerSettingsAdminBLL>();
                 services.AddScoped<IBonusAdminBLL, BonusAdminBLL>();
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
+                services.AddScoped<IServerSettingsAdminService, ServerSettingsAdminService>();
                 services.AddScoped<IBonusAdminService, BonusAdminService>();
                 services.AddScoped<IUserProfileService, UserProfileService>();
                 services.AddScoped<UserState>();
@@ -218,7 +218,10 @@ namespace eTasks_server.Extensions
                 services.AddSingleton<IAiCapabilityCatalog, AiCapabilityCatalog>();
                 services.AddScoped<IAiPromptComposer, AiPromptComposer>();
                 services.AddScoped<IAiAssistantService, OpenRouterAiAssistantService>();
-                services.AddSingleton<IOperationAuditLogger, MongoOperationAuditLogger>();
+                services.AddScoped<IServerSettingsProvider, ServerSettingsProvider>();
+                services.AddScoped<IServerSettingsDiagnosticsService, ServerSettingsDiagnosticsService>();
+                services.AddScoped<IOperationAuditLogger, MongoOperationAuditLogger>();
+                services.AddSingleton<ISecretProtector, SecretProtector>();
                 services.AddScoped<IAuthBLL, AuthBLL>();
 
                 services.AddAuthentication(options =>

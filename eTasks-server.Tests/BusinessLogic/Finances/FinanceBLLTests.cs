@@ -1,9 +1,11 @@
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Finances.Requests;
+using eTasks_server.Models.Entities.Common;
 using eTasks_server.Models.Entities.Finances;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Tests.Support;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -87,6 +89,88 @@ namespace eTasks_server.Tests.BusinessLogic.Finances
 
             Assert.Empty(sync.Upserts);
             Assert.Contains(sync.Deleted, x => x.Id == entry.Id);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithRecurrence_PersistsFinanceRecurrence()
+        {
+            using var context = TestDbContextFactory.Create(nameof(CreateAsync_WithRecurrence_PersistsFinanceRecurrence));
+            var user = TestDbContextFactory.CreateActiveUser();
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            IFinanceBLL sut = new FinanceBLL(context, NullLogger<IFinanceBLL>.Instance);
+
+            var result = await sut.CreateAsync(user.Uid, new CreateFinanceEntryRequest
+            {
+                Title = "Internet",
+                EntryType = FinanceEntryType.Debit,
+                PaymentMethod = FinancePaymentMethod.CreditCard,
+                Amount = 199.90m,
+                OccursOn = new DateTime(2026, 4, 15),
+                IsPaid = false,
+                IsRecurring = true,
+                Recurrence = new FinanceRecurrenceRequest
+                {
+                    RecurrenceType = RecurrenceType.Monthly,
+                    RecurrenceInterval = 1,
+                    DayOfMonth = 15
+                }
+            });
+
+            var recurrence = await context.FinanceRecurrences.SingleAsync();
+
+            Assert.NotNull(result.Recurrence);
+            Assert.Equal(result.Id, recurrence.FinanceEntryId);
+            Assert.Equal(RecurrenceType.Monthly, recurrence.RecurrenceType);
+            Assert.Equal(1, recurrence.Interval);
+            Assert.Equal(15, recurrence.DayOfMonth);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_DisablingRecurrence_RemovesFinanceRecurrence()
+        {
+            using var context = TestDbContextFactory.Create(nameof(UpdateAsync_DisablingRecurrence_RemovesFinanceRecurrence));
+            var user = TestDbContextFactory.CreateActiveUser();
+            var entry = new FinanceEntry
+            {
+                UserUid = user.Uid,
+                Title = "Academia",
+                EntryType = FinanceEntryType.Debit,
+                PaymentMethod = FinancePaymentMethod.Pix,
+                Amount = 99.90m,
+                OccursOn = new DateTime(2026, 4, 8),
+                IsPaid = false,
+                IsRecurring = true,
+                Recurrence = new FinanceRecurrence
+                {
+                    RecurrenceType = RecurrenceType.Monthly,
+                    Interval = 1,
+                    DayOfMonth = 8
+                }
+            };
+
+            context.Users.Add(user);
+            context.FinanceEntries.Add(entry);
+            await context.SaveChangesAsync();
+
+            IFinanceBLL sut = new FinanceBLL(context, NullLogger<IFinanceBLL>.Instance);
+
+            var result = await sut.UpdateAsync(user.Uid, entry.Id, new UpdateFinanceEntryRequest
+            {
+                Title = entry.Title,
+                EntryType = entry.EntryType,
+                PaymentMethod = entry.PaymentMethod,
+                Amount = entry.Amount,
+                OccursOn = entry.OccursOn,
+                IsPaid = entry.IsPaid,
+                IsRecurring = false,
+                Recurrence = null
+            });
+
+            Assert.False(result.IsRecurring);
+            Assert.Null(result.Recurrence);
+            Assert.Empty(context.FinanceRecurrences);
         }
     }
 }

@@ -3,52 +3,50 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using eTasks_server.Core.Services.Interfaces;
-using eTasks_server.Core.Services.Options;
 using eTasks_server.Models.DTOs.AI.Requests;
 using eTasks_server.Models.DTOs.AI.Responses;
 using eTasks_server.Models.Exceptions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace eTasks_server.Core.Services
 {
     public class OpenRouterAiAssistantService(
         IHttpClientFactory httpClientFactory,
         IAiPromptComposer promptComposer,
-        IOptions<OpenRouterOptions> options,
+        IServerSettingsProvider settingsProvider,
         ILogger<IAiAssistantService> logger) : IAiAssistantService
     {
-        private readonly OpenRouterOptions _options = options.Value;
-
         public async Task<AiAssistResponse> AssistAsync(Guid userUid, AiAssistRequest request, CancellationToken cancellationToken = default)
         {
             ValidateRequest(request);
+            var settings = await settingsProvider.GetCurrentAsync(cancellationToken);
 
-            if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey))
+            if (!settings.OpenRouterEnabled || string.IsNullOrWhiteSpace(settings.OpenRouterApiKey))
             {
                 throw new ApiException(System.Net.HttpStatusCode.ServiceUnavailable, "O servico de IA nao esta habilitado no servidor.");
             }
 
             var httpClient = httpClientFactory.CreateClient("OpenRouter");
+            httpClient.BaseAddress = new Uri(NormalizeBaseUrl(settings.OpenRouterBaseUrl));
 
             using var message = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
-            message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+            message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.OpenRouterApiKey);
 
-            if (!string.IsNullOrWhiteSpace(_options.SiteUrl))
+            if (!string.IsNullOrWhiteSpace(settings.OpenRouterSiteUrl))
             {
-                message.Headers.TryAddWithoutValidation("HTTP-Referer", _options.SiteUrl);
+                message.Headers.TryAddWithoutValidation("HTTP-Referer", settings.OpenRouterSiteUrl);
             }
 
-            if (!string.IsNullOrWhiteSpace(_options.AppName))
+            if (!string.IsNullOrWhiteSpace(settings.OpenRouterAppName))
             {
-                message.Headers.TryAddWithoutValidation("X-Title", _options.AppName);
+                message.Headers.TryAddWithoutValidation("X-Title", settings.OpenRouterAppName);
             }
 
             var payload = new OpenRouterChatRequest
             {
-                Model = _options.Model,
-                Temperature = _options.Temperature,
-                MaxTokens = _options.MaxTokens,
+                Model = settings.OpenRouterModel,
+                Temperature = settings.OpenRouterTemperature,
+                MaxTokens = settings.OpenRouterMaxTokens,
                 Messages =
                 [
                     new OpenRouterChatMessage
@@ -94,7 +92,7 @@ namespace eTasks_server.Core.Services
             return new AiAssistResponse
             {
                 Provider = "OpenRouter",
-                Model = parsed.Model ?? _options.Model,
+                Model = parsed.Model ?? settings.OpenRouterModel,
                 Content = content,
                 Usage = new AiUsageResponse
                 {
@@ -103,6 +101,16 @@ namespace eTasks_server.Core.Services
                     TotalTokens = parsed.Usage?.TotalTokens ?? 0
                 }
             };
+        }
+
+        private static string NormalizeBaseUrl(string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return "https://openrouter.ai/api/v1/";
+            }
+
+            return baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/";
         }
 
         private static void ValidateRequest(AiAssistRequest request)

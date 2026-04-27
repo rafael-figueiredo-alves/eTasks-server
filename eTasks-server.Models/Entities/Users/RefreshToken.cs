@@ -58,6 +58,13 @@ namespace eTasks_server.Models.Entities.Users
         public static void Configure(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens").HasKey(x => x.Id);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(x => x.Token)
+                .IsUnique();
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(x => new { x.IsRevoked, x.ExpiresAt });
         }
     }
 }

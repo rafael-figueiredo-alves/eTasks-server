@@ -1,8 +1,6 @@
 using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Core.Services.Models;
-using eTasks_server.Core.Services.Options;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace eTasks_server.Core.Services
@@ -10,34 +8,30 @@ namespace eTasks_server.Core.Services
     public class MongoOperationAuditLogger : IOperationAuditLogger
     {
         private readonly ILogger<IOperationAuditLogger> _logger;
-        private readonly IMongoCollection<OperationAuditLog>? _collection;
+        private readonly IServerSettingsProvider _settingsProvider;
 
-        public MongoOperationAuditLogger(IOptions<MongoAuditOptions> options, ILogger<IOperationAuditLogger> logger)
+        public MongoOperationAuditLogger(IServerSettingsProvider settingsProvider, ILogger<IOperationAuditLogger> logger)
         {
+            _settingsProvider = settingsProvider;
             _logger = logger;
-            var settings = options.Value;
-
-            if (!settings.Enabled || string.IsNullOrWhiteSpace(settings.ConnectionString))
-            {
-                return;
-            }
-
-            var client = new MongoClient(settings.ConnectionString);
-            _collection = client
-                .GetDatabase(settings.DatabaseName)
-                .GetCollection<OperationAuditLog>(settings.CollectionName);
         }
 
         public async Task LogAsync(OperationAuditLog operationLog, CancellationToken cancellationToken = default)
         {
-            if (_collection is null)
+            var settings = await _settingsProvider.GetCurrentAsync(cancellationToken);
+            if (!settings.MongoAuditEnabled || string.IsNullOrWhiteSpace(settings.MongoAuditConnectionString))
             {
                 return;
             }
 
             try
             {
-                await _collection.InsertOneAsync(operationLog, cancellationToken: cancellationToken);
+                var client = new MongoClient(settings.MongoAuditConnectionString);
+                var collection = client
+                    .GetDatabase(settings.MongoAuditDatabaseName)
+                    .GetCollection<OperationAuditLog>(settings.MongoAuditCollectionName);
+
+                await collection.InsertOneAsync(operationLog, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {

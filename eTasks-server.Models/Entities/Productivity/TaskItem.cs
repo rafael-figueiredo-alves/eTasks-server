@@ -118,6 +118,9 @@ namespace eTasks_server.Models.Entities.Productivity
                 .HasIndex(x => new { x.UserUid, x.IsDeleted });
 
             modelBuilder.Entity<TaskItem>()
+                .HasIndex(x => new { x.UserUid, x.IsDeleted, x.TaskDate });
+
+            modelBuilder.Entity<TaskItem>()
                 .HasOne(x => x.GeneratedFromTask)
                 .WithMany(x => x.GeneratedTasks)
                 .HasForeignKey(x => x.GeneratedFromTaskId)

@@ -55,6 +55,9 @@ namespace eTasks_server.Models.Entities.Users
             modelBuilder.Entity<PasswordResetCode>()
                                 .ToTable("password_reset_codes")
                                 .HasKey(x => x.Id);
+
+            modelBuilder.Entity<PasswordResetCode>()
+                                .HasIndex(x => new { x.UserUid, x.IsUsed, x.ExpiresAt });
         }
     }
 }

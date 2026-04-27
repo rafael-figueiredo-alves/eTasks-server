@@ -1,5 +1,6 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
+using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
@@ -17,10 +18,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
     public class WebAuthBLL : BaseBLL<IWebAuthBLL>, IWebAuthBLL
     {
         private readonly IConfiguration _configuration;
+        private readonly ISecretProtector _secretProtector;
 
-        public WebAuthBLL(AppDbContext context, IConfiguration configuration, ILogger<IWebAuthBLL> logger) : base(context, logger)
+        public WebAuthBLL(AppDbContext context, IConfiguration configuration, ISecretProtector secretProtector, ILogger<IWebAuthBLL> logger) : base(context, logger)
         {
             _configuration = configuration;
+            _secretProtector = secretProtector;
         }
 
         public async Task LoginAsync(HttpContext httpContext, WebLoginRequest request, string? ipAddress)
@@ -60,7 +63,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Conta removida. Nao e possivel acessar o sistema.");
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, _secretProtector.Unprotect(user.PasswordHash)))
             {
                 await _context.LoginLogs.AddAsync(new LoginLog
                 {
@@ -176,7 +179,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             {
                 Name = request.DisplayName.Trim(),
                 Email = normalizedEmail,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                PasswordHash = _secretProtector.Protect(BCrypt.Net.BCrypt.HashPassword(request.Password)),
                 IsAdmin = true,
                 IsConfirmed = true
             };

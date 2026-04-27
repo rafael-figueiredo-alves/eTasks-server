@@ -22,6 +22,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
 
             var query = _context.FinanceEntries
                 .AsNoTracking()
+                .Include(x => x.Recurrence)
                 .Where(x => x.UserUid == userUid && !x.IsDeleted);
 
             if (request.Year.HasValue)
@@ -105,6 +106,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
 
             var entry = await _context.FinanceEntries
                 .AsNoTracking()
+                .Include(x => x.Recurrence)
                 .FirstOrDefaultAsync(x => x.Id == financeEntryId && !x.IsDeleted, cancellationToken);
 
             entry = EnsureFound(entry, "Lancamento financeiro nao encontrado.");
@@ -150,7 +152,9 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             await GetAndValidateActiveUserAsync(userUid);
             ValidatePayload(request.Title, request.Description, request.Category, request.Counterparty, request.EntryType, request.PaymentMethod, request.Amount, request.OccursOn, request.IsPaid, request.PaidAt, request.IsRecurring, request.Recurrence);
 
-            var entry = await _context.FinanceEntries.FirstOrDefaultAsync(x => x.Id == financeEntryId && !x.IsDeleted, cancellationToken);
+            var entry = await _context.FinanceEntries
+                .Include(x => x.Recurrence)
+                .FirstOrDefaultAsync(x => x.Id == financeEntryId && !x.IsDeleted, cancellationToken);
             entry = EnsureFound(entry, "Lancamento financeiro nao encontrado.");
             EnsureOwnership(entry.UserUid, userUid);
 
@@ -230,7 +234,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
         {
             await GetAndValidateActiveUserAsync(userUid);
 
-            var upsertsQuery = _context.FinanceEntries.AsNoTracking().Where(x => x.UserUid == userUid && !x.IsDeleted);
+            var upsertsQuery = _context.FinanceEntries.AsNoTracking().Include(x => x.Recurrence).Where(x => x.UserUid == userUid && !x.IsDeleted);
             var deletedQuery = _context.FinanceEntries.AsNoTracking().Where(x => x.UserUid == userUid && x.IsDeleted && x.DeletedAt.HasValue);
 
             if (request.Since.HasValue)
@@ -393,23 +397,29 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             }
         }
 
-        private static void ApplyRecurrence(FinanceEntry entry, FinanceRecurrenceRequest? recurrence)
+        private void ApplyRecurrence(FinanceEntry entry, FinanceRecurrenceRequest? recurrence)
         {
             if (!entry.IsRecurring || recurrence is null)
             {
-                entry.RecurrenceType = RecurrenceType.None;
-                entry.RecurrenceInterval = 1;
-                entry.WeekDays = WeekDays.None;
-                entry.DayOfMonth = null;
-                entry.RecurrenceEndsOn = null;
+                if (entry.Recurrence is not null)
+                {
+                    _context.FinanceRecurrences.Remove(entry.Recurrence);
+                }
+
+                entry.Recurrence = null;
                 return;
             }
 
-            entry.RecurrenceType = recurrence.RecurrenceType;
-            entry.RecurrenceInterval = recurrence.RecurrenceInterval;
-            entry.WeekDays = recurrence.WeekDays;
-            entry.DayOfMonth = recurrence.DayOfMonth;
-            entry.RecurrenceEndsOn = recurrence.RecurrenceEndsOn;
+            entry.Recurrence ??= new FinanceRecurrence
+            {
+                FinanceEntryId = entry.Id
+            };
+
+            entry.Recurrence.RecurrenceType = recurrence.RecurrenceType;
+            entry.Recurrence.Interval = recurrence.RecurrenceInterval;
+            entry.Recurrence.WeekDays = recurrence.WeekDays;
+            entry.Recurrence.DayOfMonth = recurrence.DayOfMonth;
+            entry.Recurrence.EndsOn = recurrence.RecurrenceEndsOn;
         }
 
         private static string? NormalizeText(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -431,13 +441,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
                 IsPaid = entry.IsPaid,
                 PaidAt = entry.PaidAt,
                 IsRecurring = entry.IsRecurring,
-                Recurrence = !entry.IsRecurring || entry.RecurrenceType == RecurrenceType.None ? null : new FinanceRecurrenceResponse
+                Recurrence = !entry.IsRecurring || entry.Recurrence is null || entry.Recurrence.RecurrenceType == RecurrenceType.None ? null : new FinanceRecurrenceResponse
                 {
-                    RecurrenceType = entry.RecurrenceType,
-                    RecurrenceInterval = entry.RecurrenceInterval,
-                    WeekDays = entry.WeekDays,
-                    DayOfMonth = entry.DayOfMonth,
-                    RecurrenceEndsOn = entry.RecurrenceEndsOn
+                    RecurrenceType = entry.Recurrence.RecurrenceType,
+                    RecurrenceInterval = entry.Recurrence.Interval,
+                    WeekDays = entry.Recurrence.WeekDays,
+                    DayOfMonth = entry.Recurrence.DayOfMonth,
+                    RecurrenceEndsOn = entry.Recurrence.EndsOn
                 },
                 CreatedAt = entry.CreatedAt,
                 UpdatedAt = entry.UpdatedAt

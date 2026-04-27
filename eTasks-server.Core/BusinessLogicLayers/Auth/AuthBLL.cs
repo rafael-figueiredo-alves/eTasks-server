@@ -22,11 +22,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
     {
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly ISecretProtector _secretProtector;
 
-        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ILogger<IAuthBLL> logger) : base(context, logger)
+        public AuthBLL(AppDbContext context, IConfiguration configuration, IEmailService emailService, ISecretProtector secretProtector, ILogger<IAuthBLL> logger) : base(context, logger)
         {
             _configuration = configuration;
             _emailService = emailService;
+            _secretProtector = secretProtector;
         }
 
         public async Task<LoginResponse> RegisterAsync(RegisterRequest request)
@@ -61,7 +63,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             {
                 Name = request.Name,
                 Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                PasswordHash = _secretProtector.Protect(BCrypt.Net.BCrypt.HashPassword(request.Password)),
                 PhotoPath = photoPath,
                 IsAdmin = false
             };
@@ -119,7 +121,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi removida e nao pode mais ser utilizada.");
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, _secretProtector.Unprotect(user.PasswordHash)))
             {
                 _logger.LogWarning("Falha de autenticacao. Senha incorreta para o usuario: {Uid}", user.Uid);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
@@ -230,7 +232,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 throw new ValidationException("Code", "Codigo invalido ou ja expirado.");
 
             resetCode.IsUsed = true;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordHash = _secretProtector.Protect(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
 
             var activeTokens = await _context.RefreshTokens.Where(r => r.UserUid == user.Uid && !r.IsRevoked).ToListAsync();
             foreach (var tk in activeTokens) tk.IsRevoked = true;
@@ -246,13 +248,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == userUid && !u.IsDeleted);
             if (user == null) throw new ValidationException("User", "Usuario nao localizado.");
 
-            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, _secretProtector.Unprotect(user.PasswordHash)))
             {
                 _logger.LogWarning("O usuario {Uid} tentou trocar a senha mas forneceu a senha atual incorretamente.", userUid);
                 throw new ValidationException("CurrentPassword", "A senha atual esta incorreta.");
             }
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordHash = _secretProtector.Protect(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
 
             var activeTokens = await _context.RefreshTokens.Where(r => r.UserUid == user.Uid && !r.IsRevoked).ToListAsync();
             foreach (var tk in activeTokens) tk.IsRevoked = true;
