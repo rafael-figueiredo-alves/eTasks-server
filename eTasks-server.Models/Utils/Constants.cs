@@ -69,6 +69,11 @@ namespace eTasks_server.Models.Utils
         public const string ApiBaseUrl = "ApiSettings:BaseUrl";
 
         /// <summary>
+        /// Nome da configuração para a URL base da API, que deve ser configurada no arquivo appsettings.json ou em variáveis de ambiente.
+        /// </summary>
+        public const string ApiV2Path = "ApiSettings:ApiV2Path";
+
+        /// <summary>
         /// Chave de configuracao usada para autorizar o cadastro administrativo no painel web.
         /// </summary>
         public const string AdminApiKeyConfig = "APIKEY_ADMIN";

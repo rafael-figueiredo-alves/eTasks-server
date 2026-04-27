@@ -91,6 +91,11 @@
             Início
         </MudNavLink>
 
+        <MudNavLink Href="/admin/server-settings"
+                    Icon="@Icons.Material.Filled.Settings">
+            Configurações do Servidor
+        </MudNavLink>
+
         <MudNavLink Href="/version"
                     Icon="@Icons.Material.Filled.Info">
             Gerenciar versionamento do App
@@ -113,7 +118,7 @@
         <MudDivider Class="my-2" />
 
         <MudNavLink Href="/api/v2/web-auth/logout?returnUrl=%2Flogin"
-                    Icon="@Icons.Material.Filled.Logout">
+                    Icon="@Icons.Material.Filled.Logout" IconColor="Color.Error">
             Sair
         </MudNavLink>
     </MudNavMenu>

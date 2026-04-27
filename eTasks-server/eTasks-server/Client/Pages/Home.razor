@@ -122,9 +122,28 @@
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("version")' FullWidth="true" Class="rounded-pill py-3">
                             Controle de Versão
                         </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick='() => NavigateTo("admin/gamification")' FullWidth="true" Class="rounded-pill py-3">
-                            Gamificação
-                        </MudButton>
+                        <MudMenu FullWidth="true" Style="width: 100%;">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Secondary"
+                                           StartIcon="@Icons.Material.Filled.EmojiEvents"
+                                           FullWidth="true"
+                                           Class="rounded-pill py-3"
+                                           onClick="@context.ToggleAsync">
+                                    Gamificação
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Stars" Style="width: 100%;"
+                                             OnClick='() => NavigateTo("admin/bonus/rules")'>
+                                    Regras de Bônus
+                                </MudMenuItem>
+                                <MudMenuItem Icon="@Icons.Material.Filled.MilitaryTech" Style="width: 100%;"
+                                             OnClick='() => NavigateTo("admin/bonus/achievements")'>
+                                    Conquistas
+                                </MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
                         <MudDivider Class="my-2" />
                         <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Code" OnClick='() => NavigateTo("docs", true)' FullWidth="true" Class="rounded-pill">
                             Documentação API (Scalar)

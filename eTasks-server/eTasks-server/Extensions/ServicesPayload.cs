@@ -83,7 +83,7 @@ namespace eTasks_server.Extensions
             {
                 services.AddHttpClient("LocalApi", client =>
                 {
-                    var baseUrl = configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
+                    var baseUrl = configuration[Constants.ApiBaseUrl] + configuration[Constants.ApiV2Path] ?? "http://localhost:5033/api/v2";
                     client.BaseAddress = new Uri(baseUrl);
                 });
 

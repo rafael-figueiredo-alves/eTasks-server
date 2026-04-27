@@ -84,7 +84,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             var confirmationToken = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
 
             var baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
-            var confirmationLink = $"{baseUrl.TrimEnd('/')}/api/v2/auth/confirm-email?token={confirmationToken}";
+            var confirmationLink = $"{(baseUrl + _configuration[Constants.ApiV2Path]).TrimEnd('/')}/auth/confirm-email?token={confirmationToken}";
 
 #pragma warning disable CS4014
             _emailService.SendAccountConfirmationEmailAsync(user.Email, confirmationLink);
