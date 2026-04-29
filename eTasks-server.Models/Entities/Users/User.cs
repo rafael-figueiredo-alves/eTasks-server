@@ -1,6 +1,7 @@
 using eTasks_server.Models.Entities.Finances;
 using eTasks_server.Models.Entities.Goals;
 using eTasks_server.Models.Entities.Notes;
+using eTasks_server.Models.Entities.Notifications;
 using eTasks_server.Models.Entities.Productivity;
 using eTasks_server.Models.Entities.Readings;
 using eTasks_server.Models.Entities.Shopping;
@@ -129,6 +130,8 @@ namespace eTasks_server.Models.Entities.Users
         /// Lançamentos financeiros do usuário.
         /// </summary>
         public ICollection<FinanceEntry> FinanceEntries { get; set; } = new List<FinanceEntry>();
+        public ICollection<PushDeviceRegistration> PushDeviceRegistrations { get; set; } = new List<PushDeviceRegistration>();
+        public ICollection<NotificationRecipient> NotificationRecipients { get; set; } = new List<NotificationRecipient>();
         #endregion
 
         /// <summary>
@@ -213,6 +216,18 @@ namespace eTasks_server.Models.Entities.Users
 
             modelBuilder.Entity<User>()
                                 .HasMany(x => x.FinanceEntries)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.PushDeviceRegistrations)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.NotificationRecipients)
                                 .WithOne(x => x.User)
                                 .HasForeignKey(x => x.UserUid)
                                 .OnDelete(DeleteBehavior.Cascade);

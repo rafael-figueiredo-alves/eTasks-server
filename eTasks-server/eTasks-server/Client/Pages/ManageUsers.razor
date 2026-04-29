@@ -5,7 +5,7 @@
 @page "/admin/users"
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-6">Gerenciamento de Usuários</MudText>
+    <AdminPageHeader Title="Gerenciamento de Usuários" />
 
     <MudDataGrid T="AdminUserDTO" Items="@Users" Loading="@IsLoading" Filterable="true" QuickFilter="@FilterFunc" Hover="true">
         <ToolBarContent>

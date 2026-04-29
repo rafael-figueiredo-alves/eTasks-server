@@ -1,0 +1,141 @@
+@page "/admin/database"
+@attribute [Authorize]
+@using eTasks_server.Models.DTOs.DatabaseAdmin.Requests
+@using eTasks_server.Models.DTOs.DatabaseAdmin.Responses
+@rendermode InteractiveServer
+@inherits DatabaseAdminPage
+
+<PageTitle>Banco de Dados</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
+    <AdminPageHeader Title="Banco de Dados"
+                     Subtitle="Acompanhe uso, gere backup SQL e execute scripts administrativos controlados.">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadAsync" Disabled="@_isBusy">
+            Recarregar
+        </MudButton>
+        <MudButton Href="/api/v2/admin/database/backup"
+                   Target="_blank"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   Disabled="@_isBusy">
+            Baixar Backup
+        </MudButton>
+    </AdminPageHeader>
+
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <MudAlert Severity="@_statusSeverity" Dense="true" Class="mb-4">@_statusMessage</MudAlert>
+    }
+
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_overview is not null)
+    {
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Banco</MudText>
+                    <MudText Typo="Typo.h6">@_overview.DatabaseName</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_overview.ServerVersion</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Tabelas</MudText>
+                    <MudText Typo="Typo.h5">@_overview.TableCount</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Registros</MudText>
+                    <MudText Typo="Typo.h5">@_overview.TotalRows</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Armazenamento</MudText>
+                    <MudText Typo="Typo.h5">@FormatBytes(_overview.TotalLengthBytes)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Dados @_overview.DataLengthBytesFormatted() / Indices @_overview.IndexLengthBytesFormatted()
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" lg="7">
+                <MudPaper Class="pa-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <div>
+                            <MudText Typo="Typo.h6">Tabelas</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Contagem real de registros e tamanho informado pelo MySQL.
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Atualizado em @_overview.GeneratedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                        </MudText>
+                    </MudStack>
+
+                    <MudDataGrid T="DatabaseTableSummaryResponse" Items="@_overview.Tables" Dense="true" Hover="true" Filterable="true">
+                        <Columns>
+                            <PropertyColumn Property="x => x.Name" Title="Tabela" />
+                            <PropertyColumn Property="x => x.Rows" Title="Registros" />
+                            <TemplateColumn Title="Dados">
+                                <CellTemplate>@FormatBytes(context.Item.DataLengthBytes)</CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Indices">
+                                <CellTemplate>@FormatBytes(context.Item.IndexLengthBytes)</CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Total">
+                                <CellTemplate>@FormatBytes(context.Item.TotalLengthBytes)</CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                        <PagerContent>
+                            <MudDataGridPager T="DatabaseTableSummaryResponse" />
+                        </PagerContent>
+                    </MudDataGrid>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" lg="5">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6">Executar Script SQL</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                        Permitido para ajustes administrativos como CREATE TABLE, ALTER TABLE, INSERT e UPDATE.
+                    </MudText>
+
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-4">
+                        Comandos destrutivos e administrativos como DROP, DELETE, TRUNCATE, GRANT e criacao de usuario sao bloqueados.
+                    </MudAlert>
+
+                    <MudTextField @bind-Value="_script"
+                                  Label="Script SQL"
+                                  Lines="14"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Placeholder="CREATE TABLE ...; INSERT INTO ...; UPDATE ...;" />
+
+                    <MudCheckBox @bind-Value="_confirmScriptExecution"
+                                 Label="Confirmo que revisei o script antes de executar"
+                                 Color="Color.Warning"
+                                 Class="mt-3" />
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Text" OnClick="ClearScript" Disabled="@_isBusy">
+                            Limpar
+                        </MudButton>
+                        <MudButton Color="Color.Warning"
+                                   Variant="Variant.Filled"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   OnClick="ExecuteScriptAsync"
+                                   Disabled="@(!_confirmScriptExecution || _isBusy || string.IsNullOrWhiteSpace(_script))">
+                            Executar
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>

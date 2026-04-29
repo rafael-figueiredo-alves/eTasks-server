@@ -5,15 +5,11 @@
 
 <MudContainer MaxWidth="MaxWidth.Large">
 
-    <MudToolBar Dense="true" Class="mb-4">
-        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">Voltar</MudButton>
-        <MudSpacer />
-        <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
-    </MudToolBar>
-
     <MudContainer MaxWidth="MaxWidth.Medium">
 
-        <MudText Typo="Typo.h4" Class="mb-4">Informações da Versão do Aplicativo</MudText>
+        <AdminPageHeader Title="Informações da Versão do Aplicativo" Class="mb-4">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Edit" OnClick="GoToEdit">Editar</MudButton>
+        </AdminPageHeader>
 
         <MudForm Model="_model">
             @if (isLoading)

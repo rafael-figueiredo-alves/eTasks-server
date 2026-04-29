@@ -2,6 +2,7 @@ using eTasks_server.Models.Entities.Finances;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Models.Entities.Goals;
 using eTasks_server.Models.Entities.Notes;
+using eTasks_server.Models.Entities.Notifications;
 using eTasks_server.Models.Entities.Productivity;
 using eTasks_server.Models.Entities.Readings;
 using eTasks_server.Models.Entities.Settings;
@@ -43,6 +44,9 @@ namespace eTasks_server.Core.Data
         public DbSet<FinanceEntry> FinanceEntries { get; set; }
         public DbSet<FinanceRecurrence> FinanceRecurrences { get; set; }
         public DbSet<ServerSettings> ServerSettings { get; set; }
+        public DbSet<PushDeviceRegistration> PushDeviceRegistrations { get; set; }
+        public DbSet<NotificationMessage> NotificationMessages { get; set; }
+        public DbSet<NotificationRecipient> NotificationRecipients { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -67,6 +71,9 @@ namespace eTasks_server.Core.Data
             FinanceEntry.Configure(modelBuilder);
             FinanceRecurrence.Configure(modelBuilder);
             global::eTasks_server.Models.Entities.Settings.ServerSettings.Configure(modelBuilder);
+            PushDeviceRegistration.Configure(modelBuilder);
+            NotificationMessage.Configure(modelBuilder);
+            NotificationRecipient.Configure(modelBuilder);
             ConfigureGuidColumns(modelBuilder);
 
             base.OnModelCreating(modelBuilder);

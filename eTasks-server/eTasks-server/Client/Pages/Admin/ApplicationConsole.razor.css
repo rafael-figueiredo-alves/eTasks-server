@@ -1,0 +1,57 @@
+.console-log {
+    background: #101418;
+    border-radius: 8px;
+    color: #d7dde5;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    max-height: 68vh;
+    overflow: auto;
+    padding: 12px;
+}
+
+.console-line {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 6px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.console-time {
+    color: #8ea0b8;
+    margin-right: 12px;
+}
+
+.console-level {
+    display: inline-block;
+    font-weight: 700;
+    margin-right: 12px;
+    min-width: 78px;
+}
+
+.console-source {
+    color: #8ea0b8;
+    margin-left: 12px;
+}
+
+.console-info .console-level {
+    color: #7dd3fc;
+}
+
+.console-warning .console-level {
+    color: #facc15;
+}
+
+.console-error .console-level {
+    color: #f87171;
+}
+
+.console-muted .console-level {
+    color: #a3a3a3;
+}
+
+.console-line pre {
+    color: #fca5a5;
+    margin: 6px 0 0 90px;
+    white-space: pre-wrap;
+}

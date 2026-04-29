@@ -7,22 +7,15 @@
 <PageTitle>Configuracoes do Servidor</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
-    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-6">
-        <div>
-            <MudText Typo="Typo.h4">Configuracoes do Servidor</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Ajuste recursos operacionais do host sem reiniciar a aplicacao.
-            </MudText>
-        </div>
-        <MudStack Row="true" Spacing="2">
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadAsync" Disabled="@_isBusy">
-                Recarregar
-            </MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="@_isBusy">
-                Salvar
-            </MudButton>
-        </MudStack>
-    </MudStack>
+    <AdminPageHeader Title="Configuracoes do Servidor"
+                     Subtitle="Ajuste recursos operacionais do host sem reiniciar a aplicacao.">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadAsync" Disabled="@_isBusy">
+            Recarregar
+        </MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="@_isBusy">
+            Salvar
+        </MudButton>
+    </AdminPageHeader>
 
     @if (!string.IsNullOrWhiteSpace(_statusMessage))
     {

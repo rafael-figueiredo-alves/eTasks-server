@@ -1,0 +1,98 @@
+@page "/admin/logs"
+@attribute [Authorize]
+@using eTasks_server.Models.DTOs.ApplicationLogs.Responses
+@rendermode InteractiveServer
+@inherits ApplicationLogsPage
+
+<PageTitle>Logs da Aplicação</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
+    <AdminPageHeader Title="Logs da Aplicação"
+                     Subtitle="Visualize, baixe ou remova arquivos de log gerados pelo servidor.">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadAsync" Disabled="@_isBusy">
+            Recarregar
+        </MudButton>
+        <MudButton Href="/admin/console" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Terminal">
+            Console
+        </MudButton>
+    </AdminPageHeader>
+
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <MudAlert Severity="@_statusSeverity" Dense="true" Class="mb-4">@_statusMessage</MudAlert>
+    }
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="5">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">Arquivos</MudText>
+
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                }
+                else
+                {
+                    <MudDataGrid T="LogFileSummaryResponse" Items="@_files" Dense="true" Hover="true" Loading="@_isBusy">
+                        <Columns>
+                            <PropertyColumn Property="x => x.FileName" Title="Arquivo" />
+                            <TemplateColumn Title="Tamanho">
+                                <CellTemplate>@FormatBytes(context.Item.SizeBytes)</CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Ações" Sortable="false" Filterable="false">
+                                <CellTemplate>
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudTooltip Text="Visualizar">
+                                            <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" OnClick="@(() => OpenFileAsync(context.Item.FileName))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Baixar">
+                                            <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Download" Color="Color.Primary" Href="@GetDownloadUrl(context.Item.FileName)" Target="_blank" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Apagar">
+                                            <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteFileAsync(context.Item.FileName))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                        <PagerContent>
+                            <MudDataGridPager T="LogFileSummaryResponse" />
+                        </PagerContent>
+                    </MudDataGrid>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" lg="7">
+            <MudPaper Class="pa-4">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6">@(_selectedFile?.FileName ?? "Visualização")</MudText>
+                        @if (_selectedFile is not null)
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                @FormatBytes(_selectedFile.SizeBytes) - atualizado em @_selectedFile.LastModifiedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                            </MudText>
+                        }
+                    </div>
+                </MudStack>
+
+                @if (_selectedFile is null)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        Selecione um arquivo para visualizar o conteúdo.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudTextField T="string"
+                                  Value="@_selectedFile.Content"
+                                  Lines="26"
+                                  ReadOnly="true"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true" />
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

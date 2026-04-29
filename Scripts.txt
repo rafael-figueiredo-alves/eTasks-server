@@ -424,3 +424,63 @@ CREATE TABLE IF NOT EXISTS `finance_recurrences` (
 ) ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `push_device_registrations` (
+    `Id` BINARY(16) NOT NULL DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    `UserUid` BINARY(16) NOT NULL,
+    `Platform` INT NOT NULL,
+    `DeviceId` VARCHAR(150) NOT NULL,
+    `DisplayName` VARCHAR(120) NOT NULL,
+    `PushToken` TEXT NULL,
+    `PushEndpoint` TEXT NULL,
+    `P256dh` TEXT NULL,
+    `Auth` TEXT NULL,
+    `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    `UpdatedAt` DATETIME(6) NOT NULL,
+    `LastSeenAt` DATETIME(6) NOT NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE KEY `UX_push_device_user_platform_device` (`UserUid`, `Platform`, `DeviceId`),
+    CONSTRAINT `FK_push_device_users_UserUid`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notification_messages` (
+    `Id` BINARY(16) NOT NULL DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    `CreatedByUserUid` BINARY(16) NULL,
+    `TargetType` INT NOT NULL,
+    `Title` VARCHAR(120) NOT NULL,
+    `Body` VARCHAR(500) NOT NULL,
+    `ActionUrl` TEXT NULL,
+    `DataJson` TEXT NULL,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    PRIMARY KEY (`Id`),
+    KEY `IX_notification_messages_CreatedAt` (`CreatedAt`),
+    CONSTRAINT `FK_notification_messages_users_CreatedByUserUid`
+        FOREIGN KEY (`CreatedByUserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE SET NULL
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notification_recipients` (
+    `Id` BINARY(16) NOT NULL DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    `NotificationMessageId` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    `ReadAt` DATETIME(6) NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE KEY `UX_notification_recipient_message_user` (`NotificationMessageId`, `UserUid`),
+    KEY `IX_notification_recipients_UserUid_ReadAt` (`UserUid`, `ReadAt`),
+    CONSTRAINT `FK_notification_recipients_messages_NotificationMessageId`
+        FOREIGN KEY (`NotificationMessageId`) REFERENCES `notification_messages` (`Id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `FK_notification_recipients_users_UserUid`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;

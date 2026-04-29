@@ -54,3 +54,16 @@
         opacity: 0;
     }
 }
+
+.dashboard-shortcut-menu,
+.dashboard-shortcut-menu .mud-menu {
+    width: 100%;
+}
+
+.dashboard-shortcut-menu .mud-button-root {
+    width: 100%;
+}
+
+.dashboard-shortcut-popover .mud-list {
+    min-width: 220px;
+}

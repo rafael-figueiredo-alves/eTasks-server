@@ -1,0 +1,50 @@
+@page "/admin/console"
+@attribute [Authorize]
+@using eTasks_server.Models.DTOs.ApplicationLogs.Responses
+@rendermode InteractiveServer
+@inherits ApplicationConsolePage
+
+<PageTitle>Console da Aplicação</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
+    <AdminPageHeader Title="Console da Aplicação"
+                     Subtitle="Eventos da aplicação em tempo real a partir do Serilog."
+                     BackUrl="/admin/logs">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DeleteSweep" OnClick="Clear">
+            Limpar
+        </MudButton>
+    </AdminPageHeader>
+
+    <MudPaper Class="pa-4">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudText Typo="Typo.h6">Eventos</MudText>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Text">@_entries.Count registro(s)</MudChip>
+        </MudStack>
+
+        <div class="console-log">
+            @if (_entries.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">Aguardando novos eventos da aplicação.</MudAlert>
+            }
+            else
+            {
+                @foreach (var entry in _entries)
+                {
+                    <div class="console-line @GetLevelClass(entry.Level)">
+                        <span class="console-time">@entry.Timestamp.ToString("HH:mm:ss")</span>
+                        <span class="console-level">@entry.Level</span>
+                        <span class="console-message">@entry.Message</span>
+                        @if (!string.IsNullOrWhiteSpace(entry.Source))
+                        {
+                            <span class="console-source">@entry.Source</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(entry.Exception))
+                        {
+                            <pre>@entry.Exception</pre>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </MudPaper>
+</MudContainer>

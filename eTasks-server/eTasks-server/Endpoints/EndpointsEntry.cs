@@ -7,6 +7,7 @@ using eTasks_server.Endpoints.API_Resourcers.Readings;
 using eTasks_server.Endpoints.API_Resourcers.Shopping;
 using eTasks_server.Endpoints.API_Resourcers.Tasks;
 using eTasks_server.Endpoints.Auth;
+using eTasks_server.Endpoints.Notifications;
 using eTasks_server.Endpoints.Usuarios;
 using eTasks_server.Endpoints.Utils;
 using eTasks_server.Endpoints.Version;
@@ -30,6 +31,7 @@ namespace eTasks_server.Endpoints
                 API_V2.MapUserAdminEndpoints();
                 API_V2.MapBonusAdminEndpoints();
                 API_V2.MapUsuariosEndpoints();
+                API_V2.MapNotificationsEndpoints();
                 API_V2.MapTasksEndpoints();
                 API_V2.MapGoalsEndpoints();
                 API_V2.MapNotesEndpoints();
@@ -37,6 +39,9 @@ namespace eTasks_server.Endpoints
                 API_V2.MapShoppingListsEndpoints();
                 API_V2.MapFinancesEndpoints();
                 API_V2.MapDashboardEndpoints();
+                API_V2.MapDatabaseAdminEndpoints();
+                API_V2.MapApplicationLogAdminEndpoints();
+                API_V2.MapAdminNotificationEndpoints();
             }
         }
     }

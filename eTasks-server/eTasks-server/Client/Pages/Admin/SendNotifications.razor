@@ -1,0 +1,103 @@
+@page "/admin/notifications"
+@attribute [Authorize]
+@using eTasks_server.Models.DTOs.Notifications.Requests
+@using eTasks_server.Models.DTOs.Users.Admin.Responses
+@using eTasks_server.Models.Enums.Notifications
+@rendermode InteractiveServer
+@inherits SendNotificationsPage
+
+<PageTitle>Notificações</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
+    <AdminPageHeader Title="Notificações"
+                     Subtitle="Envie mensagens para o PWA, Windows ou Android via central de notificações.">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadUsersAsync" Disabled="@_isBusy">
+            Recarregar usuários
+        </MudButton>
+    </AdminPageHeader>
+
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <MudAlert Severity="@_statusSeverity" Dense="true" Class="mb-4">@_statusMessage</MudAlert>
+    }
+
+    <MudPaper Class="pa-4">
+        <MudForm @ref="_form" Model="_request">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudSelect T="NotificationTargetType" Label="Destinatários" @bind-Value="_request.TargetType" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@NotificationTargetType.All">Todos os usuários ativos</MudSelectItem>
+                        <MudSelectItem Value="@NotificationTargetType.RegularUsers">Usuários comuns</MudSelectItem>
+                        <MudSelectItem Value="@NotificationTargetType.Admins">Administradores</MudSelectItem>
+                        <MudSelectItem Value="@NotificationTargetType.SelectedUsers">Usuários selecionados</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                @if (_request.TargetType == NotificationTargetType.SelectedUsers)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="Guid"
+                                   Label="Usuários"
+                                   MultiSelection="true"
+                                   SelectedValues="@_selectedUserUids"
+                                   SelectedValuesChanged="@OnSelectedUsersChanged"
+                                   Variant="Variant.Outlined"
+                                   ToStringFunc="@GetUserLabel">
+                            @foreach (var user in _users)
+                            {
+                                <MudSelectItem Value="@user.Uid">@($"{user.Name} - {user.Email}")</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.Title"
+                                  Label="Título"
+                                  Variant="Variant.Outlined"
+                                  MaxLength="120"
+                                  Required="true"
+                                  RequiredError="Informe o título." />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.Body"
+                                  Label="Mensagem"
+                                  Variant="Variant.Outlined"
+                                  Lines="5"
+                                  MaxLength="500"
+                                  Required="true"
+                                  RequiredError="Informe a mensagem." />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.ActionUrl"
+                                  Label="URL de ação opcional"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="/tasks ou https://..." />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_request.DataJson"
+                                  Label="Payload JSON opcional"
+                                  Variant="Variant.Outlined"
+                                  Lines="4"
+                                  Placeholder="{ &quot;tipo&quot;: &quot;aviso&quot; }" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+            <MudButton Variant="Variant.Text" OnClick="Clear" Disabled="@_isBusy">
+                Limpar
+            </MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Send"
+                       OnClick="SendAsync"
+                       Disabled="@_isBusy">
+                Enviar
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>

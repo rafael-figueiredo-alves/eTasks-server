@@ -41,6 +41,5 @@ namespace eTasks_server.Client.Pages
         }
 
         protected void GoToEdit() => Navigation.NavigateTo("/version/edit");
-        protected void GoBack() => Navigation.NavigateTo("/");
     }
 }

@@ -115,35 +115,56 @@
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    <div class="d-flex flex-column gap-3">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ManageAccounts" OnClick='() => NavigateTo("admin/users")' FullWidth="true" Class="rounded-pill py-3">
+                    <div class="d-flex flex-column gap-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ManageAccounts" OnClick='() => NavigateTo("admin/users")' FullWidth="true" Class="rounded-pill py-2">
                             Gerenciar Usuários
                         </MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("version")' FullWidth="true" Class="rounded-pill py-3">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Notifications" OnClick='() => NavigateTo("admin/notifications")' FullWidth="true" Class="rounded-pill py-2">
+                            Notificações
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Storage" OnClick='() => NavigateTo("admin/database")' FullWidth="true" Class="rounded-pill py-2">
+                            Operações de Banco
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SettingsApplications" OnClick='() => NavigateTo("admin/server-settings")' FullWidth="true" Class="rounded-pill py-2">
+                            Opções do Servidor
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Article" OnClick='() => NavigateTo("admin/logs")' FullWidth="true" Class="rounded-pill py-2">
+                            Logs
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Terminal" OnClick='() => NavigateTo("admin/console")' FullWidth="true" Class="rounded-pill py-2">
+                            Console
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SystemUpdate" OnClick='() => NavigateTo("version")' FullWidth="true" Class="rounded-pill py-2">
                             Controle de Versão
                         </MudButton>
-                        <MudMenu FullWidth="true" Style="width: 100%;">
+                        <div class="dashboard-shortcut-menu">
+                            <MudMenu FullWidth="true" Style="width: 100%;"
+                                 AnchorOrigin="Origin.BottomCenter"
+                                 TransformOrigin="Origin.TopCenter"
+                                 PopoverClass="dashboard-shortcut-popover">
                             <ActivatorContent>
                                 <MudButton Variant="Variant.Outlined"
                                            Color="Color.Secondary"
                                            StartIcon="@Icons.Material.Filled.EmojiEvents"
+                                           EndIcon="@Icons.Material.Filled.ExpandMore"
                                            FullWidth="true"
-                                           Class="rounded-pill py-3"
+                                           Class="rounded-pill py-2"
                                            onClick="@context.ToggleAsync">
                                     Gamificação
                                 </MudButton>
                             </ActivatorContent>
                             <ChildContent>
-                                <MudMenuItem Icon="@Icons.Material.Filled.Stars" Style="width: 100%;"
+                                <MudMenuItem Icon="@Icons.Material.Filled.Stars"
                                              OnClick='() => NavigateTo("admin/bonus/rules")'>
                                     Regras de Bônus
                                 </MudMenuItem>
-                                <MudMenuItem Icon="@Icons.Material.Filled.MilitaryTech" Style="width: 100%;"
+                                <MudMenuItem Icon="@Icons.Material.Filled.MilitaryTech"
                                              OnClick='() => NavigateTo("admin/bonus/achievements")'>
                                     Conquistas
                                 </MudMenuItem>
                             </ChildContent>
                         </MudMenu>
+                        </div>
                         <MudDivider Class="my-2" />
                         <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Code" OnClick='() => NavigateTo("docs", true)' FullWidth="true" Class="rounded-pill">
                             Documentação API (Scalar)

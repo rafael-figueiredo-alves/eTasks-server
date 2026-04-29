@@ -10,6 +10,7 @@ using eTasks_server.Core.BusinessLogicLayers.API_Resources.Shopping;
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks;
 using eTasks_server.Core.BusinessLogicLayers.Auth;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
+using eTasks_server.Core.BusinessLogicLayers.Notifications;
 using eTasks_server.Core.BusinessLogicLayers.Usuarios;
 using eTasks_server.Core.BusinessLogicLayers.Version;
 using eTasks_server.Core.Data;
@@ -159,10 +160,17 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IUserAdminBLL, UserAdminBLL>();
                 services.AddScoped<IServerSettingsAdminBLL, ServerSettingsAdminBLL>();
                 services.AddScoped<IBonusAdminBLL, BonusAdminBLL>();
+                services.AddScoped<IDatabaseAdminBLL, DatabaseAdminBLL>();
+                services.AddScoped<IApplicationLogAdminBLL, ApplicationLogAdminBLL>();
+                services.AddScoped<IUserNotificationBLL, UserNotificationBLL>();
+                services.AddScoped<IAdminNotificationBLL, AdminNotificationBLL>();
                 services.AddScoped<IVersionService, VersionService>();
                 services.AddScoped<IUserAdminService, UserAdminService>();
                 services.AddScoped<IServerSettingsAdminService, ServerSettingsAdminService>();
                 services.AddScoped<IBonusAdminService, BonusAdminService>();
+                services.AddScoped<IDatabaseAdminService, DatabaseAdminService>();
+                services.AddScoped<IApplicationLogAdminService, ApplicationLogAdminService>();
+                services.AddScoped<IAdminNotificationService, AdminNotificationService>();
                 services.AddScoped<IUserProfileService, UserProfileService>();
                 services.AddScoped<UserState>();
                 services.AddScoped<IDashboardBLL, DashboardBLL>();
@@ -282,6 +290,17 @@ namespace eTasks_server.Extensions
             #region Private Methods
             private IServiceCollection SetupSerilog(IWebHostEnvironment env)
             {
+                var logsDirectory = Path.Combine(
+                    Directory.GetParent(env.ContentRootPath)?.FullName ?? env.ContentRootPath,
+                    "logs");
+                var realtimeLogStore = new RealtimeLogStore();
+
+                builder.Services.AddSingleton<IRealtimeLogStore>(realtimeLogStore);
+                builder.Services.Configure<ApplicationLogAdminOptions>(options =>
+                {
+                    options.LogsDirectoryPath = logsDirectory;
+                });
+
                 Log.Logger = new LoggerConfiguration()
                     .MinimumLevel.Information()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -289,9 +308,9 @@ namespace eTasks_server.Extensions
                     .Enrich.WithMachineName()
                     .Enrich.WithThreadId()
                     .WriteTo.Console()
+                    .WriteTo.Sink(new RealtimeLogSink(realtimeLogStore))
                     .WriteTo.File(
-                        Directory.GetParent(env.ContentRootPath)?.FullName + Path.DirectorySeparatorChar +
-                        "logs/log-.txt",
+                        Path.Combine(logsDirectory, "log-.txt"),
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 10)
                     .CreateLogger();

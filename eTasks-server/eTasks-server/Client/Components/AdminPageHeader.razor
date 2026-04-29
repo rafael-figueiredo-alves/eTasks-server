@@ -1,0 +1,41 @@
+@inject NavigationManager Navigation
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="@Class" Style="gap:16px; flex-wrap:wrap;">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudTooltip Text="@BackTooltip">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Color="Color.Primary"
+                           Variant="Variant.Text"
+                           Edge="Edge.Start"
+                           OnClick="NavigateBack"
+                           AriaLabel="@BackTooltip" />
+        </MudTooltip>
+
+        <div style="min-width:0;">
+            <MudText Typo="@TitleTypo">@Title</MudText>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@Subtitle</MudText>
+            }
+        </div>
+    </MudStack>
+
+    @if (ChildContent is not null)
+    {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="flex-wrap:wrap;">
+            @ChildContent
+        </MudStack>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string BackUrl { get; set; } = "/";
+    [Parameter] public string BackTooltip { get; set; } = "Voltar";
+    [Parameter] public Typo TitleTypo { get; set; } = Typo.h4;
+    [Parameter] public string Class { get; set; } = "mb-6";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private void NavigateBack() => Navigation.NavigateTo(BackUrl);
+}
