@@ -111,7 +111,8 @@ namespace eTasks_server.Client.Pages.Admin
                 MongoAuditEnabled = response.MongoAuditEnabled,
                 MongoAuditConnectionString = response.MongoAuditConnectionString,
                 MongoAuditDatabaseName = response.MongoAuditDatabaseName,
-                MongoAuditCollectionName = response.MongoAuditCollectionName
+                MongoAuditCollectionName = response.MongoAuditCollectionName,
+                ApplicationLogRetentionDays = response.ApplicationLogRetentionDays
             };
         }
     }

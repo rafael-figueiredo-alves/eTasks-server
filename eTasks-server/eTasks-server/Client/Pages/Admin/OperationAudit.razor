@@ -1,0 +1,265 @@
+@page "/admin/operation-audit"
+@attribute [Authorize]
+@using eTasks_server.Models.DTOs.OperationAudit.Responses
+@rendermode InteractiveServer
+@inherits OperationAuditPage
+
+<PageTitle>Auditoria Operacional</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
+    <AdminPageHeader Title="Auditoria Operacional"
+                     Subtitle="Dashboard e consulta paginada dos eventos registrados no MongoDB.">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ReloadAsync" Disabled="@_isBusy">
+            Recarregar
+        </MudButton>
+        <MudButton Href="/api/v2/admin/operation-audit/backup"
+                   Target="_blank"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   Disabled="@(_isBusy || _dashboard is null || !_dashboard.MongoAuditEnabled || !_dashboard.IsConfigured)">
+            Baixar Backup
+        </MudButton>
+        <MudButton Href="/admin/server-settings" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Settings">
+            Configurações
+        </MudButton>
+    </AdminPageHeader>
+
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <MudAlert Severity="@_statusSeverity" Dense="true" Class="mb-4">@_statusMessage</MudAlert>
+    }
+
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_dashboard is not null && (!_dashboard.MongoAuditEnabled || !_dashboard.IsConfigured))
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            A auditoria MongoDB não está habilitada ou configurada. Habilite o MongoDB nas configurações do servidor para consultar estes dados.
+        </MudAlert>
+    }
+    else if (_dashboard is not null)
+    {
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Total</MudText>
+                    <MudText Typo="Typo.h5">@_dashboard.TotalEntries</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_dashboard.DatabaseName / @_dashboard.CollectionName</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Últimas 24h</MudText>
+                    <MudText Typo="Typo.h5">@_dashboard.EntriesLast24Hours</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Mais recente: @FormatDateTime(_dashboard.LatestEntryAtUtc)</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Erros</MudText>
+                    <MudText Typo="Typo.h5">@_dashboard.ErrorEntries</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">HTTP 5xx ou exceções capturadas</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.overline" Color="Color.Secondary">Tempo médio</MudText>
+                    <MudText Typo="Typo.h5">@FormatDuration(_dashboard.AverageDurationMs)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_dashboard.AuthenticatedEntries requisições autenticadas</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Status HTTP</MudText>
+                    @foreach (var metric in _dashboard.StatusCodes)
+                    {
+                        <MetricRow Metric="metric" Total="@_dashboard.TotalEntries" />
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Métodos</MudText>
+                    @foreach (var metric in _dashboard.Methods)
+                    {
+                        <MetricRow Metric="metric" Total="@_dashboard.TotalEntries" />
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Recursos</MudText>
+                    @foreach (var metric in _dashboard.Resources)
+                    {
+                        <MetricRow Metric="metric" Total="@_dashboard.TotalEntries" />
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" lg="8">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Picos de Uso</MudText>
+                    @if (UsageSeries.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">Sem dados nas últimas 24 horas.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudChart ChartType="ChartType.Line"
+                                  ChartSeries="@UsageSeries"
+                                  XAxisLabels="@UsageLabels"
+                                  Width="100%"
+                                  Height="280px"
+                                  ChartOptions="@UsageChartOptions" />
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" lg="4">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6">Manutenção</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                        A limpeza remove todas as entradas da collection de auditoria MongoDB.
+                    </MudText>
+                    <MudTextField @bind-Value="_adminKey"
+                                  Label="APIKEY_ADMIN"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.DeleteSweep"
+                               OnClick="ClearMongoAsync"
+                               Disabled="@(_isBusy || string.IsNullOrWhiteSpace(_adminKey))"
+                               Class="mt-4">
+                        Limpar Auditoria
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <div>
+                            <MudText Typo="Typo.h6">Entradas</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                @(_entries?.TotalItems ?? 0) registro(s) encontrados.
+                            </MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Text">
+                            Página @((_entries?.PageIndex ?? 0) + 1) de @Math.Max(_entries?.TotalPages ?? 0, 1)
+                        </MudChip>
+                    </MudStack>
+
+                    <MudGrid Spacing="2" Class="mb-4">
+                        <MudItem xs="12" md="5">
+                            <MudTextField @bind-Value="_query.Search" Label="Buscar" Variant="Variant.Outlined" Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="6" md="2">
+                            <MudSelect T="string" @bind-Value="_query.Method" Label="Método" Variant="Variant.Outlined" Dense="true">
+                                <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                                <MudSelectItem Value="@("GET")">GET</MudSelectItem>
+                                <MudSelectItem Value="@("POST")">POST</MudSelectItem>
+                                <MudSelectItem Value="@("PUT")">PUT</MudSelectItem>
+                                <MudSelectItem Value="@("PATCH")">PATCH</MudSelectItem>
+                                <MudSelectItem Value="@("DELETE")">DELETE</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="6" md="2">
+                            <MudNumericField T="int?" @bind-Value="_query.StatusCode" Label="Status" Variant="Variant.Outlined" Min="100" Max="599" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField @bind-Value="_query.ResourceName" Label="Recurso" Variant="Variant.Outlined" Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="ClearFiltersAsync" Disabled="@_isBusy">
+                                    Limpar
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync" Disabled="@_isBusy">
+                                    Filtrar
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTable T="OperationAuditLogEntryResponse" Items="@(_entries?.Items ?? [])" Dense="true" Hover="true" Loading="@_isBusy">
+                        <HeaderContent>
+                            <MudTh>Data</MudTh>
+                            <MudTh>Método</MudTh>
+                            <MudTh>Path</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Duração</MudTh>
+                            <MudTh>Usuário</MudTh>
+                            <MudTh>IP</MudTh>
+                            <MudTh>Erro</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Data">@FormatDateTime(context.CreatedAtUtc)</MudTd>
+                            <MudTd DataLabel="Método">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@context.Method</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Path">
+                                <MudText Typo="Typo.body2">@context.Path</MudText>
+                                @if (!string.IsNullOrWhiteSpace(context.QueryString))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.QueryString</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(context.ResourceName))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Recurso: @context.ResourceName</MudText>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.StatusCode)">
+                                    @context.StatusCode
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Duração">@FormatDuration(context.DurationMs)</MudTd>
+                            <MudTd DataLabel="Usuário">
+                                @if (context.UserUid.HasValue)
+                                {
+                                    <MudText Typo="Typo.caption">@context.UserUid</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Anônimo</MudText>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="IP">@context.IpAddress</MudTd>
+                            <MudTd DataLabel="Erro">
+                                @if (!string.IsNullOrWhiteSpace(context.ErrorMessage))
+                                {
+                                    <MudTooltip Text="@context.ErrorMessage">
+                                        <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Error" />
+                                    </MudTooltip>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-4">
+                        <MudSelect T="int" Value="@_query.PageSize" ValueChanged="ChangePageSizeAsync" Label="Por página" Dense="true" Style="width: 140px;">
+                            <MudSelectItem Value="10">10</MudSelectItem>
+                            <MudSelectItem Value="25">25</MudSelectItem>
+                            <MudSelectItem Value="50">50</MudSelectItem>
+                            <MudSelectItem Value="100">100</MudSelectItem>
+                        </MudSelect>
+                        <MudStack Row="true" Spacing="1">
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ChevronLeft" OnClick="PreviousPageAsync" Disabled="@(!_canGoPrevious || _isBusy)">
+                                Anterior
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" EndIcon="@Icons.Material.Filled.ChevronRight" OnClick="NextPageAsync" Disabled="@(!_canGoNext || _isBusy)">
+                                Próxima
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>

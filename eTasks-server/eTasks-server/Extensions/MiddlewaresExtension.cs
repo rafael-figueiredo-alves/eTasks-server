@@ -58,9 +58,9 @@ namespace eTasks_server.Extensions
                     }
                 });
                 
+                webApplication.UseMiddleware<OperationAuditMiddleware>();
                 webApplication.UseAuthentication();
                 webApplication.UseAuthorization();
-                webApplication.UseMiddleware<OperationAuditMiddleware>();
                 
                 webApplication.UseHttpsRedirection();
                 webApplication.UseAntiforgery();

@@ -41,6 +41,7 @@ namespace eTasks_server.Endpoints
                 API_V2.MapDashboardEndpoints();
                 API_V2.MapDatabaseAdminEndpoints();
                 API_V2.MapApplicationLogAdminEndpoints();
+                API_V2.MapOperationAuditAdminEndpoints();
                 API_V2.MapAdminNotificationEndpoints();
             }
         }

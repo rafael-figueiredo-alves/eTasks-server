@@ -8,5 +8,6 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         Task<DatabaseOverviewResponse> GetOverviewAsync(CancellationToken cancellationToken = default);
         Task<DatabaseBackupFileResponse> GenerateBackupAsync(CancellationToken cancellationToken = default);
         Task<DatabaseScriptExecutionResponse> ExecuteScriptAsync(DatabaseScriptExecutionRequest request, CancellationToken cancellationToken = default);
+        Task<DatabaseScriptExecutionResponse> ClearDatabaseAsync(string adminKey, CancellationToken cancellationToken = default);
     }
 }

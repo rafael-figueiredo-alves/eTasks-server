@@ -9,10 +9,12 @@ namespace eTasks_server.Client.Pages.Admin
     public partial class DatabaseAdminPage : ComponentBase
     {
         [Inject] private IDatabaseAdminService DatabaseAdminService { get; set; } = default!;
+        [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
         protected DatabaseOverviewResponse? _overview;
         protected string _script = string.Empty;
+        protected string _adminKey = string.Empty;
         protected bool _confirmScriptExecution;
         protected bool _isLoading = true;
         protected bool _isBusy;
@@ -62,6 +64,29 @@ namespace eTasks_server.Client.Pages.Admin
         {
             _script = string.Empty;
             _confirmScriptExecution = false;
+        }
+
+        protected async Task ClearDatabaseAsync()
+        {
+            var confirmed = await DialogService.ShowMessageBoxAsync(
+                "Limpar base MySQL",
+                "Deseja remover os dados do MySQL preservando apenas os usuarios administradores?",
+                yesText: "Limpar",
+                cancelText: "Cancelar");
+
+            if (confirmed != true)
+            {
+                return;
+            }
+
+            await ExecuteBusyAsync(async () =>
+            {
+                var response = await DatabaseAdminService.ClearDatabaseAsync(_adminKey);
+                _adminKey = string.Empty;
+                SetStatus(response.Message, Severity.Success);
+                Snackbar.Add(response.Message, Severity.Success);
+                await ReloadAsync();
+            }, "Erro ao limpar base MySQL.");
         }
 
         public static string FormatBytes(long bytes)

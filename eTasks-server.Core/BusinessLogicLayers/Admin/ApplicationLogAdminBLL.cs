@@ -1,6 +1,7 @@
 using System.Text;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Services;
+using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Models.DTOs.ApplicationLogs.Responses;
 using eTasks_server.Models.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -10,13 +11,15 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
     public class ApplicationLogAdminBLL(
         IOptions<ApplicationLogAdminOptions> options,
+        IApplicationLogRetentionService retentionService,
         ILogger<IApplicationLogAdminBLL> logger) : IApplicationLogAdminBLL
     {
         private const int MaxReadBytes = 2 * 1024 * 1024;
         private readonly string _logsDirectoryPath = options.Value.LogsDirectoryPath;
 
-        public Task<IReadOnlyList<LogFileSummaryResponse>> GetFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<LogFileSummaryResponse>> GetFilesAsync(CancellationToken cancellationToken = default)
         {
+            await retentionService.ApplyRetentionAsync(cancellationToken);
             var directory = EnsureLogsDirectory();
             var files = Directory.EnumerateFiles(directory, "*.txt", SearchOption.TopDirectoryOnly)
                 .Select(path => new FileInfo(path))
@@ -30,7 +33,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 })
                 .ToList();
 
-            return Task.FromResult<IReadOnlyList<LogFileSummaryResponse>>(files);
+            return files;
         }
 
         public async Task<LogFileContentResponse> ReadFileAsync(string fileName, CancellationToken cancellationToken = default)

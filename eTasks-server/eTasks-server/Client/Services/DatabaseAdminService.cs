@@ -12,5 +12,8 @@ namespace eTasks_server.Client.Services
 
         public Task<DatabaseScriptExecutionResponse> ExecuteScriptAsync(DatabaseScriptExecutionRequest request, CancellationToken cancellationToken = default)
             => bll.ExecuteScriptAsync(request, cancellationToken);
+
+        public Task<DatabaseScriptExecutionResponse> ClearDatabaseAsync(string adminKey, CancellationToken cancellationToken = default)
+            => bll.ClearDatabaseAsync(adminKey, cancellationToken);
     }
 }

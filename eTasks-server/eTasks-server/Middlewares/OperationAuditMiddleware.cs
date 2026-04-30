@@ -18,16 +18,7 @@ namespace eTasks_server.Middlewares
             var stopwatch = Stopwatch.StartNew();
             Exception? capturedException = null;
 
-            try
-            {
-                await next(context);
-            }
-            catch (Exception ex)
-            {
-                capturedException = ex;
-                throw;
-            }
-            finally
+            context.Response.OnCompleted(async () =>
             {
                 stopwatch.Stop();
 
@@ -60,7 +51,17 @@ namespace eTasks_server.Middlewares
                     ErrorMessage = capturedException?.Message
                 };
 
-                await auditLogger.LogAsync(operationLog, context.RequestAborted);
+                await auditLogger.LogAsync(operationLog);
+            });
+
+            try
+            {
+                await next(context);
+            }
+            catch (Exception ex)
+            {
+                capturedException = ex;
+                throw;
             }
         }
 

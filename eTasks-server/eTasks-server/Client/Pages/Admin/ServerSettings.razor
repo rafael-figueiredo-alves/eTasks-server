@@ -91,6 +91,28 @@
                 <MudPaper Class="pa-4">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                         <div>
+                            <MudText Typo="Typo.h6">Logs da Aplicacao</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Retencao dos arquivos locais gerados pelo servidor.</MudText>
+                        </div>
+                    </MudStack>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <MudNumericField T="int"
+                                             @bind-Value="_model.ApplicationLogRetentionDays"
+                                             Label="Retencao em dias"
+                                             Min="2"
+                                             Max="15"
+                                             Immediate="true" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <div>
                             <MudText Typo="Typo.h6">MongoDB Auditoria</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Persistencia opcional de logs operacionais da API.</MudText>
                         </div>

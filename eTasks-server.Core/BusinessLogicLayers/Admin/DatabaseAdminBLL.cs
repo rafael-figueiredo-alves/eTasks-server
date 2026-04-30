@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
@@ -10,14 +11,21 @@ using eTasks_server.Models.DTOs.DatabaseAdmin.Responses;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
-    public partial class DatabaseAdminBLL(AppDbContext context, ILogger<IDatabaseAdminBLL> logger)
-        : BaseBLL<IDatabaseAdminBLL>(context, logger), IDatabaseAdminBLL
+    public partial class DatabaseAdminBLL : BaseBLL<IDatabaseAdminBLL>, IDatabaseAdminBLL
     {
         private const int MaxScriptLength = 200_000;
+        private readonly IConfiguration _configuration;
+
+        public DatabaseAdminBLL(AppDbContext context, ILogger<IDatabaseAdminBLL> logger, IConfiguration configuration)
+            : base(context, logger)
+        {
+            _configuration = configuration;
+        }
 
         public async Task<DatabaseOverviewResponse> GetOverviewAsync(CancellationToken cancellationToken = default)
         {
@@ -116,6 +124,59 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        public async Task<DatabaseScriptExecutionResponse> ClearDatabaseAsync(string adminKey, CancellationToken cancellationToken = default)
+        {
+            ValidateAdminKey(adminKey);
+
+            var connection = _context.Database.GetDbConnection();
+            var shouldClose = await OpenIfNeededAsync(connection, cancellationToken);
+
+            try
+            {
+                var tables = await LoadTableSummariesAsync(connection, cancellationToken);
+                var affectedRows = 0;
+
+                await ExecuteNonQueryAsync(connection, "SET FOREIGN_KEY_CHECKS=0;", cancellationToken);
+
+                foreach (var table in tables.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (table.Name.Equals("__EFMigrationsHistory", StringComparison.OrdinalIgnoreCase)
+                        || table.Name.Equals("users", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    affectedRows += await ExecuteNonQueryAsync(connection, $"DELETE FROM {QuoteIdentifier(table.Name)};", cancellationToken);
+                }
+
+                affectedRows += await ExecuteNonQueryAsync(connection, "DELETE FROM `users` WHERE `IsAdmin` = 0;", cancellationToken);
+                await ExecuteNonQueryAsync(connection, "SET FOREIGN_KEY_CHECKS=1;", cancellationToken);
+
+                _logger.LogWarning("Base MySQL limpa pelo painel administrativo. Usuarios administradores foram preservados.");
+
+                return new DatabaseScriptExecutionResponse
+                {
+                    Success = true,
+                    AffectedRows = affectedRows,
+                    Message = $"Base limpa com sucesso. Linhas removidas: {affectedRows}. Usuarios administradores preservados.",
+                    ExecutedAt = SaoPauloDateTime.Now()
+                };
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                {
+                    await ExecuteNonQueryAsync(connection, "SET FOREIGN_KEY_CHECKS=1;", cancellationToken);
+                }
+
+                if (shouldClose)
+                {
+                    await connection.CloseAsync();
+                }
+            }
+        }
+
         private static async Task<List<DatabaseTableSummaryResponse>> LoadTableSummariesAsync(DbConnection connection, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -208,6 +269,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await command.ExecuteScalarAsync(cancellationToken);
         }
 
+        private static async Task<int> ExecuteNonQueryAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            return await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
         private static async Task<bool> OpenIfNeededAsync(DbConnection connection, CancellationToken cancellationToken)
         {
             if (connection.State == ConnectionState.Open)
@@ -292,6 +360,29 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
 
             return builder.Length == 0 ? "database" : builder.ToString();
+        }
+
+        private void ValidateAdminKey(string adminKey)
+        {
+            var configuredAdminKey = _configuration[Constants.AdminApiKeyConfig];
+            if (string.IsNullOrWhiteSpace(configuredAdminKey))
+            {
+                throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN nao configurada.");
+            }
+
+            if (string.IsNullOrWhiteSpace(adminKey)
+                || !FixedTimeEquals(adminKey.Trim(), configuredAdminKey.Trim()))
+            {
+                throw new ValidationException(nameof(adminKey), "Chave administrativa invalida.");
+            }
+        }
+
+        private static bool FixedTimeEquals(string value, string expected)
+        {
+            var valueBytes = Encoding.UTF8.GetBytes(value);
+            var expectedBytes = Encoding.UTF8.GetBytes(expected);
+            return valueBytes.Length == expectedBytes.Length
+                && CryptographicOperations.FixedTimeEquals(valueBytes, expectedBytes);
         }
 
         [GeneratedRegex(@"\b(DROP|TRUNCATE|DELETE|RENAME|GRANT|REVOKE|CREATE\s+USER|ALTER\s+USER|CREATE\s+DATABASE|ALTER\s+DATABASE|USE|SET\s+PASSWORD|SHUTDOWN|KILL|LOAD\s+DATA|LOCK\s+TABLES|UNLOCK\s+TABLES|INTO\s+OUTFILE|INTO\s+DUMPFILE)\b", RegexOptions.IgnoreCase)]

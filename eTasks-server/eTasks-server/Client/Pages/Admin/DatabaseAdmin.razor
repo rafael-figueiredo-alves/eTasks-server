@@ -135,6 +135,29 @@
                         </MudButton>
                     </MudStack>
                 </MudPaper>
+
+                <MudPaper Class="pa-4 mt-3">
+                    <MudText Typo="Typo.h6">Limpeza da Base</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                        Remove os dados do MySQL preservando apenas os usuários administradores e o histórico de migrations.
+                    </MudText>
+                    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">
+                        Esta operação é destrutiva. Baixe um backup antes de executar.
+                    </MudAlert>
+                    <MudTextField @bind-Value="_adminKey"
+                                  Label="APIKEY_ADMIN"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                    <MudButton Color="Color.Error"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.DeleteSweep"
+                               OnClick="ClearDatabaseAsync"
+                               Disabled="@(_isBusy || string.IsNullOrWhiteSpace(_adminKey))"
+                               Class="mt-4">
+                        Limpar Base MySQL
+                    </MudButton>
+                </MudPaper>
             </MudItem>
         </MudGrid>
     }

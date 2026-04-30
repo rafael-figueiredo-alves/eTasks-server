@@ -30,6 +30,7 @@ namespace eTasks_server.Models.Entities.Settings
         public string MongoAuditConnectionString { get; set; } = string.Empty;
         public string MongoAuditDatabaseName { get; set; } = "etasks_server";
         public string MongoAuditCollectionName { get; set; } = "operation_audit_logs";
+        public int ApplicationLogRetentionDays { get; set; } = 7;
 
         public DateTime CreatedAt { get; set; } = SaoPauloDateTime.Now();
         public DateTime UpdatedAt { get; set; } = SaoPauloDateTime.Now();

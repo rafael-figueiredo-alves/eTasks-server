@@ -16,6 +16,7 @@ using eTasks_server.Core.BusinessLogicLayers.Version;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Services;
 using eTasks_server.Core.Services.Interfaces;
+using eTasks_server.HostedServices;
 using eTasks_server.Middlewares;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -162,6 +163,7 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IBonusAdminBLL, BonusAdminBLL>();
                 services.AddScoped<IDatabaseAdminBLL, DatabaseAdminBLL>();
                 services.AddScoped<IApplicationLogAdminBLL, ApplicationLogAdminBLL>();
+                services.AddScoped<IOperationAuditAdminBLL, OperationAuditAdminBLL>();
                 services.AddScoped<IUserNotificationBLL, UserNotificationBLL>();
                 services.AddScoped<IAdminNotificationBLL, AdminNotificationBLL>();
                 services.AddScoped<IVersionService, VersionService>();
@@ -170,17 +172,15 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IBonusAdminService, BonusAdminService>();
                 services.AddScoped<IDatabaseAdminService, DatabaseAdminService>();
                 services.AddScoped<IApplicationLogAdminService, ApplicationLogAdminService>();
+                services.AddScoped<IOperationAuditAdminService, OperationAuditAdminService>();
                 services.AddScoped<IAdminNotificationService, AdminNotificationService>();
                 services.AddScoped<IUserProfileService, UserProfileService>();
                 services.AddScoped<UserState>();
                 services.AddScoped<IDashboardBLL, DashboardBLL>();
                 services.AddScoped<IDashboardService, DashboardService>(sp =>
-                {
-                    var bll = sp.GetRequiredService<IDashboardBLL>();
-                    var factory = sp.GetRequiredService<IHttpClientFactory>();
-                    var client = factory.CreateClient("LocalApi");
-                    return new DashboardService(bll, client);
-                });
+                    new DashboardService(
+                        sp.GetRequiredService<IServiceScopeFactory>(),
+                        sp.GetRequiredService<IHttpClientFactory>().CreateClient("LocalApi")));
                 services.AddScoped<UserLogsDrawerService>();
 
                 return services;
@@ -228,9 +228,11 @@ namespace eTasks_server.Extensions
                 services.AddScoped<IAiAssistantService, OpenRouterAiAssistantService>();
                 services.AddScoped<IServerSettingsProvider, ServerSettingsProvider>();
                 services.AddScoped<IServerSettingsDiagnosticsService, ServerSettingsDiagnosticsService>();
+                services.AddScoped<IApplicationLogRetentionService, ApplicationLogRetentionService>();
                 services.AddScoped<IOperationAuditLogger, MongoOperationAuditLogger>();
                 services.AddSingleton<ISecretProtector, SecretProtector>();
                 services.AddScoped<IAuthBLL, AuthBLL>();
+                services.AddHostedService<ApplicationLogRetentionHostedService>();
 
                 services.AddAuthentication(options =>
                 {
@@ -312,7 +314,7 @@ namespace eTasks_server.Extensions
                     .WriteTo.File(
                         Path.Combine(logsDirectory, "log-.txt"),
                         rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 10)
+                        retainedFileCountLimit: 15)
                     .CreateLogger();
 
                 builder.Host.UseSerilog();

@@ -7,5 +7,6 @@ namespace eTasks_server.Client.Services.Interfaces
     {
         Task<DatabaseOverviewResponse> GetOverviewAsync(CancellationToken cancellationToken = default);
         Task<DatabaseScriptExecutionResponse> ExecuteScriptAsync(DatabaseScriptExecutionRequest request, CancellationToken cancellationToken = default);
+        Task<DatabaseScriptExecutionResponse> ClearDatabaseAsync(string adminKey, CancellationToken cancellationToken = default);
     }
 }

@@ -1,0 +1,15 @@
+@using eTasks_server.Models.DTOs.OperationAudit.Responses
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+    <MudText Typo="Typo.body2">@Metric.Label</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary">@Metric.Count (@Percent)</MudText>
+</MudStack>
+<MudProgressLinear Value="@PercentValue" Color="Color.Primary" Class="mb-3" />
+
+@code {
+    [Parameter, EditorRequired] public OperationAuditMetricResponse Metric { get; set; } = default!;
+    [Parameter] public long Total { get; set; }
+
+    private double PercentValue => Total <= 0 ? 0 : Math.Round(Metric.Count * 100d / Total, 2);
+    private string Percent => $"{PercentValue:0.##}%";
+}

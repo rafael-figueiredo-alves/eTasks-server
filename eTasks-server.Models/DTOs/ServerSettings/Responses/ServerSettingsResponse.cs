@@ -24,6 +24,7 @@ namespace eTasks_server.Models.DTOs.ServerSettings.Responses
         public string MongoAuditConnectionString { get; set; } = string.Empty;
         public string MongoAuditDatabaseName { get; set; } = string.Empty;
         public string MongoAuditCollectionName { get; set; } = string.Empty;
+        public int ApplicationLogRetentionDays { get; set; } = 7;
 
         public DateTime UpdatedAt { get; set; }
     }

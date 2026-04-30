@@ -71,6 +71,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             ValidateSmtp(request);
             ValidateOpenRouter(request);
             ValidateMongo(request);
+            ValidateApplicationLogs(request);
         }
 
         private static void ValidateSmtp(UpdateServerSettingsRequest request)
@@ -152,6 +153,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             }
         }
 
+        private static void ValidateApplicationLogs(UpdateServerSettingsRequest request)
+        {
+            if (request.ApplicationLogRetentionDays is < 2 or > 15)
+            {
+                throw new ValidationException(nameof(request.ApplicationLogRetentionDays), "A retencao dos logs deve ficar entre 2 e 15 dias.");
+            }
+        }
+
         private void Apply(ServerSettingsEntity entity, UpdateServerSettingsRequest request)
         {
             entity.SmtpEnabled = request.SmtpEnabled;
@@ -178,6 +187,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             entity.MongoAuditConnectionString = secretProtector.Protect(request.MongoAuditConnectionString.Trim());
             entity.MongoAuditDatabaseName = request.MongoAuditDatabaseName.Trim();
             entity.MongoAuditCollectionName = request.MongoAuditCollectionName.Trim();
+            entity.ApplicationLogRetentionDays = request.ApplicationLogRetentionDays;
         }
 
         private ServerSettingsResponse MapResponse(ServerSettingsEntity entity)
@@ -204,6 +214,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
                 MongoAuditConnectionString = secretProtector.Unprotect(entity.MongoAuditConnectionString),
                 MongoAuditDatabaseName = entity.MongoAuditDatabaseName,
                 MongoAuditCollectionName = entity.MongoAuditCollectionName,
+                ApplicationLogRetentionDays = entity.ApplicationLogRetentionDays is < 2 or > 15 ? 7 : entity.ApplicationLogRetentionDays,
                 UpdatedAt = entity.UpdatedAt
             };
         }
