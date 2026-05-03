@@ -91,6 +91,26 @@
                 <MudPaper Class="pa-4">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                         <div>
+                            <MudText Typo="Typo.h6">Google OpenID Connect</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Login social para clientes web/PWA, Windows e Android.</MudText>
+                        </div>
+                        <MudSwitch @bind-Value="_model.GoogleOpenIdEnabled" Color="Color.Primary">Habilitado</MudSwitch>
+                    </MudStack>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6"><MudTextField @bind-Value="_model.GoogleOpenIdClientId" Label="Client ID" Immediate="true" /></MudItem>
+                        <MudItem xs="12" md="6"><MudTextField @bind-Value="_model.GoogleOpenIdClientSecret" Label="Client Secret" InputType="InputType.Password" Immediate="true" /></MudItem>
+                        <MudItem xs="12" md="6"><MudTextField @bind-Value="_model.GoogleOpenIdRedirectUri" Label="Redirect URI" HelperText="Ex.: https://seu-servidor/api/v2/auth/google/callback" Immediate="true" /></MudItem>
+                        <MudItem xs="12" md="6"><MudTextField @bind-Value="_model.GoogleOpenIdWebSuccessRedirectUrl" Label="Retorno web/PWA" HelperText="URL da PWA que recebera googleSession." Immediate="true" /></MudItem>
+                        <MudItem xs="12"><MudTextField @bind-Value="_model.GoogleOpenIdStateCode" Label="Codigo fixo de state" InputType="InputType.Password" Immediate="true" /></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <div>
                             <MudText Typo="Typo.h6">Logs da Aplicacao</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Retencao dos arquivos locais gerados pelo servidor.</MudText>
                         </div>

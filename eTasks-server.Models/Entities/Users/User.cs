@@ -86,6 +86,7 @@ namespace eTasks_server.Models.Entities.Users
         /// Relação de RefreshTokens de seções do usuário
         /// </summary>
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<UserExternalLogin> ExternalLogins { get; set; } = new List<UserExternalLogin>();
         /// <summary>
         /// Lista de códigos para troca de senhas
         /// </summary>
@@ -150,6 +151,12 @@ namespace eTasks_server.Models.Entities.Users
 
             modelBuilder.Entity<User>()
                                 .HasMany(x => x.RefreshTokens)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.ExternalLogins)
                                 .WithOne(x => x.User)
                                 .HasForeignKey(x => x.UserUid)
                                 .OnDelete(DeleteBehavior.Cascade);

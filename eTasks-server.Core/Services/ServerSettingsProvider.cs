@@ -17,6 +17,7 @@ namespace eTasks_server.Core.Services
             settings.SmtpPassword = secretProtector.Unprotect(settings.SmtpPassword);
             settings.OpenRouterApiKey = secretProtector.Unprotect(settings.OpenRouterApiKey);
             settings.MongoAuditConnectionString = secretProtector.Unprotect(settings.MongoAuditConnectionString);
+            settings.GoogleOpenIdClientSecret = secretProtector.Unprotect(settings.GoogleOpenIdClientSecret);
 
             return settings;
         }

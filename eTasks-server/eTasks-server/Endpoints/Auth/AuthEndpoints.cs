@@ -6,6 +6,7 @@ using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace eTasks_server.Endpoints.Auth
 {
@@ -23,6 +24,7 @@ namespace eTasks_server.Endpoints.Auth
             ResetPasswordEndpoint(group);
             ChangePasswordEndpoint(group);
             ConfirmAccountEndpoint(group);
+            GoogleAuthEndpoints(group);
 
             return app;
         }
@@ -183,6 +185,105 @@ namespace eTasks_server.Endpoints.Auth
             .Produces(StatusCodes.Status200OK, contentType: "text/html");
         }
 
+        private static void GoogleAuthEndpoints(RouteGroupBuilder group)
+        {
+            group.MapPost("/google/start", async (HttpContext context, [FromBody] GoogleAuthStartRequest request, IAuthBLL authBLL, CancellationToken cancellationToken) =>
+            {
+                var response = await authBLL.StartGoogleLoginAsync(request, GetRequestBaseUri(context), cancellationToken);
+                return Results.Ok(response);
+            })
+            .AllowAnonymous()
+            .WithName("GoogleAuthStart")
+            .WithSummary("Cria uma sessao de login Google OpenID Connect e retorna a URL de autorizacao.")
+            .Produces(StatusCodes.Status200OK, typeof(GoogleAuthStartResponse));
+
+            group.MapGet("/google/start", async (
+                HttpContext context,
+                [FromQuery] string userAgent,
+                [FromQuery] string clientInstanceId,
+                [FromQuery] string? returnUrl,
+                IAuthBLL authBLL,
+                CancellationToken cancellationToken) =>
+            {
+                var response = await authBLL.StartGoogleLoginAsync(new GoogleAuthStartRequest
+                {
+                    UserAgent = userAgent,
+                    ClientInstanceId = clientInstanceId,
+                    ReturnUrl = returnUrl
+                }, GetRequestBaseUri(context), cancellationToken);
+
+                return Results.Redirect(response.AuthorizationUrl);
+            })
+            .AllowAnonymous()
+            .WithName("GoogleAuthStartRedirect")
+            .WithSummary("Inicia o login Google por redirecionamento direto do navegador.");
+
+            group.MapGet("/google/callback", async (
+                HttpContext context,
+                [FromQuery] string? code,
+                [FromQuery] string? state,
+                [FromQuery] string? error,
+                [FromQuery(Name = "error_description")] string? errorDescription,
+                IAuthBLL authBLL,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await authBLL.CompleteGoogleLoginAsync(code, state, error, errorDescription, context.Connection.RemoteIpAddress?.ToString(), GetRequestBaseUri(context), cancellationToken);
+                if (!string.IsNullOrWhiteSpace(result.RedirectUrl))
+                {
+                    return Results.Redirect(result.RedirectUrl);
+                }
+
+                var title = result.Success ? "Login Google concluido" : "Login Google nao concluido";
+                var html = $$"""
+                    <!doctype html>
+                    <html lang="pt-BR">
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title>{{title}}</title>
+                    </head>
+                    <body>
+                        <h1>{{title}}</h1>
+                        <p>{{WebUtility.HtmlEncode(result.Message)}}</p>
+                        <p>Voce pode fechar esta janela e retornar ao aplicativo.</p>
+                        <script>window.close();</script>
+                    </body>
+                    </html>
+                    """;
+
+                return Results.Content(html, "text/html");
+            })
+            .AllowAnonymous()
+            .WithName("GoogleAuthCallback")
+            .WithSummary("Callback OAuth/OpenID Connect usado pelo Google.");
+
+            group.MapGet("/google/status", async (
+                [FromQuery] Guid sessionCode,
+                [FromQuery] string userAgent,
+                [FromQuery] string clientInstanceId,
+                IAuthBLL authBLL,
+                CancellationToken cancellationToken) =>
+            {
+                var response = await authBLL.GetGoogleLoginStatusAsync(sessionCode, userAgent, clientInstanceId, cancellationToken);
+                return Results.Ok(response);
+            })
+            .AllowAnonymous()
+            .WithName("GoogleAuthStatus")
+            .WithSummary("Consulta o estado de uma sessao de login Google.")
+            .Produces(StatusCodes.Status200OK, typeof(GoogleAuthStatusResponse));
+
+            group.MapPost("/google/consume", async (HttpContext context, [FromBody] GoogleAuthConsumeRequest request, IAuthBLL authBLL, CancellationToken cancellationToken) =>
+            {
+                var response = await authBLL.ConsumeGoogleLoginAsync(request, cancellationToken);
+                SetRefreshTokenCookie(context, response, request.UserAgent);
+                return Results.Ok(response);
+            })
+            .AllowAnonymous()
+            .WithName("GoogleAuthConsume")
+            .WithSummary("Consome uma sessao Google concluida e retorna LoginResponse JWT/refresh.")
+            .Produces(StatusCodes.Status200OK, typeof(LoginResponse));
+        }
+
         private static void SetRefreshTokenCookie(HttpContext context, LoginResponse response, string? userAgent)
         {
             if (!ShouldUseRefreshTokenCookie(userAgent))
@@ -215,6 +316,12 @@ namespace eTasks_server.Endpoints.Auth
         private static bool ShouldUseRefreshTokenCookie(string? userAgent)
         {
             return string.Equals(userAgent, Constants.WebUserAgent, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static Uri GetRequestBaseUri(HttpContext context)
+        {
+            var request = context.Request;
+            return new Uri($"{request.Scheme}://{request.Host}/");
         }
     }
 }

@@ -72,6 +72,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             ValidateOpenRouter(request);
             ValidateMongo(request);
             ValidateApplicationLogs(request);
+            ValidateGoogleOpenId(request);
         }
 
         private static void ValidateSmtp(UpdateServerSettingsRequest request)
@@ -161,6 +162,41 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             }
         }
 
+        private static void ValidateGoogleOpenId(UpdateServerSettingsRequest request)
+        {
+            if (!request.GoogleOpenIdEnabled)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(request.GoogleOpenIdClientId))
+            {
+                throw new ValidationException(nameof(request.GoogleOpenIdClientId), "Informe o Client ID do Google.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.GoogleOpenIdClientSecret))
+            {
+                throw new ValidationException(nameof(request.GoogleOpenIdClientSecret), "Informe o Client Secret do Google.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.GoogleOpenIdRedirectUri)
+                && !Uri.TryCreate(request.GoogleOpenIdRedirectUri, UriKind.Absolute, out _))
+            {
+                throw new ValidationException(nameof(request.GoogleOpenIdRedirectUri), "Informe uma Redirect URI absoluta.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.GoogleOpenIdWebSuccessRedirectUrl)
+                && !Uri.TryCreate(request.GoogleOpenIdWebSuccessRedirectUrl, UriKind.Absolute, out _))
+            {
+                throw new ValidationException(nameof(request.GoogleOpenIdWebSuccessRedirectUrl), "Informe uma URL absoluta para retorno web/PWA.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.GoogleOpenIdStateCode) || request.GoogleOpenIdStateCode.Trim().Length < 16)
+            {
+                throw new ValidationException(nameof(request.GoogleOpenIdStateCode), "Informe um codigo fixo de state com pelo menos 16 caracteres.");
+            }
+        }
+
         private void Apply(ServerSettingsEntity entity, UpdateServerSettingsRequest request)
         {
             entity.SmtpEnabled = request.SmtpEnabled;
@@ -188,6 +224,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             entity.MongoAuditDatabaseName = request.MongoAuditDatabaseName.Trim();
             entity.MongoAuditCollectionName = request.MongoAuditCollectionName.Trim();
             entity.ApplicationLogRetentionDays = request.ApplicationLogRetentionDays;
+
+            entity.GoogleOpenIdEnabled = request.GoogleOpenIdEnabled;
+            entity.GoogleOpenIdClientId = request.GoogleOpenIdClientId.Trim();
+            entity.GoogleOpenIdClientSecret = secretProtector.Protect(request.GoogleOpenIdClientSecret.Trim());
+            entity.GoogleOpenIdRedirectUri = request.GoogleOpenIdRedirectUri.Trim();
+            entity.GoogleOpenIdWebSuccessRedirectUrl = request.GoogleOpenIdWebSuccessRedirectUrl.Trim();
+            entity.GoogleOpenIdStateCode = request.GoogleOpenIdStateCode.Trim();
         }
 
         private ServerSettingsResponse MapResponse(ServerSettingsEntity entity)
@@ -215,6 +258,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
                 MongoAuditDatabaseName = entity.MongoAuditDatabaseName,
                 MongoAuditCollectionName = entity.MongoAuditCollectionName,
                 ApplicationLogRetentionDays = entity.ApplicationLogRetentionDays is < 2 or > 15 ? 7 : entity.ApplicationLogRetentionDays,
+                GoogleOpenIdEnabled = entity.GoogleOpenIdEnabled,
+                GoogleOpenIdClientId = entity.GoogleOpenIdClientId,
+                GoogleOpenIdClientSecret = secretProtector.Unprotect(entity.GoogleOpenIdClientSecret),
+                GoogleOpenIdRedirectUri = entity.GoogleOpenIdRedirectUri,
+                GoogleOpenIdWebSuccessRedirectUrl = entity.GoogleOpenIdWebSuccessRedirectUrl,
+                GoogleOpenIdStateCode = entity.GoogleOpenIdStateCode,
                 UpdatedAt = entity.UpdatedAt
             };
         }

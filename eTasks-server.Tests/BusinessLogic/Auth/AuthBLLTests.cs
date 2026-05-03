@@ -5,6 +5,7 @@ using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.Utils;
 using eTasks_server.Tests.Support;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -29,6 +30,19 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
 
         private static ISecretProtector CreateProtector(IConfiguration configuration) => new SecretProtector(configuration);
 
+        private static IAuthBLL CreateSut(Core.Data.AppDbContext context, IConfiguration configuration, IEmailService emailService, ISecretProtector protector)
+        {
+            var services = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+            return new AuthBLL(
+                context,
+                configuration,
+                emailService,
+                protector,
+                new ServerSettingsProvider(context, protector),
+                services.GetRequiredService<IHttpClientFactory>(),
+                NullLogger<IAuthBLL>.Instance);
+        }
+
         [Fact]
         public async Task RegisterAsync_StoresProtectedPasswordHash_AndCreatesRefreshToken()
         {
@@ -36,7 +50,7 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             var configuration = CreateConfiguration();
             var protector = CreateProtector(configuration);
             var emailService = new FakeEmailService();
-            IAuthBLL sut = new AuthBLL(context, configuration, emailService, protector, NullLogger<IAuthBLL>.Instance);
+            IAuthBLL sut = CreateSut(context, configuration, emailService, protector);
 
             var response = await sut.RegisterAsync(new RegisterRequest
             {
@@ -67,7 +81,7 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
-            IAuthBLL sut = new AuthBLL(context, configuration, emailService, protector, NullLogger<IAuthBLL>.Instance);
+            IAuthBLL sut = CreateSut(context, configuration, emailService, protector);
 
             var response = await sut.LoginAsync(new LoginRequest
             {
@@ -101,7 +115,7 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             });
             await context.SaveChangesAsync();
 
-            IAuthBLL sut = new AuthBLL(context, configuration, emailService, protector, NullLogger<IAuthBLL>.Instance);
+            IAuthBLL sut = CreateSut(context, configuration, emailService, protector);
 
             var changed = await sut.ChangePasswordAsync(user.Uid, new ChangePasswordRequest
             {

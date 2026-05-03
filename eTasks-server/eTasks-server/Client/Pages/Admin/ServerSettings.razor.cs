@@ -112,7 +112,13 @@ namespace eTasks_server.Client.Pages.Admin
                 MongoAuditConnectionString = response.MongoAuditConnectionString,
                 MongoAuditDatabaseName = response.MongoAuditDatabaseName,
                 MongoAuditCollectionName = response.MongoAuditCollectionName,
-                ApplicationLogRetentionDays = response.ApplicationLogRetentionDays
+                ApplicationLogRetentionDays = response.ApplicationLogRetentionDays,
+                GoogleOpenIdEnabled = response.GoogleOpenIdEnabled,
+                GoogleOpenIdClientId = response.GoogleOpenIdClientId,
+                GoogleOpenIdClientSecret = response.GoogleOpenIdClientSecret,
+                GoogleOpenIdRedirectUri = response.GoogleOpenIdRedirectUri,
+                GoogleOpenIdWebSuccessRedirectUrl = response.GoogleOpenIdWebSuccessRedirectUrl,
+                GoogleOpenIdStateCode = response.GoogleOpenIdStateCode
             };
         }
     }

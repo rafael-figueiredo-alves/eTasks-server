@@ -23,6 +23,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <returns>Retorna o LoginResponse com Token e RefreshToken</returns>
         Task<LoginResponse> RegisterAsync(RegisterRequest request);
 
+        Task<GoogleAuthStartResponse> StartGoogleLoginAsync(GoogleAuthStartRequest request, Uri requestBaseUri, CancellationToken cancellationToken = default);
+
+        Task<GoogleAuthStatusResponse> GetGoogleLoginStatusAsync(Guid sessionCode, string userAgent, string clientInstanceId, CancellationToken cancellationToken = default);
+
+        Task<LoginResponse> ConsumeGoogleLoginAsync(GoogleAuthConsumeRequest request, CancellationToken cancellationToken = default);
+
+        Task<GoogleAuthCallbackResult> CompleteGoogleLoginAsync(string? code, string? state, string? error, string? errorDescription, string? ipAddress, Uri requestBaseUri, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Método para renovar o token de acesso usando um token de refresh. Ele recebe uma entidade de RefreshTokenRequest, que inclui o token de refresh e, opcionalmente, o user agent do cliente. O método retorna uma nova entidade de LoginResponse com um novo token de acesso e um novo token de refresh.
         /// </summary>
@@ -64,5 +72,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// </summary>
         /// <param name="refreshToken">Refresh token a ser revogado</param>
         Task RevokeRefreshTokenAsync(string? refreshToken);
+    }
+
+    public class GoogleAuthCallbackResult
+    {
+        public bool Success { get; set; }
+        public Guid? SessionCode { get; set; }
+        public string UserAgent { get; set; } = string.Empty;
+        public string? RedirectUrl { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

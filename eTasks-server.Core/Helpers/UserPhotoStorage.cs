@@ -21,7 +21,7 @@ namespace eTasks_server.Core.Helpers
         public static async Task<string> SaveAsync(string base64Payload, string? currentRelativePath, CancellationToken cancellationToken = default)
         {
             var (bytes, extension) = ParseBase64(base64Payload);
-            var directory = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "profiles");
+            var directory = GetStorageRoot();
             Directory.CreateDirectory(directory);
 
             var fileName = $"{Guid.NewGuid()}{extension}";
@@ -35,34 +35,74 @@ namespace eTasks_server.Core.Helpers
 
         public static void Delete(string? relativePath)
         {
-            var absolutePath = ResolveAbsolutePath(relativePath);
-            if (absolutePath is null || !File.Exists(absolutePath))
+            foreach (var absolutePath in ResolveCandidatePaths(relativePath))
             {
-                return;
+                if (File.Exists(absolutePath))
+                {
+                    File.Delete(absolutePath);
+                }
             }
-
-            File.Delete(absolutePath);
         }
 
         private static string? ResolveAbsolutePath(string? relativePath)
         {
+            return ResolveCandidatePaths(relativePath).FirstOrDefault(File.Exists);
+        }
+
+        private static IEnumerable<string> ResolveCandidatePaths(string? relativePath)
+        {
             if (string.IsNullOrWhiteSpace(relativePath))
             {
-                return null;
+                yield break;
             }
 
             var normalized = relativePath.Replace('\\', '/').TrimStart('/');
             if (!normalized.StartsWith($"{RelativeDirectory}/", StringComparison.OrdinalIgnoreCase))
             {
-                return null;
+                yield break;
             }
 
-            var uploadsRoot = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "uploads", "profiles"));
-            var absolutePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), normalized.Replace('/', Path.DirectorySeparatorChar)));
+            var fileName = Path.GetFileName(normalized);
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                yield break;
+            }
 
-            return absolutePath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase)
-                ? absolutePath
-                : null;
+            var storageRoot = GetStorageRoot();
+            var storagePath = Path.GetFullPath(Path.Combine(storageRoot, fileName));
+            if (IsUnderRoot(storagePath, storageRoot))
+            {
+                yield return storagePath;
+            }
+
+            var legacyRoot = GetLegacyStorageRoot();
+            var legacyPath = Path.GetFullPath(Path.Combine(legacyRoot, fileName));
+            if (IsUnderRoot(legacyPath, legacyRoot))
+            {
+                yield return legacyPath;
+            }
+        }
+
+        private static string GetStorageRoot()
+        {
+            var contentRoot = Directory.GetCurrentDirectory();
+            var protectedRoot = Directory.GetParent(contentRoot)?.FullName ?? contentRoot;
+
+            return Path.GetFullPath(Path.Combine(protectedRoot, "uploads", "profiles"));
+        }
+
+        private static string GetLegacyStorageRoot()
+        {
+            return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "uploads", "profiles"));
+        }
+
+        private static bool IsUnderRoot(string path, string root)
+        {
+            var fullPath = Path.GetFullPath(path);
+            var fullRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                + Path.DirectorySeparatorChar;
+
+            return fullPath.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase);
         }
 
         private static (byte[] Bytes, string Extension) ParseBase64(string payload)

@@ -2,254 +2,307 @@
 
 <img src="https://github.com/rafael-figueiredo-alves/eTasks/blob/main/assets/eTasks_logo_new.png" alt="eTasks Logo" width="180"/>
 
-# eTasks
+# eTasks Server
 
-### Gerencie tarefas, metas e listas com produtividade e bom humor! 😄✅
-
-<br/>
-
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/rafael-figueiredo-alves/eTasks?include_prereleases&color=%230d6efd&label=versão&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/releases)
-[![GitHub Stars](https://img.shields.io/github/stars/rafael-figueiredo-alves/eTasks-server?color=yellow&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/rafael-figueiredo-alves/eTasks-server?color=%230d6efd&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/rafael-figueiredo-alves/eTasks-server?color=red&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/issues)
-[![GitHub License](https://img.shields.io/github/license/rafael-figueiredo-alves/eTasks-server?style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/blob/main/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/rafael-figueiredo-alves/eTasks-server?style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks/commits)
+### Backend ASP.NET Core para o ecossistema eTasks
 
 <br/>
 
-![Delphi](https://img.shields.io/badge/Delphi-EE1F35?style=for-the-badge&logo=delphi&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
-![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/rafael-figueiredo-alves/eTasks-server?include_prereleases&color=%230d6efd&label=versao&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/rafael-figueiredo-alves/eTasks-server?color=yellow&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/rafael-figueiredo-alves/eTasks-server?color=%230d6efd&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/rafael-figueiredo-alves/eTasks-server?color=red&style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server/issues)
+[![GitHub License](https://img.shields.io/github/license/rafael-figueiredo-alves/eTasks-server?style=for-the-badge)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rafael-figueiredo-alves/eTasks-server?style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server/commits)
+
+<br/>
+
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![Blazor](https://img.shields.io/badge/Blazor-512BD4?style=for-the-badge&logo=blazor&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
 </div>
 
 ---
 
-## 📋 Índice
+## Indice
 
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Funcionalidades](#-funcionalidades)
-- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [Ecossistema eTasks](#-ecossistema-etasks)
-- [Plataformas Suportadas](#-plataformas-suportadas)
-- [Capturas de Tela](#-capturas-de-tela)
-- [Como Começar](#-como-começar)
-- [Pré-requisitos](#-pré-requisitos)
-- [Instalação](#-instalação)
-- [Arquitetura](#-arquitetura)
-- [Roadmap](#-roadmap)
-- [Contribuindo](#-contribuindo)
-- [Autor](#-autor)
-- [Licença](#-licença)
-
----
-
-## 🚀 Sobre o Projeto
-
-O **eTasks** é um aplicativo de gerenciamento de tarefas, metas e listas de compras, desenvolvido com foco na **produtividade** e no **bom humor**. A ideia é simples: tornar a organização do dia a dia algo leve, intuitivo e até divertido.
-
-O projeto nasceu como um exercício de aprendizado e treinamento em programação **Delphi**, explorando conceitos avançados como o padrão **MVC**, uso de **interfaces**, integração com o **Firebase** como backend, e boas práticas de desenvolvimento mobile e desktop. Com o tempo, evoluiu para um ecossistema completo com projetos irmãos para **servidor** e **web**.
-
-> 💡 *"Organizar suas tarefas nunca foi tão divertido!"*
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Funcionalidades](#funcionalidades)
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Ecossistema eTasks](#ecossistema-etasks)
+- [Clientes Suportados](#clientes-suportados)
+- [Documentacao da API](#documentacao-da-api)
+- [Como Comecar](#como-comecar)
+- [Pre-requisitos](#pre-requisitos)
+- [Instalacao](#instalacao)
+- [Configuracao](#configuracao)
+- [Arquitetura](#arquitetura)
+- [Roadmap](#roadmap)
+- [Contribuindo](#contribuindo)
+- [Autor](#autor)
+- [Licenca](#licenca)
 
 ---
 
-## ✨ Funcionalidades
+## Sobre o Projeto
 
-- ✅ **Gestão de Tarefas** — Crie, edite, conclua e exclua tarefas de forma simples e rápida
-- 🎯 **Gestão de Metas** — Registre seus objetivos e acompanhe seu progresso
-- 🛒 **Listas de Mercado** — Nunca mais esqueça nada no supermercado
-- 🔐 **Autenticação de Usuário** — Login seguro via Firebase Authentication
-- ☁️ **Sincronização na Nuvem** — Dados armazenados e sincronizados via Firebase
-- 🌙 **Interface Amigável** — Design pensado para ser agradável e fácil de usar
-- 📱 **Multi-plataforma** — Disponível para Windows e Android (com web em desenvolvimento)
+O **eTasks Server** e o backend do ecossistema eTasks. Ele centraliza autenticacao, regras de negocio, persistencia de dados, sincronizacao dos clientes e o painel administrativo web.
+
+O projeto e construido com **ASP.NET Core**, **Minimal APIs**, **Blazor Server interativo** para o painel administrativo, **EF Core** e **MySQL**. A API principal fica versionada em `/api/v2` e atende clientes externos como app web/PWA, Windows e Android.
+
+O servidor tambem hospeda um painel administrativo no proprio projeto web. Esse painel usa autenticacao por cookie, enquanto os clientes externos usam JWT com refresh token.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Funcionalidades
 
-### App Principal (Mobile & Desktop)
+- **Autenticacao externa com JWT**: login, registro, confirmacao de conta, refresh token, logout, recuperacao e troca de senha.
+- **Autenticacao web administrativa com cookie**: login tradicional por formulario, logout e protecao do painel administrativo.
+- **Sincronizacao de recursos do usuario**: tarefas, metas, notas, leituras, listas de compras e financas.
+- **Perfil do usuario**: dados cadastrais, foto de perfil, configuracoes, bonus e exportacao de dados.
+- **Painel administrativo Blazor**: dashboard, usuarios, versoes, configuracoes do servidor, banco de dados, logs, auditoria, bonus e notificacoes.
+- **Gamificacao**: regras de pontuacao, conquistas e resumo de bonus.
+- **Notificacoes**: cadastro de dispositivos e envio/gestao de notificacoes administrativas.
+- **Assistente de IA**: endpoints e servicos para assistencia contextual usando provedor configuravel.
+- **Logs e auditoria**: Serilog, logs em tempo real no painel, retencao de logs e auditoria operacional com MongoDB opcional.
+- **Documentacao interativa**: OpenAPI e Scalar protegidos por autenticacao.
+- **Health check**: monitoramento basico da aplicacao e banco.
 
-| Tecnologia | Descrição |
+---
+
+## Tecnologias Utilizadas
+
+| Tecnologia | Uso no projeto |
 |---|---|
-| ![Delphi](https://img.shields.io/badge/Delphi-EE1F35?style=flat&logo=delphi&logoColor=white) **Delphi / RAD Studio** | Linguagem e IDE principal do projeto |
-| 🎨 **Skia4Delphi** | Renderização gráfica avançada e moderna |
-| 🏛️ **MVC Pattern** | Arquitetura Model-View-Controller para organização do código |
-| 🔌 **Interfaces Delphi** | Uso extensivo de interfaces para desacoplamento e testabilidade |
-| 🎨 **Lunacy (Icons8)** | Ferramenta de design e prototipagem utilizada no projeto |
-
-### Conceitos e Padrões Aplicados
-
-- Padrão de projeto **MVC** (Model-View-Controller)
-- **Interfaces** para abstração e desacoplamento
-- Integração com APIs REST
-- Desenvolvimento **Multi-plataforma** (FMX - FireMonkey)
-- Versionamento com **Git & GitHub**
+| **C# / .NET 10** | Linguagem e runtime da solucao |
+| **ASP.NET Core** | Host web, pipeline HTTP, autenticacao e autorizacao |
+| **Minimal APIs** | Endpoints versionados em `/api/v2` |
+| **Blazor Server / Razor Components** | Painel administrativo hospedado no proprio servidor |
+| **MudBlazor** | Componentes visuais do painel administrativo |
+| **Entity Framework Core** | Acesso a dados e mapeamento das entidades |
+| **MySQL / Pomelo EF Core** | Banco relacional principal |
+| **Serilog** | Logs estruturados em console, arquivo e painel em tempo real |
+| **Scalar / OpenAPI** | Referencia interativa da API |
+| **MongoDB Atlas opcional** | Auditoria operacional, quando configurada |
+| **SMTP** | Envio de e-mails de confirmacao e recuperacao de senha |
 
 ---
 
-## 🌐 Ecossistema eTasks
+## Ecossistema eTasks
 
-O eTasks é mais do que um único repositório — é um **ecossistema de projetos interligados** que juntos formam uma solução completa de gerenciamento de tarefas.
+O eTasks e formado por clientes e servicos que compartilham o mesmo dominio de produtividade pessoal.
 
-<div align="center">
+| Projeto | Papel |
+|---|---|
+| **eTasks Server** | Este repositorio. Backend, API e painel administrativo |
+| **eTasks** | Aplicativo nativo Delphi para Windows e Android |
+| **eTasks Web/PWA** | Cliente web que consome a API |
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  ECOSSISTEMA eTasks                 │
-├──────────────────┬──────────────┬───────────────────┤
-│   📱 eTasks      │ ⚙️ eTasks   │   🌐 eTasks       │
-│                  │   Server     │      Web          │
-|                  | (Este Repo)  │                   │
-│                  │              │                   │
-│  Delphi          │  C# /        │  C# / Blazor      │
-│  Windows &       │  ASP.NET /   │  WebAssembly      │
-│  Android         │  Minimal API │                   │
-└──────────────────┴──────────────┴───────────────────┘
-
-```
-
-</div>
-
-### 📱 eTasks — App Mobile & Desktop 
-
-O app principal desenvolvido em **Delphi**, disponível para **Windows** (32 e 64 bits) e **Android**. É o coração do ecossistema, onde toda a experiência do usuário foi originalmente concebida.
-
-🔗 **Repositório:** [rafael-figueiredo-alves/eTasks](https://github.com/rafael-figueiredo-alves/eTasks)
+Este repositorio substitui a dependencia historica de backend externo para os fluxos principais do eTasks, concentrando dados, autenticacao e administracao em uma API propria.
 
 ---
 
-### ⚙️ eTasks Server *(este repositório)*
+## Clientes Suportados
 
-> *"A server for eTasks made with C#, ASP.NET and the power of Minimal APIs"*
-
-O **eTasks Server** é o projeto de backend dedicado ao ecossistema, desenvolvido em **C#** com **ASP.NET** e o padrão moderno de **Minimal APIs**. Ele fornece os serviços e endpoints necessários para integração entre os diferentes clientes do ecossistema.
-
-![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=csharp&logoColor=white)
-![ASP.NET](https://img.shields.io/badge/ASP.NET-512BD4?style=flat&logo=dotnet&logoColor=white)
-![.NET](https://img.shields.io/badge/.NET-512BD4?style=flat&logo=dotnet&logoColor=white)
-
-🔗 **Repositório:** [rafael-figueiredo-alves/eTasks-server](https://github.com/rafael-figueiredo-alves/eTasks-server)
-
----
-
-### 🌐 eTasks Web
-
-> *"Com intuito de trazer a experiência do eTasks desktop e mobile para a web, este projeto visa explorar conhecimentos em C# e Blazor para montar um aplicativo de tarefas com integração com o Firebase."*
-
-O **eTasks Web** traz toda a experiência do eTasks para o navegador, utilizando **Blazor WebAssembly** — o framework da Microsoft para desenvolvimento web com **C#** — integrado ao **Firebase** como backend. Uma excelente vitrine das possibilidades do ecossistema .NET na web.
-
-![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=csharp&logoColor=white)
-![Blazor](https://img.shields.io/badge/Blazor-512BD4?style=flat&logo=blazor&logoColor=white)
-![WebAssembly](https://img.shields.io/badge/WebAssembly-654FF0?style=flat&logo=webassembly&logoColor=white)
-
-🔗 **Repositório:** [rafael-figueiredo-alves/eTasks-Web](https://github.com/rafael-figueiredo-alves/eTasks-Web)
-🌍 **Demo ao vivo:** [rafael-figueiredo-alves.github.io/eTasks-Web](https://rafael-figueiredo-alves.github.io/eTasks-Web)
-
----
-
-## 💻 Plataformas Suportadas
-
-| Plataforma | Arquitetura | Status |
+| Cliente | Autenticacao | Observacao |
 |---|---|---|
-| ![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white) Windows | 32 bits | ✅ Disponível |
-| ![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white) Windows | 64 bits | ✅ Disponível |
-| ![Android](https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=white) Android | 32 bits | ✅ Disponível |
-| ![Web](https://img.shields.io/badge/Web-4285F4?style=flat&logo=googlechrome&logoColor=white) Web (Blazor) | — | 🔗 Projeto eTasks-Web |
+| Web/PWA | JWT | User agent esperado: `web` |
+| Windows Delphi | JWT | User agent esperado: `windows` |
+| Android Delphi | JWT | User agent esperado: `android` |
+| Painel administrativo | Cookie | User agent administrativo e politicas web |
 
-> 📦 Há planos de disponibilizar o aplicativo para download nas **lojas de aplicativos oficiais** (Google Play Store e Microsoft Store).
-
----
-
-## 📸 Capturas de Tela
-
-<div align="center">
-
-<!-- Adicione aqui suas capturas de tela -->
-> *📷 Capturas de tela serão adicionadas em breve.*
-
-</div>
+Os fluxos sao separados de proposito: clientes externos usam `Authorization: Bearer`, enquanto o painel administrativo usa cookie auth.
 
 ---
 
-## 🏁 Como Começar
+## Documentacao da API
 
-### 📋 Pré-requisitos
+A API e registrada sob o prefixo:
 
-Para compilar e executar o projeto, você precisará de:
+```text
+/api/v2
+```
 
-- **RAD Studio** (Delphi) — Versão recomendada: Alexandria (11) ou superior
-- **Skia4Delphi** — Para renderização gráfica avançada ([Instalação](https://github.com/skia4delphi/skia4delphi))
-- **Android SDK** — Necessário apenas para compilar para Android (incluído no RAD Studio)
+Grupos principais de endpoints:
 
-### 🔧 Instalação
+- `auth`
+- `web-auth`
+- `usuarios`
+- `users`
+- `tasks`
+- `goals`
+- `notes`
+- `readings`
+- `shopping`
+- `finances`
+- `notifications`
+- `ai`
+- `dashboard`
+- `database`
+- `application-logs`
+- `operation-audit`
+- `bonus`
+- `version`
+- `utils`
 
-1. **Clone o repositório:**
+A referencia OpenAPI e publicada pelo app, e a interface Scalar fica em:
+
+```text
+/docs
+```
+
+O acesso a documentacao interativa e protegido por autenticacao.
+
+---
+
+## Como Comecar
+
+### Pre-requisitos
+
+Para compilar e executar o projeto localmente, voce precisa de:
+
+- **.NET SDK 10**
+- **MySQL** acessivel para a connection string configurada
+- Opcional: **MongoDB Atlas** para auditoria operacional
+- Opcional: servidor **SMTP** para envio real de e-mails
+
+### Instalacao
+
+1. Clone o repositorio:
 
 ```bash
-git clone https://github.com/rafael-figueiredo-alves/eTasks.git
-cd eTasks
+git clone https://github.com/rafael-figueiredo-alves/eTasks-server.git
+cd eTasks-server
 ```
 
-2. **Instale as dependências:**
-   - Instale o **Skia4Delphi** conforme a documentação oficial
+2. Restaure os pacotes:
 
-
-3. **Abra o projeto no RAD Studio:**
-   - Abra o arquivo `.dproj` principal
-   - Selecione a plataforma desejada (Win32, Win64 ou Android)
-   - Compile e execute!
-
----
-
-## 🏛️ Arquitetura
-
-O projeto segue o padrão **MVC (Model-View-Controller)**, com uso extensivo de **interfaces** para garantir desacoplamento entre as camadas:
-
-```
-eTasks/
-├── Model/          # Regras de negócio e entidades de dados
-├── View/           # Formulários e componentes visuais (FMX)
-├── Controller/     # Lógica de controle e comunicação entre Model e View
-├── Interfaces/     # Definições de interfaces para abstração
-├── Services/       # Serviços (Firebase, autenticação, etc.)
-└── Utils/          # Utilitários e helpers
+```bash
+dotnet restore eTasks-server.slnx
 ```
 
+3. Compile a solucao:
+
+```bash
+dotnet build eTasks-server.slnx
+```
+
+4. Execute o host web:
+
+```bash
+dotnet run --project eTasks-server/eTasks-server/eTasks-server.csproj
+```
+
+### Configuracao
+
+As principais configuracoes ficam em `appsettings.json`, `appsettings.Development.json`, variaveis de ambiente ou provider equivalente no ambiente de hospedagem.
+
+Configuracoes importantes:
+
+- `ConnectionStrings:DefaultConnection`
+- `Jwt:Key`
+- `Jwt:Issuer`
+- `Jwt:Audience`
+- `APIKEY_ADMIN`
+- `ApiSettings:BaseUrl`
+- `ApiSettings:ApiV2Path`
+- `Security:DataEncryptionKey`
+- `Smtp:*`
+
+Nao use os valores de exemplo em producao. Segredos devem ser fornecidos por variaveis de ambiente, secrets manager ou configuracao segura do provedor de hospedagem.
+
 ---
 
-## 🗺️ Roadmap
+## Arquitetura
 
-- [x] Gerenciamento de Tarefas (CRUD completo)
-- [x] Gerenciamento de Metas
-- [x] Listas de Mercado
-- [x] Autenticação via Firebase
-- [x] Suporte a Windows 32/64 bits
-- [x] Suporte a Android
-- [ ] Melhorias gráficas com Skia4Delphi
-- [ ] Notificações e lembretes
-- [ ] Publicação na Google Play Store
-- [ ] Publicação na Microsoft Store
-- [ ] Integração com eTasks Server (Minimal APIs)
-- [ ] Sincronização em tempo real aprimorada
+A solucao e organizada em projetos com responsabilidades separadas:
+
+```text
+eTasks-server/
++-- eTasks-server.slnx
++-- eTasks-server/
+|   +-- eTasks-server/
+|       +-- Program.cs
+|       +-- Extensions/
+|       +-- Endpoints/
+|       +-- Components/
+|       +-- Client/
+|       +-- wwwroot/
++-- eTasks-server.Core/
+|   +-- BusinessLogicLayers/
+|   +-- Data/
+|   +-- Helpers/
+|   +-- Services/
++-- eTasks-server.Models/
+|   +-- DTOs/
+|   +-- Entities/
+|   +-- Enums/
+|   +-- Exceptions/
+|   +-- Utils/
++-- eTasks-server.Tests/
+```
+
+Responsabilidades principais:
+
+- **Web Host (`eTasks-server/eTasks-server`)**: bootstrap, DI, middlewares, endpoints, OpenAPI, Scalar, autenticacao, autorizacao e painel Blazor.
+- **Client do painel (`eTasks-server/eTasks-server/Client`)**: paginas administrativas, layout, dialogs e servicos internos da UI.
+- **Core (`eTasks-server.Core`)**: regras de negocio, EF Core, servicos internos, autenticacao, auditoria, logs, e-mail e integracoes.
+- **Models (`eTasks-server.Models`)**: entidades, DTOs, constantes, enums, exceptions e contratos compartilhados.
+- **Tests (`eTasks-server.Tests`)**: projeto de testes automatizados presente na solucao.
+
+Fluxo de inicializacao:
+
+```text
+builder.RegisterServices()
+builder.Build()
+app.RegisterMiddlewares()
+app.AddAPIEndpoints()
+app.MapResourcesEndpoints()
+app.Run()
+```
 
 ---
 
-## 🤝 Contribuindo
+## Roadmap
 
-Contribuições são muito bem-vindas! Se você tem alguma sugestão, encontrou um bug ou quer colaborar com o projeto, fique à vontade para:
-
-1. Faça um **Fork** do projeto
-2. Crie uma **Branch** para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Faça o **Commit** das suas alterações (`git commit -m 'feat: Adiciona MinhaFeature'`)
-4. Faça o **Push** para a Branch (`git push origin feature/MinhaFeature`)
-5. Abra um **Pull Request**
-
-Você também pode participar abrindo uma [Issue](https://github.com/rafael-figueiredo-alves/eTasks/issues) ou deixando uma ⭐ no repositório!
+- [x] API versionada em `/api/v2`
+- [x] Autenticacao JWT para clientes externos
+- [x] Autenticacao por cookie para painel administrativo
+- [x] Painel administrativo Blazor no mesmo host
+- [x] CRUD e sincronizacao de tarefas, metas, notas, leituras, compras e financas
+- [x] Logs em tempo real e retencao de logs
+- [x] Auditoria operacional com MongoDB opcional
+- [x] Configuracoes administrativas do servidor
+- [x] Integracao com assistente de IA
+- [ ] Ampliar cobertura de testes automatizados
+- [ ] Documentar contratos dos principais endpoints com exemplos
+- [ ] Melhorar automacao de deploy e observabilidade
 
 ---
 
-## 👨‍💻 Autor
+## Contribuindo
+
+Contribuicoes sao bem-vindas. Para colaborar:
+
+1. Faca um fork do projeto.
+2. Crie uma branch para sua alteracao (`git checkout -b feature/minha-feature`).
+3. Faca commits objetivos (`git commit -m "feat: adiciona minha feature"`).
+4. Envie a branch (`git push origin feature/minha-feature`).
+5. Abra um pull request.
+
+Antes de abrir o PR, compile a solucao e rode os testes disponiveis:
+
+```bash
+dotnet build eTasks-server.slnx
+dotnet test eTasks-server.slnx
+```
+
+---
+
+## Autor
 
 <div align="center">
 
@@ -257,7 +310,7 @@ Você também pode participar abrindo uma [Issue](https://github.com/rafael-figu
 
 **Rafael de Figueiredo Alves**
 
-Desenvolvedor de Software apaixonado por Delphi, C#, .NET, Blazor, React e muito mais. Pai de dois filhos e eterno aprendiz da arte da programação.
+Desenvolvedor de Software apaixonado por Delphi, C#, .NET, Blazor, React e muito mais.
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rafael-figueiredo-alves)
 
@@ -265,19 +318,16 @@ Desenvolvedor de Software apaixonado por Delphi, C#, .NET, Blazor, React e muito
 
 ---
 
-## 📄 Licença
+## Licenca
 
-Este projeto está sob licença. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto esta sob licenca. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
 <div align="center">
 
-Feito com ❤️ e muito ☕ por **Rafael de Figueiredo Alves**
+Feito por **Rafael de Figueiredo Alves**
 
-⭐ Se este projeto te ajudou ou te inspirou, deixe uma estrela!
-
-[![eTasks](https://img.shields.io/badge/eTasks-Produtividade%20com%20Bom%20Humor-blue?style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks)
+[![eTasks Server](https://img.shields.io/badge/eTasks%20Server-ASP.NET%20Core-blue?style=for-the-badge)](https://github.com/rafael-figueiredo-alves/eTasks-server)
 
 </div>
-

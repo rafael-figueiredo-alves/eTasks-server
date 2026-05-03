@@ -27,6 +27,8 @@ namespace eTasks_server.Core.Data
         public DbSet<eTasksVersion> DbVersion { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<UserExternalLogin> UserExternalLogins { get; set; }
+        public DbSet<ExternalAuthSession> ExternalAuthSessions { get; set; }
         public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
         public DbSet<LoginLog> LoginLogs { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
@@ -54,6 +56,8 @@ namespace eTasks_server.Core.Data
             eTasksVersion.Configure(modelBuilder);
             User.Configure(modelBuilder);
             RefreshToken.Configure(modelBuilder);
+            UserExternalLogin.Configure(modelBuilder);
+            ExternalAuthSession.Configure(modelBuilder);
             PasswordResetCode.Configure(modelBuilder);
             LoginLog.Configure(modelBuilder);
             global::eTasks_server.Models.Entities.Users.UserSettings.Configure(modelBuilder);

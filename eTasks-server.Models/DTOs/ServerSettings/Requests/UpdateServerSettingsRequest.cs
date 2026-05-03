@@ -25,5 +25,12 @@ namespace eTasks_server.Models.DTOs.ServerSettings.Requests
         public string MongoAuditDatabaseName { get; set; } = "etasks_server";
         public string MongoAuditCollectionName { get; set; } = "operation_audit_logs";
         public int ApplicationLogRetentionDays { get; set; } = 7;
+
+        public bool GoogleOpenIdEnabled { get; set; }
+        public string GoogleOpenIdClientId { get; set; } = string.Empty;
+        public string GoogleOpenIdClientSecret { get; set; } = string.Empty;
+        public string GoogleOpenIdRedirectUri { get; set; } = string.Empty;
+        public string GoogleOpenIdWebSuccessRedirectUrl { get; set; } = string.Empty;
+        public string GoogleOpenIdStateCode { get; set; } = string.Empty;
     }
 }
