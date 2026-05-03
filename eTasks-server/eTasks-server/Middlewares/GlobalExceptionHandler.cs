@@ -8,14 +8,9 @@ namespace eTasks_server.Middlewares
     /// <summary>
     /// Middleware global para captura e tratamento de exceções não tratadas em toda a aplicação.
     /// </summary>
-    public class GlobalExceptionHandler : IExceptionHandler
+    public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
     {
-        private readonly ILogger<GlobalExceptionHandler> _logger;
-
-        public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
         public async ValueTask<bool> TryHandleAsync(
             HttpContext httpContext,
