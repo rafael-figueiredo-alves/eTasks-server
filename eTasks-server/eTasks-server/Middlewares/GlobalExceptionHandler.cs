@@ -12,6 +12,13 @@ namespace eTasks_server.Middlewares
     {
         private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
+        /// <summary>
+        /// Tenta tratar a exceção capturada, mapeando tipos específicos para respostas HTTP adequadas e mensagens amigáveis.
+        /// </summary>
+        /// <param name="httpContext">Contexto HTTP</param>
+        /// <param name="exception">Exceção capturada</param>
+        /// <param name="cancellationToken">Token para cancelar ação</param>
+        /// <returns>Indica se a exceção foi tratada</returns>
         public async ValueTask<bool> TryHandleAsync(
             HttpContext httpContext,
             Exception exception,
