@@ -14,6 +14,10 @@ namespace eTasks_server.Endpoints.Auth
     {
         extension(IEndpointRouteBuilder app)
         {
+            /// <summary>
+            /// Mapeia os endpoints relacionados à autenticação, incluindo login, registro, refresh de token, logout, esqueci minha senha, reset de senha, alteração de senha e confirmação de conta. Também inclui endpoints para o fluxo de login OAuth/OpenID Connect com Google. Os endpoints são organizados em um grupo com a rota base "/auth" e possuem tags, resumos, descrições e tipos de resposta adequados para cada operação.
+            /// </summary>
+            /// <returns></returns>
             public IEndpointRouteBuilder MapAuthEndpoints()
             {
                 var group = app.MapGroup("/auth")
@@ -35,37 +39,51 @@ namespace eTasks_server.Endpoints.Auth
 
         extension(RouteGroupBuilder group)
         {
-            public RouteGroupBuilder LoginEndpoint()
+            /// <summary>
+            /// Método para realizar login no sistema e obter um JWT e Refresh Token. O JWT deve ser enviado no header Authorization Bearer para acessar rotas protegidas. O Refresh Token pode ser usado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder LoginEndpoint()
             {
                 group.MapPost("/login", async (HttpContext context, [FromBody] LoginRequest request, IAuthBLL authBLL) =>
                 {
                     var ip = context.Connection.RemoteIpAddress?.ToString();
                     var response = await authBLL.LoginAsync(request, ip);
+
                     SetRefreshTokenCookie(context, response, request.UserAgent);
+
                     return Results.Ok(response);
                 })
                 .WithName("Login")
-                .WithDisplayName("Login de Usuario")
+                .AllowAnonymous()
+                .WithDisplayName("Login de Usuário")
                 .WithSummary("Realiza o login de um usuário retornando JWT e Refresh Token.")
-                .WithDescription("O JWT deve ser enviado no header Authorization Bearer para acessar rotas protegidas. O Refresh Token pode ser usado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja valido e nao tenha expirado.")
+                .WithDescription("O JWT deve ser enviado no header Authorization Bearer para acessar rotas protegidas. O Refresh Token pode ser usado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado.")
                 .Produces(StatusCodes.Status200OK, typeof(LoginResponse))
-                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse));
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Endpoint para registrar um novo usuário no sistema. Após o registro, um e-mail de confirmação será enviado. O usuário deve clicar no link de confirmação para ativar a conta antes de poder fazer login.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder RegisterEndpoint()
             {
                 group.MapPost("/register", async (HttpContext context, [FromBody] RegisterRequest request, IAuthBLL authBLL) =>
                 {
                     var response = await authBLL.RegisterAsync(request);
+
                     SetRefreshTokenCookie(context, response, request.UserAgent);
+
                     return Results.Ok(response);
                 })
                 .WithName("UserRegister")
-                .WithDisplayName("Registro de Usuario")
-                .WithSummary("Registra um novo usuario no sistema.")
-                .WithDescription("Apos o registro, um e-mail de confirmacao sera enviado. O usuario deve clicar no link de confirmacao para ativar a conta antes de poder fazer login.")
+                .WithDisplayName("Registro de Usuário")
+                .WithSummary("Registra um novo usuário no sistema.")
+                .WithDescription("Após o registro, um e-mail de confirmação será enviado. O usuário deve clicar no link de confirmação para ativar a conta antes de poder fazer login.")
                 .AllowAnonymous()
                 .Produces(StatusCodes.Status200OK, typeof(LoginResponse))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse));
@@ -73,6 +91,10 @@ namespace eTasks_server.Endpoints.Auth
                 return group;
             }
 
+            /// <summary>
+            /// Endpoint para trocar um Refresh Token válido e não expirado por um novo Token JWT. Utilizado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado. O JWT retornado deve ser usado no header Authorization Bearer para acessar rotas protegidas.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder RefreshTokenEndpoint()
             {
                 group.MapPost("/refresh", async (HttpContext context, [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequest? request, IAuthBLL authBLL) =>
@@ -88,18 +110,25 @@ namespace eTasks_server.Endpoints.Auth
 
                     var response = await authBLL.RefreshTokenAsync(request);
                     SetRefreshTokenCookie(context, response, request.UserAgent);
+
                     return Results.Ok(response);
                 })
                 .WithName("RefreshToken")
-                .WithSummary("Troca um Refresh Token valido e nao expirado por um novo Token JWT.")
+                .AllowAnonymous()
+                .WithSummary("Troca um Refresh Token válido e não expirado por um novo Token JWT.")
                 .WithDisplayName("Logar com Refresh Token")
-                .WithDescription("Utilizado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja valido e nao tenha expirado. O JWT retornado deve ser usado no header Authorization Bearer para acessar rotas protegidas.")
+                .WithDescription("Utilizado para obter um novo JWT sem precisar fazer login novamente, desde que o Refresh Token seja válido e não tenha expirado. O JWT retornado deve ser usado no header Authorization Bearer para acessar rotas protegidas.")
                 .Produces(StatusCodes.Status200OK, typeof(LoginResponse))
-                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse));
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Use este endpoint para revogar o Refresh Token atual, efetivamente fazendo logout do usuário. Ele também remove os cookies HttpOnly de autenticação. Após usar este endpoint, o usuário precisará fazer login novamente para obter um novo JWT e Refresh Token.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder LogoutEndpoint()
             {
                 group.MapPost("/logout", async (HttpContext context, [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RefreshTokenRequest? request, IAuthBLL authBLL) =>
@@ -108,11 +137,12 @@ namespace eTasks_server.Endpoints.Auth
                     {
                         return Results.ValidationProblem(new Dictionary<string, string[]>
                         {
-                            ["UserAgent"] = ["O UserAgent e obrigatorio."]
+                            ["UserAgent"] = ["O UserAgent é obrigatório."]
                         });
                     }
 
                     var refreshToken = request?.RefreshToken;
+
                     if (ShouldUseRefreshTokenCookie(request?.UserAgent)
                         && string.IsNullOrWhiteSpace(refreshToken)
                         && context.Request.Cookies.TryGetValue(Constants.RefreshTokenCookieName, out var cookieRefreshToken))
@@ -121,56 +151,80 @@ namespace eTasks_server.Endpoints.Auth
                     }
 
                     await authBLL.RevokeRefreshTokenAsync(refreshToken);
+
                     ClearRefreshTokenCookie(context);
+
                     return Results.Ok(new { Message = "Logout realizado com sucesso." });
                 })
                 .WithName("Logout")
-                .WithSummary("Revoga o refresh token atual e remove os cookies HttpOnly de autenticacao.")
+                .AllowAnonymous()
+                .WithSummary("Revoga o refresh token atual e remove os cookies HttpOnly de autenticação.")
                 .WithDisplayName("Logout da API")
-                .Produces(StatusCodes.Status200OK);
+                .Produces(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Endpoint para solicitar o envio de um código de redefinição de senha para o e-mail do usuário. Se o e-mail existir no sistema, um código de 6 dígitos será enviado para o endereço de e-mail fornecido. O usuário pode então usar esse código para redefinir a senha da conta usando o endpoint de reset de senha.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder ForgotPasswordEndpoint()
             {
                 group.MapPost("/forgot-password", async ([FromBody] ForgotPasswordRequest request, IAuthBLL authBLL) =>
                 {
                     var success = await authBLL.ForgotPasswordAsync(request);
-                    return Results.Ok(new PasswordResponse { Success = success, Message = "Se o e-mail existir, um codigo foi enviado." });
+                    return Results.Ok(new PasswordResponse { Success = success, Message = "Se o e-mail fornecido for válido, um código foi enviado para o endereço." });
                 })
                 .WithName("ForgotPassword")
+                .AllowAnonymous()
                 .WithDisplayName("Esqueci minha senha")
-                .WithSummary("Solicita envio de codigo de redefinicao de senha.")
-                .WithDescription("Utilizado para solicitar o envio de um codigo de redefinicao de senha para o e-mail do usuario. Se o e-mail existir no sistema, um codigo de 6 digitos sera enviado.")
-                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse));
+                .WithSummary("Solicita envio de código de redefinição de senha.")
+                .WithDescription("Utilizado para solicitar o envio de um código de redefinição de senha para o e-mail do usuário. Se o e-mail existir no sistema, um código de 6 digitos será enviado.")
+                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse))
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Reseta a senha de um usuário usando um código de 6 dígitos enviado para o e-mail do usuário. O usuário deve fornecer o endereço de e-mail, o código de 6 dígitos recebido e a nova senha desejada. Se o código for válido e corresponder ao e-mail fornecido, a senha da conta será atualizada para a nova senha.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder ResetPasswordEndpoint()
             {
                 group.MapPost("/reset-password", async ([FromBody] ResetPasswordRequest request, IAuthBLL authBLL) =>
                 {
                     var success = await authBLL.ResetPasswordAsync(request);
-                    return Results.Ok(new PasswordResponse { Success = success, Message = "Senha redefinida com exito." });
+                    return Results.Ok(new PasswordResponse { Success = success, Message = "Senha redefinida com êxito." });
                 })
                 .WithName("ResetPassword")
-                .WithSummary("Valida o codigo de 6 digitos e altera a senha da conta.")
-                .WithDescription("Utilizado para redefinir a senha de um usuario. O codigo enviado para o e-mail deve ser informado junto com a nova senha.")
-                .WithDisplayName("Redefinir senha com codigo de 6 digitos")
-                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse));
+                .AllowAnonymous()
+                .WithSummary("Valida o código de 6 digitos e altera a senha da conta.")
+                .WithDescription("Utilizado para redefinir a senha de um usuário. O código enviado para o e-mail deve ser informado junto com a nova senha.")
+                .WithDisplayName("Redefinir senha com código de 6 digitos")
+                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse))
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Endpoint para alterar a senha de um usuário autenticado via JWT Bearer. O usuário deve fornecer a senha atual e a nova senha. O JWT deve ser enviado no header Authorization Bearer. Se a senha atual for válida, a senha da conta será atualizada para a nova senha fornecida.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder ChangePasswordEndpoint()
             {
                 group.MapPost("/change-password", async (System.Security.Claims.ClaimsPrincipal user, [FromBody] ChangePasswordRequest request, IAuthBLL authBLL) =>
                 {
                     var userUid = user.GetRequiredUserUid();
+
                     var success = await authBLL.ChangePasswordAsync(userUid, request);
-                    return Results.Ok(new PasswordResponse { Success = success, Message = "Senha alterada com exito." });
+                    return Results.Ok(new PasswordResponse { Success = success, Message = "Senha alterada com êxito." });
                 })
                 .RequireAuthorization(policy =>
                 {
@@ -178,14 +232,20 @@ namespace eTasks_server.Endpoints.Auth
                     policy.RequireAuthenticatedUser();
                 })
                 .WithName("ChangePassword")
-                .WithSummary("Altera a senha de um usuario autenticado via JWT Bearer.")
-                .WithDisplayName("Alterar senha de usuario autenticado")
+                .WithSummary("Altera a senha de um usuário autenticado via JWT Bearer.")
+                .WithDisplayName("Alterar senha de usuário autenticado")
                 .WithDescription("O usuario deve fornecer a senha atual e a nova senha. O JWT deve ser enviado no header Authorization Bearer.")
-                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse));
+                .Produces(StatusCodes.Status200OK, typeof(PasswordResponse))
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Endpoint para confirmar o endereço de e-mail de um usuário após o registro. O usuário deve clicar no link de confirmação enviado para o e-mail, que contém um token JWT como parâmetro de consulta. Este endpoint valida o token JWT e ativa a conta, garantindo a veracidade do endereço de e-mail fornecido durante o registro.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder ConfirmAccountEndpoint()
             {
                 group.MapGet("/confirm-email", async ([FromQuery] string token, IAuthBLL authBLL) =>
@@ -193,21 +253,43 @@ namespace eTasks_server.Endpoints.Auth
                     var success = await authBLL.ConfirmEmailAsync(token);
                     if (success)
                     {
-                        return Results.Content("<h1>Conta confirmada com sucesso!</h1><p>Voce pode fechar esta aba e retornar ao aplicativo.</p>", "text/html");
+                        return Results.Content("<h1>Conta confirmada com sucesso!</h1><p>Você pode fechar esta aba e retornar ao aplicativo.</p>", "text/html");
                     }
 
-                    return Results.Content("<h1>O link expirou ou e invalido.</h1><p>Voce pode solicitar um novo codigo direto pelo eTasks.</p>", "text/html");
+                    return Results.Content("<h1>O link expirou ou é inválido.</h1><p>Você pode solicitar um novo código direto pelo eTasks.</p>", "text/html");
                 })
                 .WithName("ConfirmEmail")
-                .WithSummary("Valida o token JWT e ativa a conta garantindo a veracidade do endereco de e-mail.")
-                .WithDescription("Utilizado para confirmar o endereco de e-mail de um usuario apos o registro.")
+                .AllowAnonymous()
+                .WithSummary("Valida o token JWT e ativa a conta garantindo a veracidade do endereço de e-mail.")
+                .WithDescription("Utilizado para confirmar o endereço de e-mail de um usuário após o registro.")
                 .WithDisplayName("Confirmar e-mail de registro")
-                .Produces(StatusCodes.Status200OK, contentType: "text/html");
+                .Produces(StatusCodes.Status200OK, contentType: "text/html")
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
 
+            /// <summary>
+            /// Métodos relacionados ao fluxo de login OAuth/OpenID Connect com Google. Este conjunto de endpoints permite que os usuários façam login usando suas contas do Google, utilizando o protocolo OAuth/OpenID Connect para autenticação. O fluxo inclui a obtenção da URL de autorização do Google, redirecionamento do usuário para o Google, processamento do callback do Google após a autenticação e consumo da sessão de login Google para obter um JWT e Refresh Token para acessar o sistema.
+            /// </summary>
+            /// <returns></returns>
             public RouteGroupBuilder GoogleAuthEndpoints()
+            {
+                group.GoogleOAuthLoginStartRetrieveAthURL()
+                     .GoogleOAuthLoginStartRedirectURL()
+                     .GoogleOAuthLoginCallback()
+                     .GoogleOAuthLoginStatus()
+                     .GoogleOAuthLoginConsume();
+
+                return group;
+            }
+
+            #region Métodos relacionados ao fluxo de login OAuth/OpenID Connect com Google
+            /// <summary>
+            /// Retorna a URL de autorização do Google para iniciar o processo de login usando OAuth/OpenID Connect. Este endpoint é útil para cenários onde o cliente é um aplicativo móvel ou SPA que não pode lidar com redirecionamentos, permitindo que o cliente obtenha a URL de autorização e a utilize para iniciar o processo de login Google. Ele aceita os seguintes parâmetros no corpo da requisição: UserAgent (string, obrigatório), ClientInstanceId (string, obrigatório) e ReturnUrl (string, opcional). O endpoint retorna um objeto contendo a URL de autorização do Google, um código de sessão exclusivo e a data de expiração da sessão.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder GoogleOAuthLoginStartRetrieveAthURL()
             {
                 group.MapPost("/google/start", async (HttpContext context, [FromBody] GoogleAuthStartRequest request, IAuthBLL authBLL, CancellationToken cancellationToken) =>
                 {
@@ -216,30 +298,48 @@ namespace eTasks_server.Endpoints.Auth
                 })
                 .AllowAnonymous()
                 .WithName("GoogleAuthStart")
-                .WithSummary("Cria uma sessao de login Google OpenID Connect e retorna a URL de autorizacao.")
+                .WithSummary("Cria uma sessão de login Google OpenID Connect e retorna a URL de autorização.")
                 .Produces(StatusCodes.Status200OK, typeof(GoogleAuthStartResponse));
 
-                group.MapGet("/google/start", async (
-                    HttpContext context,
-                    [FromQuery] string userAgent,
-                    [FromQuery] string clientInstanceId,
-                    [FromQuery] string? returnUrl,
-                    IAuthBLL authBLL,
-                    CancellationToken cancellationToken) =>
-                {
-                    var response = await authBLL.StartGoogleLoginAsync(new GoogleAuthStartRequest
-                    {
-                        UserAgent = userAgent,
-                        ClientInstanceId = clientInstanceId,
-                        ReturnUrl = returnUrl
-                    }, GetRequestBaseUri(context), cancellationToken);
+                return group;
+            }
 
-                    return Results.Redirect(response.AuthorizationUrl);
-                })
+            /// <summary>
+            /// Redireciona o usuário para a URL de autorização do Google para iniciar o processo de login usando OAuth/OpenID Connect. Este endpoint é útil para cenários onde o cliente é um navegador web e pode lidar com redirecionamentos, permitindo uma experiência de login mais fluida. Ele aceita os mesmos parâmetros do endpoint de início de login, mas em vez de retornar a URL de autorização, ele redireciona diretamente o navegador do usuário para essa URL.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder GoogleOAuthLoginStartRedirectURL()
+            {
+                group.MapGet("/google/start", async (
+                                                     HttpContext context,
+                                                     [FromQuery] string userAgent,
+                                                     [FromQuery] string clientInstanceId,
+                                                     [FromQuery] string? returnUrl,
+                                                     IAuthBLL authBLL,
+                                                     CancellationToken cancellationToken) =>
+                                                    {
+                                                        var response = await authBLL.StartGoogleLoginAsync(new GoogleAuthStartRequest
+                                                        {
+                                                         UserAgent = userAgent,
+                                                            ClientInstanceId = clientInstanceId,
+                                                            ReturnUrl = returnUrl
+                                                        }, GetRequestBaseUri(context), cancellationToken);
+
+                                                        return Results.Redirect(response.AuthorizationUrl);
+                                                    })
                 .AllowAnonymous()
                 .WithName("GoogleAuthStartRedirect")
                 .WithSummary("Inicia o login Google por redirecionamento direto do navegador.");
 
+                return group;
+            }
+
+            /// <summary>
+            /// Método callback para processar a resposta do Google após o usuário concluir o processo de login no Google. O Google redirecionará o usuário de volta para este endpoint com os parâmetros de consulta code, state, error e error_description. Este endpoint processa esses parâmetros, completa o processo de login Google e, se bem-sucedido, pode redirecionar o usuário de volta para a aplicação cliente usando a URL de retorno fornecida durante o início do login ou exibir uma página de sucesso/erro informando o resultado do login Google.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder GoogleOAuthLoginCallback()
+            {
                 group.MapGet("/google/callback", async (
                     HttpContext context,
                     [FromQuery] string? code,
@@ -255,7 +355,7 @@ namespace eTasks_server.Endpoints.Auth
                         return Results.Redirect(result.RedirectUrl);
                     }
 
-                    var title = result.Success ? "Login Google concluido" : "Login Google nao concluido";
+                    var title = result.Success ? "Login Google concluido" : "Login Google não concluído";
                     var html = $$"""
                     <!doctype html>
                     <html lang="pt-BR">
@@ -267,7 +367,7 @@ namespace eTasks_server.Endpoints.Auth
                     <body>
                         <h1>{{title}}</h1>
                         <p>{{WebUtility.HtmlEncode(result.Message)}}</p>
-                        <p>Voce pode fechar esta janela e retornar ao aplicativo.</p>
+                        <p>Voce pode fechar esta janela e retornar ao eTasks.</p>
                         <script>window.close();</script>
                     </body>
                     </html>
@@ -279,21 +379,39 @@ namespace eTasks_server.Endpoints.Auth
                 .WithName("GoogleAuthCallback")
                 .WithSummary("Callback OAuth/OpenID Connect usado pelo Google.");
 
-                group.MapGet("/google/status", async (
-                    [FromQuery] Guid sessionCode,
-                    [FromQuery] string userAgent,
-                    [FromQuery] string clientInstanceId,
-                    IAuthBLL authBLL,
-                    CancellationToken cancellationToken) =>
-                {
-                    var response = await authBLL.GetGoogleLoginStatusAsync(sessionCode, userAgent, clientInstanceId, cancellationToken);
-                    return Results.Ok(response);
-                })
-                .AllowAnonymous()
-                .WithName("GoogleAuthStatus")
-                .WithSummary("Consulta o estado de uma sessao de login Google.")
-                .Produces(StatusCodes.Status200OK, typeof(GoogleAuthStatusResponse));
+                return group;
+            }
 
+            /// <summary>
+            /// Obtém o status de uma sessão de login Google em andamento usando o código de sessão exclusivo gerado durante o início do processo de login. Este endpoint é projetado para ser chamado periodicamente pelo cliente (por exemplo, a cada poucos segundos) enquanto o usuário está no fluxo de login do Google para verificar se a autenticação foi concluída. Ele aceita os seguintes parâmetros de consulta: sessionCode (Guid, obrigatório), userAgent (string, obrigatório) e clientInstanceId (string, obrigatório). O endpoint retorna um objeto contendo o status atual da sessão de login Google, que pode ser "pending", "completed" ou "failed", juntamente com informações adicionais como data de expiração da sessão e detalhes de erros, se houver.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder GoogleOAuthLoginStatus()
+            {
+                group.MapGet("/google/status", async (
+                                                      [FromQuery] Guid sessionCode,
+                                                      [FromQuery] string userAgent,
+                                                      [FromQuery] string clientInstanceId,
+                                                      IAuthBLL authBLL,
+                                                      CancellationToken cancellationToken) =>
+                                                     {
+                                                         var response = await authBLL.GetGoogleLoginStatusAsync(sessionCode, userAgent, clientInstanceId, cancellationToken);
+                                                         return Results.Ok(response);
+                                                     })
+                 .AllowAnonymous()
+                 .WithName("GoogleAuthStatus")
+                 .WithSummary("Consulta o estado de uma sessão de login Google.")
+                 .Produces(StatusCodes.Status200OK, typeof(GoogleAuthStatusResponse));
+
+                return group;
+            }
+
+            /// <summary>
+            /// Consome uma sessão de login Google concluída, trocando o código de sessão por um JWT e Refresh Token. Este endpoint é chamado pelo cliente após detectar que a autenticação Google foi concluída com sucesso (por exemplo, após o usuário ser redirecionado de volta do fluxo de login do Google). Ele aceita um código de sessão exclusivo gerado durante o início do processo de login Google e retorna um objeto contendo o JWT, Refresh Token e suas respectivas datas de expiração. O JWT retornado deve ser usado no header Authorization Bearer para acessar rotas protegidas.
+            /// </summary>
+            /// <returns></returns>
+            private RouteGroupBuilder GoogleOAuthLoginConsume()
+            {
                 group.MapPost("/google/consume", async (HttpContext context, [FromBody] GoogleAuthConsumeRequest request, IAuthBLL authBLL, CancellationToken cancellationToken) =>
                 {
                     var response = await authBLL.ConsumeGoogleLoginAsync(request, cancellationToken);
@@ -302,12 +420,14 @@ namespace eTasks_server.Endpoints.Auth
                 })
                 .AllowAnonymous()
                 .WithName("GoogleAuthConsume")
-                .WithSummary("Consome uma sessao Google concluida e retorna LoginResponse JWT/refresh.")
+                .WithSummary("Consome uma sessão Google concluída e retorna LoginResponse JWT/refresh.")
                 .Produces(StatusCodes.Status200OK, typeof(LoginResponse));
 
                 return group;
             }
+            #endregion
 
+            #region Métodos de apoio para gerenciamento de cookies de Refresh Token
             private static void SetRefreshTokenCookie(HttpContext context, LoginResponse response, string? userAgent)
             {
                 if (!ShouldUseRefreshTokenCookie(userAgent))
@@ -347,6 +467,7 @@ namespace eTasks_server.Endpoints.Auth
                 var request = context.Request;
                 return new Uri($"{request.Scheme}://{request.Host}/");
             }
+            #endregion
         }
     }
 }
