@@ -22,8 +22,7 @@ namespace eTasks_server.Endpoints
             public async Task AddAPIEndpoints()
             {
                 //Define o prefixo para os endpoints da API, facilitando a organização e manutenção das rotas
-                var API_V2 = app.MapGroup("/api")
-                                    .MapGroup("/v2");
+                var API_V2 = app.MapGroup("/api/v2");
 
                 //Adiciona endpoints de versão da API
                 API_V2.MapVersionEndpoints();
