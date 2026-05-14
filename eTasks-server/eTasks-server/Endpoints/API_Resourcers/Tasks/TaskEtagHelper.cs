@@ -5,8 +5,19 @@ using System.Text;
 
 namespace eTasks_server.Endpoints.API_Resourcers.Tasks
 {
+    /// <summary>
+    /// Classe utilitaria para construir ETags das respostas de tarefas, garantindo que mudancas nos filtros,
+    /// nos campos relevantes das tarefas ou nas configuracoes de recorrencia invalidem corretamente o cache HTTP.
+    /// </summary>
     internal static class TaskEtagHelper
     {
+        /// <summary>
+        /// Cria um ETag para uma lista de tarefas com base nos filtros da requisicao e nos campos usados para
+        /// representar cada item da colecao, incluindo dados relevantes de conclusao e recorrencia.
+        /// </summary>
+        /// <param name="tasks">Tarefas retornadas pela consulta.</param>
+        /// <param name="request">Filtros aplicados na listagem.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildListEtag(IEnumerable<TaskListItemResponse> tasks, ListTasksRequest request)
         {
             var builder = new StringBuilder();
@@ -32,6 +43,12 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             return BuildQuotedHash(builder.ToString());
         }
 
+        /// <summary>
+        /// Cria um ETag para os detalhes de uma tarefa com base nos campos da tarefa e da recorrencia associada,
+        /// quando existir.
+        /// </summary>
+        /// <param name="task">Tarefa detalhada.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildDetailsEtag(TaskDetailsResponse task)
         {
             var payload = string.Join("|",
@@ -60,6 +77,11 @@ namespace eTasks_server.Endpoints.API_Resourcers.Tasks
             return BuildQuotedHash(payload);
         }
 
+        /// <summary>
+        /// Constroi um ETag forte a partir do valor textual informado, usando SHA256 e formato hexadecimal.
+        /// </summary>
+        /// <param name="value">Conteudo canonico usado como base do hash.</param>
+        /// <returns>Hash SHA256 formatado como ETag HTTP entre aspas.</returns>
         private static string BuildQuotedHash(string value)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));

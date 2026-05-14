@@ -5,8 +5,19 @@ using System.Text;
 
 namespace eTasks_server.Endpoints.API_Resourcers.Finances
 {
+    /// <summary>
+    /// Classe utilitaria para construir ETags das respostas de financas, garantindo que mudancas nos filtros
+    /// ou nos campos relevantes dos lancamentos invalidem corretamente o cache HTTP do cliente.
+    /// </summary>
     internal static class FinanceEtagHelper
     {
+        /// <summary>
+        /// Cria um ETag para uma lista de lancamentos financeiros com base nos filtros da requisicao e nos
+        /// campos usados para representar cada item da colecao.
+        /// </summary>
+        /// <param name="entries">Lancamentos financeiros retornados pela consulta.</param>
+        /// <param name="request">Filtros aplicados na listagem.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildListEtag(IEnumerable<FinanceEntryListItemResponse> entries, ListFinanceEntriesRequest request)
         {
             var builder = new StringBuilder();
@@ -34,6 +45,12 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
             return BuildHash(builder.ToString());
         }
 
+        /// <summary>
+        /// Cria um ETag para os detalhes de um lancamento financeiro com base nos campos que compoem a
+        /// representacao completa do recurso.
+        /// </summary>
+        /// <param name="entry">Lancamento financeiro detalhado.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildDetailsEtag(FinanceEntryDetailsResponse entry)
         {
             var payload = string.Join('|',
@@ -61,6 +78,11 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
             return BuildHash(payload);
         }
 
+        /// <summary>
+        /// Constroi um ETag forte a partir do payload textual informado, usando SHA256 e formato hexadecimal.
+        /// </summary>
+        /// <param name="payload">Conteudo canonico usado como base do hash.</param>
+        /// <returns>Hash SHA256 formatado como ETag HTTP entre aspas.</returns>
         private static string BuildHash(string payload)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(payload));

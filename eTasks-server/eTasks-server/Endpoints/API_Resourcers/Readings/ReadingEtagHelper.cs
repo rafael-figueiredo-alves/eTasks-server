@@ -5,8 +5,19 @@ using System.Text;
 
 namespace eTasks_server.Endpoints.API_Resourcers.Readings
 {
+    /// <summary>
+    /// Classe utilitaria para construir ETags das respostas de leituras, garantindo que mudancas nos filtros
+    /// ou nos campos relevantes das leituras invalidem corretamente o cache HTTP do cliente.
+    /// </summary>
     internal static class ReadingEtagHelper
     {
+        /// <summary>
+        /// Cria um ETag para uma lista de leituras com base nos filtros da requisicao e nos campos usados para
+        /// representar cada item da colecao.
+        /// </summary>
+        /// <param name="readings">Leituras retornadas pela consulta.</param>
+        /// <param name="request">Filtros aplicados na listagem.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildListEtag(IEnumerable<ReadingListItemResponse> readings, ListReadingsRequest request)
         {
             var builder = new StringBuilder();
@@ -33,6 +44,12 @@ namespace eTasks_server.Endpoints.API_Resourcers.Readings
             return BuildHash(builder.ToString());
         }
 
+        /// <summary>
+        /// Cria um ETag para os detalhes de uma leitura com base nos campos que compoem a representacao completa
+        /// do recurso.
+        /// </summary>
+        /// <param name="reading">Leitura detalhada.</param>
+        /// <returns>ETag entre aspas para uso no header HTTP ETag.</returns>
         public static string BuildDetailsEtag(ReadingDetailsResponse reading)
         {
             var payload = string.Join('|',
@@ -57,6 +74,11 @@ namespace eTasks_server.Endpoints.API_Resourcers.Readings
             return BuildHash(payload);
         }
 
+        /// <summary>
+        /// Constroi um ETag forte a partir do payload textual informado, usando SHA256 e formato hexadecimal.
+        /// </summary>
+        /// <param name="payload">Conteudo canonico usado como base do hash.</param>
+        /// <returns>Hash SHA256 formatado como ETag HTTP entre aspas.</returns>
         private static string BuildHash(string payload)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(payload));
