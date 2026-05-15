@@ -1,0 +1,739 @@
+CREATE SCHEMA IF NOT EXISTS `etasks_server`
+DEFAULT CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE `etasks_server`;
+
+CREATE TABLE IF NOT EXISTS `version` (
+    `Id` INT NOT NULL DEFAULT 1,
+    `AppVersion` INT NOT NULL,
+    `DisplayVersion` VARCHAR(20) NOT NULL,
+    `URL_APK` VARCHAR(255) NOT NULL,
+    `URL_Win` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_version_id` (`Id` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `server_settings` (
+    `Id` INT NOT NULL DEFAULT 1,
+    `SmtpEnabled` TINYINT NOT NULL DEFAULT 0,
+    `SmtpHost` VARCHAR(255) NOT NULL DEFAULT '',
+    `SmtpPort` INT NOT NULL DEFAULT 587,
+    `SmtpEnableSsl` TINYINT NOT NULL DEFAULT 1,
+    `SmtpUsername` VARCHAR(255) NOT NULL DEFAULT '',
+    `SmtpPassword` VARCHAR(1024) NOT NULL DEFAULT '',
+    `SmtpFromEmail` VARCHAR(255) NOT NULL DEFAULT '',
+    `SmtpFromName` VARCHAR(255) NOT NULL DEFAULT '',
+    `OpenRouterEnabled` TINYINT NOT NULL DEFAULT 0,
+    `OpenRouterBaseUrl` VARCHAR(255) NOT NULL DEFAULT 'https://openrouter.ai/api/v1/',
+    `OpenRouterApiKey` TEXT NOT NULL,
+    `OpenRouterModel` VARCHAR(255) NOT NULL DEFAULT 'meta-llama/llama-3.3-8b-instruct:free',
+    `OpenRouterSiteUrl` VARCHAR(255) NOT NULL DEFAULT '',
+    `OpenRouterAppName` VARCHAR(255) NOT NULL DEFAULT 'eTasks Server',
+    `OpenRouterTemperature` DECIMAL(4,2) NOT NULL DEFAULT 0.30,
+    `OpenRouterMaxTokens` INT NOT NULL DEFAULT 700,
+    `MongoAuditEnabled` TINYINT NOT NULL DEFAULT 0,
+    `MongoAuditConnectionString` TEXT NOT NULL,
+    `MongoAuditDatabaseName` VARCHAR(150) NOT NULL DEFAULT 'etasks_server',
+    `MongoAuditCollectionName` VARCHAR(150) NOT NULL DEFAULT 'operation_audit_logs',
+    `ApplicationLogRetentionDays` INT NOT NULL DEFAULT 7,
+    `GoogleOpenIdEnabled` TINYINT NOT NULL DEFAULT 0,
+    `GoogleOpenIdClientId` VARCHAR(255) NOT NULL DEFAULT '',
+    `GoogleOpenIdClientSecret` TEXT NOT NULL,
+    `GoogleOpenIdRedirectUri` VARCHAR(500) NOT NULL DEFAULT '',
+    `GoogleOpenIdWebSuccessRedirectUrl` VARCHAR(500) NOT NULL DEFAULT '',
+    `GoogleOpenIdStateCode` VARCHAR(255) NOT NULL DEFAULT '',
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_server_settings_id` (`Id` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `users` (
+    `Uid` BINARY(16) NOT NULL,
+    `Name` VARCHAR(30) NOT NULL,
+    `Email` VARCHAR(255) NOT NULL,
+    `PasswordHash` VARCHAR(1024) NOT NULL,
+    `PhotoPath` VARCHAR(500) NULL,
+    `IsConfirmed` TINYINT NOT NULL DEFAULT 0,
+    `IsAdmin` TINYINT NOT NULL DEFAULT 0,
+    `IsBlocked` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `LastAccessAt` DATETIME NULL,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Uid`),
+    UNIQUE INDEX `UX_users_email` (`Email` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `refresh_tokens` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Token` VARCHAR(255) NOT NULL,
+    `UserAgent` VARCHAR(255) NULL,
+    `ExpiresAt` DATETIME NOT NULL,
+    `IsRevoked` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_refresh_tokens_useruid` (`UserUid` ASC),
+    UNIQUE INDEX `UX_refresh_tokens_token` (`Token` ASC),
+    INDEX `IX_refresh_tokens_isrevoked_expires` (`IsRevoked` ASC, `ExpiresAt` ASC),
+    CONSTRAINT `fk_refresh_tokens_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `password_reset_codes` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Code` VARCHAR(6) NOT NULL,
+    `ExpiresAt` DATETIME NOT NULL,
+    `IsUsed` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_password_reset_codes_useruid` (`UserUid` ASC),
+    INDEX `IX_pwd_reset_useruid_expires` (`UserUid` ASC, `IsUsed` ASC, `ExpiresAt` ASC),
+    CONSTRAINT `fk_password_reset_codes_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `login_logs` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NULL,
+    `Status` VARCHAR(20) NOT NULL,
+    `IpAddress` VARCHAR(50) NULL,
+    `UserAgent` VARCHAR(255) NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_login_logs_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_login_logs_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_settings` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Theme` VARCHAR(10) NOT NULL DEFAULT 'light',
+    `Language` VARCHAR(5) NOT NULL DEFAULT 'pt',
+    `InitialScreen` INT NOT NULL DEFAULT 0,
+    `EnableBonusSystem` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_user_settings_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_user_settings_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `bonus_achievements` (
+    `Id` BINARY(16) NOT NULL,
+    `Code` VARCHAR(50) NOT NULL,
+    `Name` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `PointsRequired` INT NOT NULL,
+    `DisplayType` INT NOT NULL DEFAULT 0,
+    `IsActive` TINYINT NOT NULL DEFAULT 1,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_bonus_achievements_code` (`Code` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `bonus_point_rules` (
+    `Id` BINARY(16) NOT NULL,
+    `Source` INT NOT NULL,
+    `Name` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `DefaultPoints` INT NOT NULL,
+    `AllowCustomPoints` TINYINT NOT NULL DEFAULT 1,
+    `IsActive` TINYINT NOT NULL DEFAULT 1,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_bonus_point_rules_source` (`Source` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_bonus_points` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Points` INT NOT NULL,
+    `Source` INT NOT NULL,
+    `Description` VARCHAR(255) NULL,
+    `SourceReferenceId` BINARY(16) NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_user_bonus_points_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_user_bonus_points_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_achievements` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `BonusAchievementId` BINARY(16) NOT NULL,
+    `PointsAtAchievement` INT NOT NULL,
+    `AchievedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_user_achievements_user_bonusachievement` (`UserUid` ASC, `BonusAchievementId` ASC),
+    CONSTRAINT `fk_user_achievements_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_user_achievements_bonus_achievements`
+        FOREIGN KEY (`BonusAchievementId`) REFERENCES `bonus_achievements` (`Id`)
+        ON DELETE RESTRICT
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `task_items` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `GeneratedFromTaskId` BINARY(16) NULL,
+    `Summary` VARCHAR(200) NOT NULL,
+    `Notes` TEXT NULL,
+    `Priority` INT NOT NULL DEFAULT 1,
+    `TaskDate` DATETIME NOT NULL,
+    `IsCompleted` TINYINT NOT NULL DEFAULT 0,
+    `CompletedAt` DATETIME NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_task_items_useruid_taskdate` (`UserUid` ASC, `TaskDate` ASC),
+    INDEX `IX_task_items_useruid_iscompleted` (`UserUid` ASC, `IsCompleted` ASC),
+    INDEX `IX_task_items_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    INDEX `IX_task_items_active` (`UserUid` ASC, `IsDeleted` ASC, `TaskDate` ASC),
+    INDEX `IX_task_items_generatedfromtaskid` (`GeneratedFromTaskId` ASC),
+    CONSTRAINT `fk_task_items_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_task_items_generated_from_task`
+        FOREIGN KEY (`GeneratedFromTaskId`) REFERENCES `task_items` (`Id`)
+        ON DELETE NO ACTION
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `task_recurrences` (
+    `Id` BINARY(16) NOT NULL,
+    `TaskItemId` BINARY(16) NOT NULL,
+    `RecurrenceType` INT NOT NULL DEFAULT 2,
+    `Interval` INT NOT NULL DEFAULT 1,
+    `WeekDays` INT NOT NULL DEFAULT 0,
+    `DayOfMonth` INT NULL,
+    `MonthOfYear` INT NULL,
+    `StartsOn` DATETIME NOT NULL,
+    `EndsOn` DATETIME NULL,
+    `LastGeneratedAt` DATETIME NULL,
+    `IsActive` TINYINT NOT NULL DEFAULT 1,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_task_recurrences_taskitemid` (`TaskItemId` ASC),
+    CONSTRAINT `fk_task_recurrences_task_items`
+        FOREIGN KEY (`TaskItemId`) REFERENCES `task_items` (`Id`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `goals` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Summary` VARCHAR(200) NOT NULL,
+    `Description` TEXT NULL,
+    `Type` INT NOT NULL DEFAULT 0,
+    `Priority` INT NOT NULL DEFAULT 1,
+    `RewardPoints` INT NULL,
+    `Status` INT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_goals_useruid_status` (`UserUid` ASC, `Status` ASC),
+    INDEX `IX_goals_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    CONSTRAINT `fk_goals_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `shopping_lists` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Name` VARCHAR(150) NOT NULL,
+    `Place` VARCHAR(150) NULL,
+    `Type` INT NOT NULL DEFAULT 0,
+    `TotalItems` INT NOT NULL DEFAULT 0,
+    `TotalAmount` DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+    `IsFinalized` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_shopping_lists_useruid_isfinalized` (`UserUid` ASC, `IsFinalized` ASC),
+    INDEX `IX_shopping_lists_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    CONSTRAINT `fk_shopping_lists_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `shopping_list_items` (
+    `Id` BINARY(16) NOT NULL,
+    `ShoppingListId` BINARY(16) NOT NULL,
+    `Description` VARCHAR(150) NOT NULL,
+    `Unit` INT NOT NULL DEFAULT 0,
+    `Quantity` DECIMAL(18,2) NOT NULL DEFAULT 1.00,
+    `UnitPrice` DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+    `TotalAmount` DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+    `IsCompleted` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_shopping_list_items_listid_iscompleted` (`ShoppingListId` ASC, `IsCompleted` ASC),
+    CONSTRAINT `fk_shopping_list_items_shopping_lists`
+        FOREIGN KEY (`ShoppingListId`) REFERENCES `shopping_lists` (`Id`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notes` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Subject` VARCHAR(200) NOT NULL,
+    `Content` TEXT NOT NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_notes_useruid` (`UserUid` ASC),
+    INDEX `IX_notes_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    CONSTRAINT `fk_notes_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `reading_items` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Title` VARCHAR(200) NOT NULL,
+    `Authors` VARCHAR(250) NULL,
+    `Subject` VARCHAR(150) NULL,
+    `Summary` TEXT NULL,
+    `Opinion` TEXT NULL,
+    `Rating` INT NULL,
+    `TotalPages` INT NOT NULL DEFAULT 0,
+    `CurrentPage` INT NOT NULL DEFAULT 0,
+    `Genre` VARCHAR(100) NULL,
+    `Format` INT NOT NULL DEFAULT 0,
+    `Status` INT NOT NULL DEFAULT 0,
+    `StartedAt` DATETIME NULL,
+    `FinishedAt` DATETIME NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_reading_items_useruid_status` (`UserUid` ASC, `Status` ASC),
+    INDEX `IX_reading_items_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    CONSTRAINT `fk_reading_items_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `finance_entries` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Title` VARCHAR(200) NOT NULL,
+    `Description` TEXT NULL,
+    `Category` VARCHAR(100) NULL,
+    `Counterparty` VARCHAR(150) NULL,
+    `EntryType` INT NOT NULL DEFAULT 1,
+    `PaymentMethod` INT NOT NULL DEFAULT 0,
+    `Amount` DECIMAL(18,2) NOT NULL,
+    `OccursOn` DATETIME NOT NULL,
+    `IsPaid` TINYINT NOT NULL DEFAULT 0,
+    `PaidAt` DATETIME NULL,
+    `IsRecurring` TINYINT NOT NULL DEFAULT 0,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `IsDeleted` TINYINT NOT NULL DEFAULT 0,
+    `DeletedAt` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    INDEX `IX_finance_entries_useruid_occurson` (`UserUid` ASC, `OccursOn` ASC),
+    INDEX `IX_finance_entries_useruid_isdeleted` (`UserUid` ASC, `IsDeleted` ASC),
+    CONSTRAINT `fk_finance_entries_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `finance_recurrences` (
+    `Id` BINARY(16) NOT NULL,
+    `FinanceEntryId` BINARY(16) NOT NULL,
+    `RecurrenceType` INT NOT NULL DEFAULT 3,
+    `Interval` INT NOT NULL DEFAULT 1,
+    `WeekDays` INT NOT NULL DEFAULT 0,
+    `DayOfMonth` INT NULL,
+    `EndsOn` DATETIME NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_finance_recurrences_financeentryid` (`FinanceEntryId` ASC),
+    CONSTRAINT `fk_finance_recurrences_finance_entries`
+        FOREIGN KEY (`FinanceEntryId`) REFERENCES `finance_entries` (`Id`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_external_logins` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Provider` VARCHAR(50) NOT NULL,
+    `ProviderUserId` VARCHAR(255) NOT NULL,
+    `Email` VARCHAR(255) NOT NULL,
+    `DisplayName` VARCHAR(150) NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `UpdatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_user_external_logins_provider_user` (`Provider` ASC, `ProviderUserId` ASC),
+    INDEX `IX_user_external_logins_useruid` (`UserUid` ASC),
+    CONSTRAINT `fk_user_external_logins_users`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `external_auth_sessions` (
+    `Id` BINARY(16) NOT NULL,
+    `SessionCode` BINARY(16) NOT NULL,
+    `Provider` VARCHAR(50) NOT NULL,
+    `ClientUserAgent` VARCHAR(50) NOT NULL,
+    `ClientInstanceId` VARCHAR(120) NOT NULL,
+    `FixedStateCode` VARCHAR(255) NOT NULL,
+    `Status` VARCHAR(20) NOT NULL DEFAULT 'Pending',
+    `ErrorCode` VARCHAR(100) NULL,
+    `ErrorDescription` VARCHAR(500) NULL,
+    `ProtectedLoginResponseJson` TEXT NULL,
+    `ExpiresAt` DATETIME NOT NULL,
+    `CompletedAt` DATETIME NULL,
+    `ConsumedAt` DATETIME NULL,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`Id`),
+    UNIQUE INDEX `UX_external_auth_sessions_sessioncode` (`SessionCode` ASC),
+    INDEX `IX_external_auth_sessions_provider_client` (`Provider` ASC, `ClientUserAgent` ASC, `ClientInstanceId` ASC),
+    INDEX `IX_external_auth_sessions_status_expires` (`Status` ASC, `ExpiresAt` ASC)
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `push_device_registrations` (
+    `Id` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `Platform` INT NOT NULL,
+    `DeviceId` VARCHAR(150) NOT NULL,
+    `DisplayName` VARCHAR(120) NOT NULL,
+    `PushToken` TEXT NULL,
+    `PushEndpoint` TEXT NULL,
+    `P256dh` TEXT NULL,
+    `Auth` TEXT NULL,
+    `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    `UpdatedAt` DATETIME(6) NOT NULL,
+    `LastSeenAt` DATETIME(6) NOT NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE KEY `UX_push_device_user_platform_device` (`UserUid`, `Platform`, `DeviceId`),
+    CONSTRAINT `FK_push_device_users_UserUid`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notification_messages` (
+    `Id` BINARY(16) NOT NULL,
+    `CreatedByUserUid` BINARY(16) NULL,
+    `TargetType` INT NOT NULL,
+    `Title` VARCHAR(120) NOT NULL,
+    `Body` VARCHAR(500) NOT NULL,
+    `ActionUrl` TEXT NULL,
+    `DataJson` TEXT NULL,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    PRIMARY KEY (`Id`),
+    KEY `IX_notification_messages_CreatedAt` (`CreatedAt`),
+    CONSTRAINT `FK_notification_messages_users_CreatedByUserUid`
+        FOREIGN KEY (`CreatedByUserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE SET NULL
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notification_recipients` (
+    `Id` BINARY(16) NOT NULL,
+    `NotificationMessageId` BINARY(16) NOT NULL,
+    `UserUid` BINARY(16) NOT NULL,
+    `CreatedAt` DATETIME(6) NOT NULL,
+    `ReadAt` DATETIME(6) NULL,
+    PRIMARY KEY (`Id`),
+    UNIQUE KEY `UX_notification_recipient_message_user` (`NotificationMessageId`, `UserUid`),
+    KEY `IX_notification_recipients_UserUid_ReadAt` (`UserUid`, `ReadAt`),
+    CONSTRAINT `FK_notification_recipients_messages_NotificationMessageId`
+        FOREIGN KEY (`NotificationMessageId`) REFERENCES `notification_messages` (`Id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `FK_notification_recipients_users_UserUid`
+        FOREIGN KEY (`UserUid`) REFERENCES `users` (`Uid`)
+        ON DELETE CASCADE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+-- =============================================================
+-- TRIGGERS - Geração automática de UUID em todas as tabelas
+-- =============================================================
+
+DELIMITER $$
+
+CREATE TRIGGER `before_insert_users`
+BEFORE INSERT ON `users`
+FOR EACH ROW
+BEGIN
+    IF NEW.Uid IS NULL OR NEW.Uid = 0x00000000000000000000000000000000 THEN
+        SET NEW.Uid = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_refresh_tokens`
+BEFORE INSERT ON `refresh_tokens`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_password_reset_codes`
+BEFORE INSERT ON `password_reset_codes`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_login_logs`
+BEFORE INSERT ON `login_logs`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_user_settings`
+BEFORE INSERT ON `user_settings`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_bonus_achievements`
+BEFORE INSERT ON `bonus_achievements`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_bonus_point_rules`
+BEFORE INSERT ON `bonus_point_rules`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_user_bonus_points`
+BEFORE INSERT ON `user_bonus_points`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_user_achievements`
+BEFORE INSERT ON `user_achievements`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_task_items`
+BEFORE INSERT ON `task_items`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_task_recurrences`
+BEFORE INSERT ON `task_recurrences`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_goals`
+BEFORE INSERT ON `goals`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_shopping_lists`
+BEFORE INSERT ON `shopping_lists`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_shopping_list_items`
+BEFORE INSERT ON `shopping_list_items`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_notes`
+BEFORE INSERT ON `notes`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_reading_items`
+BEFORE INSERT ON `reading_items`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_finance_entries`
+BEFORE INSERT ON `finance_entries`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_finance_recurrences`
+BEFORE INSERT ON `finance_recurrences`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_user_external_logins`
+BEFORE INSERT ON `user_external_logins`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_external_auth_sessions`
+BEFORE INSERT ON `external_auth_sessions`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+    IF NEW.SessionCode IS NULL OR NEW.SessionCode = 0x00000000000000000000000000000000 THEN
+        SET NEW.SessionCode = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_push_device_registrations`
+BEFORE INSERT ON `push_device_registrations`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_notification_messages`
+BEFORE INSERT ON `notification_messages`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+CREATE TRIGGER `before_insert_notification_recipients`
+BEFORE INSERT ON `notification_recipients`
+FOR EACH ROW
+BEGIN
+    IF NEW.Id IS NULL OR NEW.Id = 0x00000000000000000000000000000000 THEN
+        SET NEW.Id = UUID_TO_BIN(UUID(), 1);
+    END IF;
+END$$
+
+DELIMITER ;

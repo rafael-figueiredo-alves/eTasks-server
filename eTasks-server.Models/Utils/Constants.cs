@@ -188,12 +188,12 @@ namespace eTasks_server.Models.Utils
         /// <summary>
         /// Nome do desenvolvedor, usado em mensagens de erro, documentação e outros contextos onde a identificação do responsável pelo desenvolvimento é relevante para contato, suporte ou reconhecimento.
         /// </summary>
-        public const string DeveloperName = "Rafael Figueiredo Alves";
+        public const string DeveloperName = "Rafael de Figueiredo Alves";
 
         /// <summary>
         /// Versão do servidor eTasks, usada para controle de versão e comunicação com os clientes sobre a versão atual da API e funcionalidades disponíveis.
         /// </summary>
-        public const string ServerVersion = "1.1.0";
+        public const string ServerVersion = "1.0.0";
         #endregion
     }
 }
