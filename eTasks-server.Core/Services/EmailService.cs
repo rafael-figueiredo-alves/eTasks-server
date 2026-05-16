@@ -129,7 +129,7 @@ namespace eTasks_server.Core.Services
             var appName = "eTasks";
             var year = DateTime.UtcNow.Year.ToString();
             var baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
-            var logoUrl = $"{baseUrl.TrimEnd('/')}/logo.png";
+            var logoUrl = $"{baseUrl.TrimEnd('/')}/eTasks2.webp";
             var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", templateFilename);
             var htmlBody = await File.ReadAllTextAsync(templatePath);
 
