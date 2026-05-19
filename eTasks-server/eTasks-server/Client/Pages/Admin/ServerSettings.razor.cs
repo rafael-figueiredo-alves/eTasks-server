@@ -113,6 +113,7 @@ namespace eTasks_server.Client.Pages.Admin
                 MongoAuditDatabaseName = response.MongoAuditDatabaseName,
                 MongoAuditCollectionName = response.MongoAuditCollectionName,
                 ApplicationLogRetentionDays = response.ApplicationLogRetentionDays,
+                AccountReactivationCodeValidityDays = response.AccountReactivationCodeValidityDays,
                 GoogleOpenIdEnabled = response.GoogleOpenIdEnabled,
                 GoogleOpenIdClientId = response.GoogleOpenIdClientId,
                 GoogleOpenIdClientSecret = response.GoogleOpenIdClientSecret,

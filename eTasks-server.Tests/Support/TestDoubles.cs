@@ -11,6 +11,7 @@ namespace eTasks_server.Tests.Support
     {
         public List<(string ToEmail, string ResetCode)> PasswordResetEmails { get; } = [];
         public List<(string ToEmail, string ConfirmationLink)> ConfirmationEmails { get; } = [];
+        public List<(string ToEmail, string ReactivationLink, DateTime ExpiresAt)> ReactivationEmails { get; } = [];
 
         public Task SendPasswordResetEmailAsync(string toEmail, string resetCode)
         {
@@ -21,6 +22,12 @@ namespace eTasks_server.Tests.Support
         public Task SendAccountConfirmationEmailAsync(string toEmail, string confirmationLink)
         {
             ConfirmationEmails.Add((toEmail, confirmationLink));
+            return Task.CompletedTask;
+        }
+
+        public Task SendAccountReactivationEmailAsync(string toEmail, string reactivationLink, DateTime expiresAt)
+        {
+            ReactivationEmails.Add((toEmail, reactivationLink, expiresAt));
             return Task.CompletedTask;
         }
     }

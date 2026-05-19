@@ -1,5 +1,4 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Endpoints.API_Resourcers;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Finances.Requests;
 using eTasks_server.Models.DTOs.Finances.Responses;
@@ -66,7 +65,16 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                     httpContext.Response.Headers.ETag = etag;
                     return Results.Ok(entries);
                 })
-                .Produces(StatusCodes.Status200OK, typeof(List<FinanceEntryListItemResponse>));
+                .WithDisplayName("Listar lançamentos financeiros")
+                .WithDescription("Retorna a lista de lançamentos financeiros do usuário autenticado, com suporte a filtragem por data, tipo, categoria, etc. Responde com ETag da coleção filtrada e 304 Not Modified quando o cliente envia If-None-Match compatível.")
+                .WithSummary("Lista os lançamentos financeiros do usuário autenticado, com suporte a filtros e ETag para cacheamento eficiente.")
+                .Produces(StatusCodes.Status200OK, typeof(List<FinanceEntryListItemResponse>))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -82,7 +90,16 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                     var userUid = httpContext.User.GetRequiredUserUid();
                     return Results.Ok(await financeBLL.GetMonthSummaryAsync(userUid, year, month, cancellationToken));
                 })
-                .Produces(StatusCodes.Status200OK, typeof(FinanceMonthSummaryResponse));
+                .WithDisplayName("Obter resumo mensal de finanças")
+                .WithDescription("Retorna o resumo mensal de receitas, despesas e saldo do usuário autenticado para o mês e ano especificados.")
+                .WithSummary("Retorna o resumo mensal de receitas, despesas e saldo do usuário autenticado.")
+                .Produces(StatusCodes.Status200OK, typeof(FinanceMonthSummaryResponse))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -106,7 +123,13 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
 
                     return Results.Ok(response);
                 })
-                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryPushSyncResponse));
+                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryPushSyncResponse))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }

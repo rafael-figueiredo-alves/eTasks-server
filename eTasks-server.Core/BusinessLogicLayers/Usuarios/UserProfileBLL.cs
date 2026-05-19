@@ -3,17 +3,25 @@ using System.Text;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Data;
 using eTasks_server.Core.Helpers;
+using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Models.DTOs.Users.Profile.Requests;
 using eTasks_server.Models.DTOs.Users.Profile.Responses;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
 {
-    public class UserProfileBLL(AppDbContext context, ILogger<IUserProfileBLL> logger) : BaseBLL<IUserProfileBLL>(context, logger), IUserProfileBLL
+    public class UserProfileBLL(
+        AppDbContext context,
+        IConfiguration configuration,
+        IEmailService emailService,
+        IServerSettingsProvider settingsProvider,
+        ILogger<IUserProfileBLL> logger) : BaseBLL<IUserProfileBLL>(context, logger), IUserProfileBLL
     {
         private static readonly HashSet<string> AllowedThemes = new(StringComparer.OrdinalIgnoreCase) { "light", "dark" };
         private static readonly HashSet<string> AllowedLanguages = new(StringComparer.OrdinalIgnoreCase) { "pt-BR", "en-US" };
@@ -169,6 +177,30 @@ namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
             user.IsBlocked = true;
             user.LastAccessAt = user.DeletedAt;
 
+            var settings = await settingsProvider.GetCurrentAsync();
+            var validityDays = settings.AccountReactivationCodeValidityDays is < 7 or > 90
+                ? 30
+                : settings.AccountReactivationCodeValidityDays;
+
+            var previousCodes = await _context.AccountReactivationCodes
+                .Where(x => x.UserUid == userUid && !x.IsUsed)
+                .ToListAsync();
+
+            foreach (var previousCode in previousCodes)
+            {
+                previousCode.IsUsed = true;
+                previousCode.UsedAt = DateTime.UtcNow;
+            }
+
+            var reactivationCode = new AccountReactivationCode
+            {
+                UserUid = userUid,
+                Code = GenerateReactivationCode(),
+                ExpiresAt = DateTime.UtcNow.AddDays(validityDays)
+            };
+
+            await _context.AccountReactivationCodes.AddAsync(reactivationCode);
+
             var activeTokens = await _context.RefreshTokens
                 .Where(x => x.UserUid == userUid && !x.IsRevoked)
                 .ToListAsync();
@@ -180,6 +212,23 @@ namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
 
             await _context.SaveChangesAsync();
             _logger.LogInformation("Usuario {Uid} removido logicamente.", userUid);
+
+            await emailService.SendAccountReactivationEmailAsync(
+                user.Email,
+                BuildAccountReactivationLink(reactivationCode.Code),
+                reactivationCode.ExpiresAt);
+        }
+
+        private string BuildAccountReactivationLink(string code)
+        {
+            var baseUrl = configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
+            var apiPath = configuration[Constants.ApiV2Path] ?? "/api/v2";
+            return $"{(baseUrl + apiPath).TrimEnd('/')}/auth/recover-account?code={WebUtility.UrlEncode(code)}";
+        }
+
+        private static string GenerateReactivationCode()
+        {
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
         }
 
         private Task<User> GetActiveUserAsync(Guid userUid)

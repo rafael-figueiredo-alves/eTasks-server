@@ -67,6 +67,8 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <returns>Verdadeiro se a confirmação puder ser concluída</returns>
         Task<bool> ConfirmEmailAsync(string token);
 
+        Task<AccountRecoveryResult> RecoverDeletedAccountAsync(string code, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Revoga um refresh token previamente emitido, quando informado.
         /// </summary>

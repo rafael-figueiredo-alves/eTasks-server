@@ -28,6 +28,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
         private readonly IEmailService _emailService;
         private readonly ISecretProtector _secretProtector;
         private readonly IServerSettingsProvider _serverSettingsProvider;
+        private readonly IAccountDeletionRetentionService _accountDeletionRetentionService;
         private readonly IHttpClientFactory _httpClientFactory;
 
         public AuthBLL(
@@ -36,6 +37,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             IEmailService emailService,
             ISecretProtector secretProtector,
             IServerSettingsProvider serverSettingsProvider,
+            IAccountDeletionRetentionService accountDeletionRetentionService,
             IHttpClientFactory httpClientFactory,
             ILogger<IAuthBLL> logger) : base(context, logger)
         {
@@ -43,6 +45,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             _emailService = emailService;
             _secretProtector = secretProtector;
             _serverSettingsProvider = serverSettingsProvider;
+            _accountDeletionRetentionService = accountDeletionRetentionService;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -469,6 +472,67 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 _logger.LogWarning(ex, "Falha na validacao do token de e-mail.");
                 return false;
             }
+        }
+
+        public async Task<AccountRecoveryResult> RecoverDeletedAccountAsync(string code, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                await _accountDeletionRetentionService.DeleteExpiredAccountsAsync(cancellationToken);
+                return new AccountRecoveryResult
+                {
+                    Success = false,
+                    Message = "O link de recuperacao informado e invalido."
+                };
+            }
+
+            var reactivationCode = await _context.AccountReactivationCodes
+                .Include(x => x.User)
+                .Where(x => x.Code == code.Trim() && !x.IsUsed)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (reactivationCode?.User is null)
+            {
+                await _accountDeletionRetentionService.DeleteExpiredAccountsAsync(cancellationToken);
+                return new AccountRecoveryResult
+                {
+                    Success = false,
+                    Message = "O link de recuperacao informado e invalido."
+                };
+            }
+
+            if (reactivationCode.ExpiresAt <= DateTime.UtcNow)
+            {
+                var userUid = reactivationCode.User.Uid;
+                _context.Users.Remove(reactivationCode.User);
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Usuario {Uid} removido permanentemente apos expiracao do link de recuperacao.", userUid);
+
+                return new AccountRecoveryResult
+                {
+                    Success = false,
+                    Expired = true,
+                    Message = "O prazo para recuperar sua conta foi excedido. A conta foi permanentemente excluida."
+                };
+            }
+
+            var user = reactivationCode.User;
+            user.IsDeleted = false;
+            user.DeletedAt = null;
+            user.IsBlocked = false;
+            user.LastAccessAt = SaoPauloDateTime.Now();
+            reactivationCode.IsUsed = true;
+            reactivationCode.UsedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Conta do usuario {Uid} reativada por link de recuperacao.", user.Uid);
+
+            return new AccountRecoveryResult
+            {
+                Success = true,
+                Message = "Sua conta foi recuperada com sucesso. Voce ja pode acessar o eTasks novamente."
+            };
         }
 
         public async Task RevokeRefreshTokenAsync(string? refreshToken)

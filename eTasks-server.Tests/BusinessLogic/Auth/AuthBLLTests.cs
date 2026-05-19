@@ -39,6 +39,7 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
                 emailService,
                 protector,
                 new ServerSettingsProvider(context, protector),
+                new AccountDeletionRetentionService(context, NullLogger<IAccountDeletionRetentionService>.Instance),
                 services.GetRequiredService<IHttpClientFactory>(),
                 NullLogger<IAuthBLL>.Instance);
         }

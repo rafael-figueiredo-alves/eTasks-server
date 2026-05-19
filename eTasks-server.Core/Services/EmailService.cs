@@ -12,7 +12,8 @@ namespace eTasks_server.Core.Services
         private enum EmailTemplate
         {
             PasswordReset,
-            AccountConfirmation
+            AccountConfirmation,
+            AccountReactivation
         }
 
         private readonly IConfiguration _configuration;
@@ -81,6 +82,39 @@ namespace eTasks_server.Core.Services
             }
         }
 
+        public async Task SendAccountReactivationEmailAsync(string toEmail, string reactivationLink, DateTime expiresAt)
+        {
+            var settings = await _settingsProvider.GetCurrentAsync();
+            if (!settings.SmtpEnabled)
+            {
+                _logger.LogInformation("Servico de e-mail desativado. Evitando envio de reativacao de conta para {Email}", toEmail);
+                return;
+            }
+
+            try
+            {
+                var emailConfig = MapEmailConfiguration(settings);
+                using var smtpClient = CreateSmtpClient(emailConfig);
+                using var mailMessage = await GetTemplateMailMessage(
+                    EmailTemplate.AccountReactivation,
+                    new Dictionary<string, string>
+                    {
+                        ["{{reactivationLink}}"] = reactivationLink,
+                        ["{{expiresAt}}"] = expiresAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    },
+                    emailConfig);
+                mailMessage.To.Add(toEmail);
+
+                _logger.LogInformation("Efetuando envio de e-mail de reativacao de conta para {Email}", toEmail);
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("E-mail de reativacao de conta para {Email} disparado com sucesso.", toEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Falha critica ao tentar enviar e-mail de reativacao de conta para {Email}", toEmail);
+            }
+        }
+
         private static EmailConfiguration MapEmailConfiguration(eTasks_server.Models.Entities.Settings.ServerSettings settings)
         {
             return new EmailConfiguration
@@ -106,21 +140,44 @@ namespace eTasks_server.Core.Services
 
         private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, string content, EmailConfiguration emailConfiguration)
         {
+            string fieldToReplace;
+
+            switch (emailTemplate)
+            {
+                case EmailTemplate.PasswordReset:
+                    fieldToReplace = "{{resetCode}}";
+                    break;
+                case EmailTemplate.AccountConfirmation:
+                    fieldToReplace = "{{confirmationLink}}";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(emailTemplate));
+            }
+
+            return await GetTemplateMailMessage(
+                emailTemplate,
+                new Dictionary<string, string> { [fieldToReplace] = content },
+                emailConfiguration);
+        }
+
+        private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, IReadOnlyDictionary<string, string> replacements, EmailConfiguration emailConfiguration)
+        {
             string templateFilename;
             string emailSubject;
-            string fieldToReplace;
 
             switch (emailTemplate)
             {
                 case EmailTemplate.PasswordReset:
                     templateFilename = "password-reset.html";
                     emailSubject = "Seu codigo de recuperacao chegou! (eTasks)";
-                    fieldToReplace = "{{resetCode}}";
                     break;
                 case EmailTemplate.AccountConfirmation:
                     templateFilename = "account-confirmation.html";
                     emailSubject = "Confirme sua conta no eTasks";
-                    fieldToReplace = "{{confirmationLink}}";
+                    break;
+                case EmailTemplate.AccountReactivation:
+                    templateFilename = "account-reactivation.html";
+                    emailSubject = "Recebemos sua solicitacao de exclusao no eTasks";
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(emailTemplate));
@@ -133,10 +190,14 @@ namespace eTasks_server.Core.Services
             var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "emails", templateFilename);
             var htmlBody = await File.ReadAllTextAsync(templatePath);
 
-            htmlBody = htmlBody.Replace(fieldToReplace, content)
-                .Replace("{{logoUrl}}", logoUrl)
+            htmlBody = htmlBody.Replace("{{logoUrl}}", logoUrl)
                 .Replace("{{appName}}", appName)
                 .Replace("{{year}}", year);
+
+            foreach (var replacement in replacements)
+            {
+                htmlBody = htmlBody.Replace(replacement.Key, replacement.Value);
+            }
 
             return new MailMessage
             {

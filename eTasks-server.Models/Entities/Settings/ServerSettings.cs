@@ -31,6 +31,7 @@ namespace eTasks_server.Models.Entities.Settings
         public string MongoAuditDatabaseName { get; set; } = "etasks_server";
         public string MongoAuditCollectionName { get; set; } = "operation_audit_logs";
         public int ApplicationLogRetentionDays { get; set; } = 7;
+        public int AccountReactivationCodeValidityDays { get; set; } = 30;
 
         public bool GoogleOpenIdEnabled { get; set; }
         public string GoogleOpenIdClientId { get; set; } = string.Empty;

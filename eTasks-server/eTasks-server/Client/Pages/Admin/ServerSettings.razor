@@ -111,8 +111,8 @@
                 <MudPaper Class="pa-4">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                         <div>
-                            <MudText Typo="Typo.h6">Logs da Aplicacao</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Retencao dos arquivos locais gerados pelo servidor.</MudText>
+                            <MudText Typo="Typo.h6">Retencao e Recuperacao</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Janelas operacionais para logs locais e recuperacao de conta.</MudText>
                         </div>
                     </MudStack>
 
@@ -123,6 +123,14 @@
                                              Label="Retencao em dias"
                                              Min="2"
                                              Max="15"
+                                             Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudNumericField T="int"
+                                             @bind-Value="_model.AccountReactivationCodeValidityDays"
+                                             Label="Validade do link de reativacao (dias)"
+                                             Min="7"
+                                             Max="90"
                                              Immediate="true" />
                         </MudItem>
                     </MudGrid>

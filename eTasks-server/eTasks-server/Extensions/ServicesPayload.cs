@@ -391,6 +391,7 @@ namespace eTasks_server.Extensions
 
                 //Adiciona serviço de retenção de logs da aplicação, permitindo que os administradores configurem e gerenciem as políticas de retenção de logs para garantir que os dados de log sejam mantidos por um período adequado para fins de auditoria e conformidade, enquanto também ajudam a gerenciar o armazenamento e a performance do sistema.
                 services.AddScoped<IApplicationLogRetentionService, ApplicationLogRetentionService>();
+                services.AddScoped<IAccountDeletionRetentionService, AccountDeletionRetentionService>();
 
                 //Adiciona serviço de auditoria de operações usando MongoDB, permitindo que as atividades e operações realizadas na aplicação sejam registradas e armazenadas de forma eficiente em um banco de dados MongoDB, facilitando a análise e o monitoramento das ações dos usuários e do sistema para fins de segurança, conformidade e melhoria contínua.
                 services.AddScoped<IOperationAuditLogger, MongoOperationAuditLogger>();
@@ -403,6 +404,7 @@ namespace eTasks_server.Extensions
 
                 //Adiciona um serviço hospedado para a retenção de logs da aplicação, permitindo que as políticas de retenção de logs sejam aplicadas de forma automática e contínua, garantindo que os dados de log sejam mantidos por um período adequado para fins de auditoria e conformidade, enquanto também ajudam a gerenciar o armazenamento e a performance do sistema.
                 services.AddHostedService<ApplicationLogRetentionHostedService>();
+                services.AddHostedService<AccountDeletionRetentionHostedService>();
 
                 //Adiciona serviços de autenticação usando uma política híbrida que suporta tanto autenticação JWT quanto autenticação por cookie. A política de autenticação "Hybrid" é configurada para selecionar automaticamente o esquema de autenticação com base na presença do cabeçalho de autorização, permitindo que a aplicação suporte diferentes métodos de autenticação de forma flexível e adaptável às necessidades dos usuários e dos clientes da API.
                 services.AddAuthentication(options =>

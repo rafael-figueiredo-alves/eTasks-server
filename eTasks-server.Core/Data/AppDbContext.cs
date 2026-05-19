@@ -30,6 +30,7 @@ namespace eTasks_server.Core.Data
         public DbSet<UserExternalLogin> UserExternalLogins { get; set; }
         public DbSet<ExternalAuthSession> ExternalAuthSessions { get; set; }
         public DbSet<PasswordResetCode> PasswordResetCodes { get; set; }
+        public DbSet<AccountReactivationCode> AccountReactivationCodes { get; set; }
         public DbSet<LoginLog> LoginLogs { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
         public DbSet<UserBonusPoint> UserBonusPoints { get; set; }
@@ -59,6 +60,7 @@ namespace eTasks_server.Core.Data
             UserExternalLogin.Configure(modelBuilder);
             ExternalAuthSession.Configure(modelBuilder);
             PasswordResetCode.Configure(modelBuilder);
+            AccountReactivationCode.Configure(modelBuilder);
             LoginLog.Configure(modelBuilder);
             global::eTasks_server.Models.Entities.Users.UserSettings.Configure(modelBuilder);
             UserBonusPoint.Configure(modelBuilder);

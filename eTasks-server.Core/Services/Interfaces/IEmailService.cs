@@ -20,5 +20,7 @@ namespace eTasks_server.Core.Services.Interfaces
         /// <param name="confirmationLink">Link para confirmar conta</param>
         /// <returns>Nada</returns>
         Task SendAccountConfirmationEmailAsync(string toEmail, string confirmationLink);
+
+        Task SendAccountReactivationEmailAsync(string toEmail, string reactivationLink, DateTime expiresAt);
     }
 }

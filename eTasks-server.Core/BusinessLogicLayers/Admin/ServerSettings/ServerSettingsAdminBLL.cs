@@ -72,6 +72,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             ValidateOpenRouter(request);
             ValidateMongo(request);
             ValidateApplicationLogs(request);
+            ValidateAccountRecovery(request);
             ValidateGoogleOpenId(request);
         }
 
@@ -162,6 +163,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             }
         }
 
+        private static void ValidateAccountRecovery(UpdateServerSettingsRequest request)
+        {
+            if (request.AccountReactivationCodeValidityDays is < 7 or > 90)
+            {
+                throw new ValidationException(nameof(request.AccountReactivationCodeValidityDays), "A validade do link de reativacao deve ficar entre 7 e 90 dias.");
+            }
+        }
+
         private static void ValidateGoogleOpenId(UpdateServerSettingsRequest request)
         {
             if (!request.GoogleOpenIdEnabled)
@@ -224,6 +233,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             entity.MongoAuditDatabaseName = request.MongoAuditDatabaseName.Trim();
             entity.MongoAuditCollectionName = request.MongoAuditCollectionName.Trim();
             entity.ApplicationLogRetentionDays = request.ApplicationLogRetentionDays;
+            entity.AccountReactivationCodeValidityDays = request.AccountReactivationCodeValidityDays;
 
             entity.GoogleOpenIdEnabled = request.GoogleOpenIdEnabled;
             entity.GoogleOpenIdClientId = request.GoogleOpenIdClientId.Trim();
@@ -258,6 +268,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
                 MongoAuditDatabaseName = entity.MongoAuditDatabaseName,
                 MongoAuditCollectionName = entity.MongoAuditCollectionName,
                 ApplicationLogRetentionDays = entity.ApplicationLogRetentionDays is < 2 or > 15 ? 7 : entity.ApplicationLogRetentionDays,
+                AccountReactivationCodeValidityDays = entity.AccountReactivationCodeValidityDays is < 7 or > 90 ? 30 : entity.AccountReactivationCodeValidityDays,
                 GoogleOpenIdEnabled = entity.GoogleOpenIdEnabled,
                 GoogleOpenIdClientId = entity.GoogleOpenIdClientId,
                 GoogleOpenIdClientSecret = secretProtector.Unprotect(entity.GoogleOpenIdClientSecret),

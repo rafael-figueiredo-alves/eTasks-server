@@ -91,6 +91,7 @@ namespace eTasks_server.Models.Entities.Users
         /// Lista de códigos para troca de senhas
         /// </summary>
         public ICollection<PasswordResetCode> PasswordResetCodes { get; set; } = new List<PasswordResetCode>();
+        public ICollection<AccountReactivationCode> AccountReactivationCodes { get; set; } = new List<AccountReactivationCode>();
         /// <summary>
         /// Acesso ao log de logins do usuário
         /// </summary>
@@ -163,6 +164,12 @@ namespace eTasks_server.Models.Entities.Users
 
             modelBuilder.Entity<User>()
                                 .HasMany(x => x.PasswordResetCodes)
+                                .WithOne(x => x.User)
+                                .HasForeignKey(x => x.UserUid)
+                                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                                .HasMany(x => x.AccountReactivationCodes)
                                 .WithOne(x => x.User)
                                 .HasForeignKey(x => x.UserUid)
                                 .OnDelete(DeleteBehavior.Cascade);

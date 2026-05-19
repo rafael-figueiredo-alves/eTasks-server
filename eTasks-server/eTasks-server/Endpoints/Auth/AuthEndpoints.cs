@@ -31,6 +31,7 @@ namespace eTasks_server.Endpoints.Auth
                      .ResetPasswordEndpoint()
                      .ChangePasswordEndpoint()
                      .ConfirmAccountEndpoint()
+                     .RecoverDeletedAccountEndpoint()
                      .GoogleAuthEndpoints();
 
                 return app;
@@ -269,6 +270,24 @@ namespace eTasks_server.Endpoints.Auth
                 return group;
             }
 
+            public RouteGroupBuilder RecoverDeletedAccountEndpoint()
+            {
+                group.MapGet("/recover-account", async (HttpContext context, [FromQuery] string code, IAuthBLL authBLL, CancellationToken cancellationToken) =>
+                {
+                    var result = await authBLL.RecoverDeletedAccountAsync(code, cancellationToken);
+                    return Results.Content(BuildAccountRecoveryHtml(result, GetRequestBaseUri(context)), "text/html");
+                })
+                .WithName("RecoverDeletedAccount")
+                .AllowAnonymous()
+                .WithSummary("Reativa uma conta removida logicamente usando o link enviado por e-mail.")
+                .WithDescription("Valida o codigo de reativacao enviado por e-mail apos a solicitacao de exclusao da conta. Se o codigo estiver valido, a conta volta a ficar ativa.")
+                .WithDisplayName("Recuperar conta removida")
+                .Produces(StatusCodes.Status200OK, contentType: "text/html")
+                .Produces(StatusCodes.Status500InternalServerError);
+
+                return group;
+            }
+
             /// <summary>
             /// Métodos relacionados ao fluxo de login OAuth/OpenID Connect com Google. Este conjunto de endpoints permite que os usuários façam login usando suas contas do Google, utilizando o protocolo OAuth/OpenID Connect para autenticação. O fluxo inclui a obtenção da URL de autorização do Google, redirecionamento do usuário para o Google, processamento do callback do Google após a autenticação e consumo da sessão de login Google para obter um JWT e Refresh Token para acessar o sistema.
             /// </summary>
@@ -466,6 +485,47 @@ namespace eTasks_server.Endpoints.Auth
             {
                 var request = context.Request;
                 return new Uri($"{request.Scheme}://{request.Host}/");
+            }
+
+            private static string BuildAccountRecoveryHtml(AccountRecoveryResult result, Uri requestBaseUri)
+            {
+                var title = result.Success
+                    ? "Conta recuperada"
+                    : result.Expired
+                        ? "Prazo excedido"
+                        : "Link invalido";
+
+                var details = WebUtility.HtmlEncode(result.Message);
+                var logoUrl = new Uri(requestBaseUri, "eTasks2.webp").ToString();
+                var color = result.Success ? "#1b7f45" : "#9a3412";
+
+                return $$"""
+                <!doctype html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <title>{{title}} - eTasks</title>
+                    <style>
+                        body { margin: 0; font-family: Arial, sans-serif; background: #f6f7f9; color: #1f2937; }
+                        main { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+                        section { width: min(520px, 100%); background: #fff; border: 1px solid #d9dde3; border-radius: 8px; padding: 32px; text-align: center; box-sizing: border-box; }
+                        img { max-height: 72px; margin-bottom: 20px; }
+                        h1 { margin: 0 0 12px; color: {{color}}; font-size: 28px; }
+                        p { margin: 0; line-height: 1.5; font-size: 16px; }
+                    </style>
+                </head>
+                <body>
+                    <main>
+                        <section>
+                            <img src="{{logoUrl}}" alt="eTasks Logo">
+                            <h1>{{title}}</h1>
+                            <p>{{details}}</p>
+                        </section>
+                    </main>
+                </body>
+                </html>
+                """;
             }
             #endregion
         }
