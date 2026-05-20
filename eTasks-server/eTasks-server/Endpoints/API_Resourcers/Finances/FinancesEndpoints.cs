@@ -23,7 +23,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
             public IEndpointRouteBuilder MapFinancesEndpoints()
             {
                 var group = app.MapGroup("/finances")
-                    .WithTags("Financas")
+                    .WithTags("Finanças")
                     .RequireAuthorization(policy =>
                     {
                         policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
@@ -123,6 +123,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
 
                     return Results.Ok(response);
                 })
+                .WithDisplayName("Push sync de lançamentos financeiros")
+                .WithDescription("Processa a outbox offline de finanças do usuário autenticado. Cada mutação é tratada de forma independente para que falhas parciais não bloqueiem o restante do lote. Retorna o resultado individual de cada operação, incluindo erros de validação, conflitos de concorrência e outros problemas.")
+                .WithSummary("Processa a outbox offline de finanças do usuário autenticado, aplicando as mutações e retornando o resultado individual de cada operação.")
                 .Produces(StatusCodes.Status200OK, typeof(FinanceEntryPushSyncResponse))
                 .Produces(StatusCodes.Status304NotModified)
                 .Produces(StatusCodes.Status401Unauthorized)
@@ -145,7 +148,16 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                     var userUid = httpContext.User.GetRequiredUserUid();
                     return Results.Ok(await financeBLL.SyncAsync(userUid, request, cancellationToken));
                 })
-                .Produces(StatusCodes.Status200OK, typeof(FinanceEntrySyncResponse));
+                .WithSummary("Retorna as alterações incrementais de finanças do usuário autenticado desde o cursor informado, para suporte a sincronização offline-first.")
+                .WithDisplayName("Sincronização incremental de lançamentos financeiros")
+                .WithDescription("Retorna as alterações incrementais de finanças do usuário autenticado desde o cursor informado, incluindo lançamentos criados, atualizados e deletados. O cursor pode ser um timestamp ou um token específico que representa o estado da última sincronização do cliente. Essa operação é fundamental para suportar a sincronização offline-first de forma eficiente, permitindo que os clientes obtenham apenas as mudanças relevantes desde a última atualização.")
+                .Produces(StatusCodes.Status200OK, typeof(FinanceEntrySyncResponse))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -169,7 +181,16 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                     httpContext.Response.Headers.ETag = etag;
                     return Results.Ok(entry);
                 })
-                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryDetailsResponse));
+                .WithDescription("Retorna os detalhes de um lançamento financeiro específico do usuário autenticado, identificado por seu ID. Responde com ETag do recurso e 304 Not Modified quando o cliente envia If-None-Match compatível, para otimizar cacheamento e reduzir tráfego desnecessário.")
+                .WithSummary("Obtém os detalhes de um lançamento financeiro específico do usuário autenticado, com suporte a ETag para cacheamento eficiente.")
+                .WithDisplayName("Obter detalhes de lançamento financeiro")
+                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryDetailsResponse))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -183,11 +204,23 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                 group.MapPost("/", async (HttpContext httpContext, [FromBody] CreateFinanceEntryRequest request, IFinanceBLL financeBLL, CancellationToken cancellationToken) =>
                 {
                     var userUid = httpContext.User.GetRequiredUserUid();
+
                     var entry = await financeBLL.CreateAsync(userUid, request, cancellationToken);
+
                     httpContext.Response.Headers.ETag = FinanceEtagHelper.BuildDetailsEtag(entry);
+
                     return Results.Created($"/api/v2/finances/{entry.Id}", entry);
                 })
-                .Produces(StatusCodes.Status201Created, typeof(FinanceEntryDetailsResponse));
+                .WithDisplayName("Criar lançamento financeiro")
+                .WithDescription("Cria um lançamento financeiro para o usuário autenticado com os dados fornecidos. Retorna a representação do recurso criado, incluindo seu ID e ETag para futuras operações de cacheamento e concorrência otimista.")
+                .WithSummary("Cria um lançamento financeiro para o usuário autenticado e retorna a representação criada com ETag para cacheamento e concorrência otimista.")
+                .Produces(StatusCodes.Status201Created, typeof(FinanceEntryDetailsResponse))
+                .Produces(StatusCodes.Status304NotModified)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -201,13 +234,26 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                 group.MapPut("/{financeEntryId:guid}", async (HttpContext httpContext, Guid financeEntryId, [FromBody] UpdateFinanceEntryRequest request, IFinanceBLL financeBLL, CancellationToken cancellationToken) =>
                 {
                     var userUid = httpContext.User.GetRequiredUserUid();
+
                     var currentEntry = await financeBLL.GetByIdAsync(userUid, financeEntryId, cancellationToken);
-                    ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, FinanceEtagHelper.BuildDetailsEtag(currentEntry), "O lancamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
+
+                    ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, FinanceEtagHelper.BuildDetailsEtag(currentEntry), "O lançamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
+
                     var updatedEntry = await financeBLL.UpdateAsync(userUid, financeEntryId, request, cancellationToken);
+
                     httpContext.Response.Headers.ETag = FinanceEtagHelper.BuildDetailsEtag(updatedEntry);
+
                     return Results.Ok(updatedEntry);
                 })
-                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryDetailsResponse));
+                .WithDisplayName("Atualizar lançamento financeiro")
+                .WithDescription("Atualiza um lançamento financeiro para o usuário autenticado com os dados fornecidos. Retorna a representação do recurso atualizado, incluindo seu ETag para futuras operações de cacheamento e concorrência otimista.")
+                .WithSummary("Atualiza um lançamento financeiro para o usuário autenticado e retorna a representação atualizada com ETag para cacheamento e concorrência otimista.")
+                .Produces(StatusCodes.Status200OK, typeof(FinanceEntryDetailsResponse))                
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -221,12 +267,24 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                 group.MapDelete("/{financeEntryId:guid}", async (HttpContext httpContext, Guid financeEntryId, IFinanceBLL financeBLL, CancellationToken cancellationToken) =>
                 {
                     var userUid = httpContext.User.GetRequiredUserUid();
+
                     var currentEntry = await financeBLL.GetByIdAsync(userUid, financeEntryId, cancellationToken);
-                    ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, FinanceEtagHelper.BuildDetailsEtag(currentEntry), "O lancamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
+
+                    ApiResourceHttpHelper.EnsureIfMatch(httpContext.Request, FinanceEtagHelper.BuildDetailsEtag(currentEntry), "O lançamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
+
                     await financeBLL.DeleteAsync(userUid, financeEntryId, cancellationToken);
+
                     return Results.NoContent();
                 })
-                .Produces(StatusCodes.Status204NoContent);
+                .WithSummary("Remove logicamente um lançamento financeiro do usuário autenticado, mantendo tombstone para sincronização offline-first.")
+                .WithDisplayName("Excluir lançamento financeiro")
+                .WithDescription("Remove logicamente um lançamento financeiro do usuário autenticado, mantendo um tombstone para que a exclusão seja sincronizada corretamente com clientes offline. Responde com 204 No Content quando a exclusão é bem-sucedida.")
+                .Produces(StatusCodes.Status204NoContent)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
+                .Produces(StatusCodes.Status500InternalServerError);
 
                 return group;
             }
@@ -243,7 +301,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                         FinanceEntryPushOperationType.Create => await ApplyCreateAsync(userUid, operation, financeBLL, cancellationToken),
                         FinanceEntryPushOperationType.Update => await ApplyUpdateAsync(userUid, operation, financeBLL, cancellationToken),
                         FinanceEntryPushOperationType.Delete => await ApplyDeleteAsync(userUid, operation, financeBLL, cancellationToken),
-                        _ => BuildFailure(operation, FinanceEntryPushSyncItemStatus.ValidationError, "invalid_operation", "Operacao de push sync invalida.")
+                        _ => BuildFailure(operation, FinanceEntryPushSyncItemStatus.ValidationError, "invalid_operation", "Operação de push sync inválida.")
                     };
                 }
                 catch (ValidationException ex)
@@ -316,17 +374,17 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
             {
                 if (string.IsNullOrWhiteSpace(operation.ClientMutationId))
                 {
-                    throw new ValidationException("ClientMutationId", "O identificador da mutacao do cliente e obrigatorio.");
+                    throw new ValidationException("ClientMutationId", "O identificador da mutção do cliente e obrigatório.");
                 }
 
                 switch (operation.Operation)
                 {
                     case FinanceEntryPushOperationType.Create when operation.Create is null:
-                        throw new ValidationException("Create", "O payload de criacao e obrigatorio.");
+                        throw new ValidationException("Create", "O payload de criação e obrigatório.");
                     case FinanceEntryPushOperationType.Update when operation.FinanceEntryId is null || operation.Update is null:
-                        throw new ValidationException("Update", "FinanceEntryId e payload de atualizacao sao obrigatorios.");
+                        throw new ValidationException("Update", "FinanceEntryId e payload de atualização são obrigatórios.");
                     case FinanceEntryPushOperationType.Delete when operation.FinanceEntryId is null:
-                        throw new ValidationException("FinanceEntryId", "FinanceEntryId e obrigatorio para exclusao.");
+                        throw new ValidationException("FinanceEntryId", "FinanceEntryId é obrigatório para exclusão.");
                 }
             }
 
@@ -340,7 +398,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Finances
                 var currentEtag = FinanceEtagHelper.BuildDetailsEtag(currentEntry);
                 if (!string.Equals(expectedEtag.Trim(), currentEtag, StringComparison.Ordinal) && expectedEtag.Trim() != "*")
                 {
-                    throw new ApiException(HttpStatusCode.PreconditionFailed, "O lancamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
+                    throw new ApiException(HttpStatusCode.PreconditionFailed, "O lançamento financeiro foi alterado por outro cliente. Atualize os dados e tente novamente.");
                 }
             }
 

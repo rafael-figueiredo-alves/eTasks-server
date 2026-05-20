@@ -68,6 +68,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Ok(notes);
                 })
                 .WithName("ListNotes")
+                .WithDisplayName("Listar Anotações")
                 .WithSummary("Lista as anotações do usuário autenticado.")
                 .WithDescription("Retorna apenas anotações do usuário autenticado, com filtros por termo de busca, data de criação e data de atualização. O endpoint retorna ETag e aceita If-None-Match para cache.")
                 .Produces(StatusCodes.Status200OK, typeof(List<NoteListItemResponse>))
@@ -102,6 +103,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Ok(response);
                 })
                 .WithName("PushSyncNotes")
+                .WithDisplayName("Sincronização Push de Anotações")
                 .WithSummary("Processa em lote as mutações pendentes da outbox de anotações.")
                 .WithDescription("Recebe operações de create, update e delete geradas offline pelo cliente. Cada item é processado individualmente com retorno de sucesso, conflito, validação ou falha.")
                 .Produces(StatusCodes.Status200OK, typeof(NotePushSyncResponse))
@@ -127,6 +129,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Ok(payload);
                 })
                 .WithName("SyncNotes")
+                .WithDisplayName("Sincronização Incremental de Anotações")
                 .WithSummary("Retorna alterações incrementais de anotações para sincronização offline-first.")
                 .WithDescription("Usa o cursor Since para retornar upserts e tombstones desde a última sincronização do cliente.")
                 .Produces(StatusCodes.Status200OK, typeof(NoteSyncResponse))
@@ -160,6 +163,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Ok(note);
                 })
                 .WithName("GetNote")
+                .WithDisplayName("Obter Anotação")
                 .WithSummary("Obtém os detalhes completos de uma anotação.")
                 .WithDescription("Retorna apenas a anotação pertencente ao usuário autenticado. O endpoint retorna ETag e aceita If-None-Match para cache.")
                 .Produces(StatusCodes.Status200OK, typeof(NoteDetailsResponse))
@@ -185,6 +189,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Created($"/api/v2/notes/{note.Id}", note);
                 })
                 .WithName("CreateNote")
+                .WithDisplayName("Criar Anotação")
                 .WithSummary("Cria uma nova anotação para o usuário autenticado.")
                 .WithDescription("Permite cadastrar anotações livres, inclusive com ClientGeneratedId para criação offline com ID estável no cliente.")
                 .Produces(StatusCodes.Status201Created, typeof(NoteDetailsResponse))
@@ -213,6 +218,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.Ok(updatedNote);
                 })
                 .WithName("UpdateNote")
+                .WithDisplayName("Atualizar Anotação")
                 .WithSummary("Edita uma anotação do usuário autenticado.")
                 .WithDescription("Aceita If-Match para concorrência otimista via ETag.")
                 .Produces(StatusCodes.Status200OK, typeof(NoteDetailsResponse))
@@ -242,6 +248,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Notes
                     return Results.NoContent();
                 })
                 .WithName("DeleteNote")
+                .WithDisplayName("Excluir Anotação")
                 .WithSummary("Remove logicamente uma anotação do usuário autenticado.")
                 .WithDescription("Aceita If-Match para concorrência otimista via ETag. A anotação não é apagada fisicamente: ela vira um tombstone para sincronização offline-first.")
                 .Produces(StatusCodes.Status204NoContent)

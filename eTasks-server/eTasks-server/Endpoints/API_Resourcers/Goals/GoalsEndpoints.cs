@@ -1,5 +1,4 @@
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
-using eTasks_server.Endpoints.API_Resourcers;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Goals.Requests;
 using eTasks_server.Models.DTOs.Goals.Responses;
@@ -24,7 +23,7 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
             public IEndpointRouteBuilder MapGoalsEndpoints()
             {
                 var group = app.MapGroup("/goals")
-                    .WithTags("Metas")
+                    .WithTags("Metas/Objetivos")
                     .RequireAuthorization(policy =>
                     {
                         policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
@@ -66,8 +65,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Ok(goals);
                 })
                 .WithName("ListGoals")
-                .WithSummary("Lista as metas do usuario autenticado.")
-                .WithDescription("Retorna apenas metas do usuario autenticado, com filtros por status, tipo, prioridade, recompensa configurada e termo de busca. O endpoint retorna ETag e aceita If-None-Match para cache.")
+                .WithSummary("Lista as metas do usuário autenticado.")
+                .WithDisplayName("Listar Metas/Objetivos")
+                .WithDescription("Retorna apenas metas do usuário autenticado, com filtros por status, tipo, prioridade, recompensa configurada e termo de busca. O endpoint retorna ETag e aceita If-None-Match para cache.")
                 .Produces(StatusCodes.Status200OK, typeof(List<GoalListItemResponse>))
                 .Produces(StatusCodes.Status304NotModified)
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
@@ -99,8 +99,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Ok(response);
                 })
                 .WithName("PushSyncGoals")
+                .WithDisplayName("Sincronização Offline-First de Metas/Objetivos (Push) - Processar Outbox")
                 .WithSummary("Processa em lote as mutacoes pendentes da outbox de metas.")
-                .WithDescription("Recebe operacoes de create, update e delete geradas offline pelo cliente. Cada item e processado individualmente com retorno de sucesso, conflito, validacao ou falha.")
+                .WithDescription("Recebe operações de create, update e delete geradas offline pelo cliente. Cada item e processado individualmente com retorno de sucesso, conflito, validação ou falha.")
                 .Produces(StatusCodes.Status200OK, typeof(GoalPushSyncResponse))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
                 .Produces(StatusCodes.Status401Unauthorized);
@@ -122,8 +123,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Ok(payload);
                 })
                 .WithName("SyncGoals")
-                .WithSummary("Retorna alteracoes incrementais de metas para sincronizacao offline-first.")
-                .WithDescription("Usa o cursor Since para retornar upserts e tombstones desde a ultima sincronizacao do cliente.")
+                .WithDisplayName("Sincronização Offline-First de Metas/Objetivos (Pull) - Alterações Incrementais")
+                .WithSummary("Retorna alterações incrementais de metas para sincronização offline-first.")
+                .WithDescription("Usa o cursor Since para retornar upserts e tombstones desde a última sincronização do cliente.")
                 .Produces(StatusCodes.Status200OK, typeof(GoalSyncResponse))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
                 .Produces(StatusCodes.Status401Unauthorized);
@@ -151,8 +153,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Ok(goal);
                 })
                 .WithName("GetGoal")
-                .WithSummary("Obtem os detalhes completos de uma meta.")
-                .WithDescription("Retorna apenas a meta pertencente ao usuario autenticado. O endpoint retorna ETag e aceita If-None-Match para cache.")
+                .WithDisplayName("Obter Detalhes de Meta/Objetivo")
+                .WithSummary("Obtém os detalhes completos de uma meta.")
+                .WithDescription("Retorna apenas a meta pertencente ao usuário autenticado. O endpoint retorna ETag e aceita If-None-Match para cache.")
                 .Produces(StatusCodes.Status200OK, typeof(GoalDetailsResponse))
                 .Produces(StatusCodes.Status304NotModified)
                 .Produces(StatusCodes.Status401Unauthorized)
@@ -175,8 +178,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Created($"/api/v2/goals/{goal.Id}", goal);
                 })
                 .WithName("CreateGoal")
-                .WithSummary("Cria uma nova meta para o usuario autenticado.")
-                .WithDescription("Permite cadastrar metas com tipo, prioridade, status e pontos de recompensa fixos opcionais. Se a meta ja nascer concluida, a recompensa configurada ou a regra GoalCompletion ativa pode ser aplicada.")
+                .WithDisplayName("Criar Meta/Objetivo")
+                .WithSummary("Cria uma nova meta para o usuário autenticado.")
+                .WithDescription("Permite cadastrar metas com tipo, prioridade, status e pontos de recompensa fixos opcionais. Se a meta já nascer concluída, a recompensa configurada ou a regra GoalCompletion ativa pode ser aplicada.")
                 .Produces(StatusCodes.Status201Created, typeof(GoalDetailsResponse))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
                 .Produces(StatusCodes.Status401Unauthorized);
@@ -201,8 +205,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.Ok(updatedGoal);
                 })
                 .WithName("UpdateGoal")
-                .WithSummary("Edita uma meta do usuario autenticado.")
-                .WithDescription("Aceita If-Match para concorrencia otimista via ETag. Se o status mudar para concluida, a recompensa da meta e ajustada automaticamente.")
+                .WithDisplayName("Atualizar Meta/Objetivo")
+                .WithSummary("Edita uma meta do usuário autenticado.")
+                .WithDescription("Aceita If-Match para concorrência otimista via ETag. Se o status mudar para concluída, a recompensa da meta é ajustada automaticamente.")
                 .Produces(StatusCodes.Status200OK, typeof(GoalDetailsResponse))
                 .Produces(StatusCodes.Status400BadRequest, typeof(ErrorResponse))
                 .Produces(StatusCodes.Status401Unauthorized)
@@ -228,8 +233,9 @@ namespace eTasks_server.Endpoints.API_Resourcers.Goals
                     return Results.NoContent();
                 })
                 .WithName("DeleteGoal")
-                .WithSummary("Remove logicamente uma meta do usuario autenticado.")
-                .WithDescription("Aceita If-Match para concorrencia otimista via ETag. A meta nao e apagada fisicamente: ela vira um tombstone para sincronizacao offline-first.")
+                .WithDisplayName("Excluir Meta/Objetivo")
+                .WithSummary("Remove logicamente uma meta do usuário autenticado.")
+                .WithDescription("Aceita If-Match para concorrência otimista via ETag. A meta não é apagada fisicamente: ela vira um tombstone para sincronização offline-first.")
                 .Produces(StatusCodes.Status204NoContent)
                 .Produces(StatusCodes.Status401Unauthorized)
                 .Produces(StatusCodes.Status404NotFound, typeof(ErrorResponse))
