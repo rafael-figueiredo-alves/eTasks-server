@@ -1,11 +1,11 @@
-@inherits LayoutComponentBase
+@* Layout principal para a aplicação *@
 
-@inject IConfiguration Configuration
-@inject UserState UserState
+@inherits MainLayoutBase
+
 @implements IDisposable
 
 @* Required *@
-<MudThemeProvider Theme="MyCustomTheme" IsDarkMode="@UserState.IsDarkTheme" />
+<MudThemeProvider Theme="MyCustomTheme" IsDarkMode="@UserState!.IsDarkTheme" />
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -34,39 +34,3 @@
     <a href="." class="reload">Recarregar</a>
     <span class="dismiss">🗙</span>
 </div>
-
-@code {
-    MudTheme MyCustomTheme = new MudTheme()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = Colors.Blue.Default,
-            Secondary = Colors.Green.Accent4,
-            AppbarBackground = Colors.Indigo.Default,
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = Colors.Blue.Lighten1
-        },
-
-        LayoutProperties = new LayoutProperties()
-        {
-            DrawerWidthLeft = "260px",
-            DrawerWidthRight = "300px"
-        }
-    };
-
-    protected override void OnInitialized()
-    {
-        var culture = new System.Globalization.CultureInfo("pt-BR");
-        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culture;
-        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
-
-        UserState.OnChange += StateHasChanged;
-    }
-
-    public void Dispose()
-    {
-        UserState.OnChange -= StateHasChanged;
-    }
-}

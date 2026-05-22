@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@* Layout vazio para páginas sem barra de aplicação *@
+
+@inherits EmptyLayoutBase
 
 @* Required *@
 <MudThemeProvider Theme="MyCustomTheme" />
@@ -17,26 +19,4 @@
     <a href="." class="reload">Recarregar</a>
     <span class="dismiss">🗙</span>
 </div>
-
-@code {
-    MudTheme MyCustomTheme = new MudTheme()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = Colors.Blue.Default,
-            Secondary = Colors.Green.Accent4,
-            AppbarBackground = Colors.Indigo.Default,
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = Colors.Blue.Lighten1
-        },
-
-        LayoutProperties = new LayoutProperties()
-        {
-            DrawerWidthLeft = "260px",
-            DrawerWidthRight = "300px"
-        }
-    };
-}
 

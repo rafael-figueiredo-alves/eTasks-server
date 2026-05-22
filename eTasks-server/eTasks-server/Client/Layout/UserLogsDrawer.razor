@@ -1,5 +1,7 @@
-﻿@inherits UserLogsDrawerBase
+﻿@* Drawer para exibir logs de login dos usuários *@
+
 @rendermode InteractiveServer
+@inherits UserLogsDrawerBase
 
 <MudDrawer @bind-Open="@IsDrawerOpen" Anchor="@_anchor"  Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px" Height="100dvh" Overlay="true">
     <MudDrawerHeader>

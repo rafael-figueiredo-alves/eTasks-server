@@ -31,7 +31,6 @@ namespace eTasks_server.Client.Pages
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
-                Console.Error.WriteLine($"Erro ao carregar a versao: {ex.Message}");
                 Snackbar.Add($"Oops! Ocorreu um erro ao carregar a versao: {ex.Message}", Severity.Error);
             }
             finally
