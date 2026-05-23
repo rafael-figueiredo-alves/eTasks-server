@@ -1,4 +1,6 @@
+using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Helpers;
 using eTasks_server.Models.DTOs.DatabaseAdmin.Requests;
 using eTasks_server.Models.DTOs.DatabaseAdmin.Responses;
 using Microsoft.AspNetCore.Components;
@@ -32,8 +34,8 @@ namespace eTasks_server.Client.Pages.Admin
             {
                 _isLoading = true;
                 _overview = await DatabaseAdminService.GetOverviewAsync();
-                SetStatus($"Informacoes carregadas em {_overview.GeneratedAt:dd/MM/yyyy HH:mm:ss}.", Severity.Info);
-            }, "Erro ao carregar informacoes do banco.");
+                SetStatus($"Informações carregadas em {_overview.GeneratedAt:dd/MM/yyyy HH:mm:ss}.", Severity.Info);
+            }, "Erro ao carregar informações do banco.");
 
             _isLoading = false;
         }
@@ -42,7 +44,7 @@ namespace eTasks_server.Client.Pages.Admin
         {
             if (!_confirmScriptExecution)
             {
-                SetStatus("Confirme a revisao do script antes de executar.", Severity.Warning);
+                SetStatus("Confirme a revisão do script antes de executar.", Severity.Warning);
                 return;
             }
 
@@ -68,25 +70,20 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ClearDatabaseAsync()
         {
-            var confirmed = await DialogService.ShowMessageBoxAsync(
-                "Limpar base MySQL",
-                "Deseja remover os dados do MySQL preservando apenas os usuarios administradores?",
-                yesText: "Limpar",
-                cancelText: "Cancelar");
+            await DialogService.ShowConfirm("Deseja remover os dados do MySQL preservando apenas os usuários administradores?",
+                "Limpar base MySQL", EventCallback.Factory.Create(this, async() => await HandleCleanDatabase()));
+        }
 
-            if (confirmed != true)
-            {
-                return;
-            }
-
-            await ExecuteBusyAsync(async () =>
+        private async Task HandleCleanDatabase()
+        {
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 var response = await DatabaseAdminService.ClearDatabaseAsync(_adminKey);
                 _adminKey = string.Empty;
                 SetStatus(response.Message, Severity.Success);
                 Snackbar.Add(response.Message, Severity.Success);
                 await ReloadAsync();
-            }, "Erro ao limpar base MySQL.");
+            }, "Erro ao limpar base MySQL.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         public static string FormatBytes(long bytes)
@@ -102,25 +99,6 @@ namespace eTasks_server.Client.Pages.Admin
             }
 
             return $"{value:0.##} {units[unit]}";
-        }
-
-        private async Task ExecuteBusyAsync(Func<Task> action, string defaultErrorMessage)
-        {
-            try
-            {
-                _isBusy = true;
-                await action();
-            }
-            catch (Exception ex)
-            {
-                var message = string.IsNullOrWhiteSpace(ex.Message) ? defaultErrorMessage : ex.Message;
-                SetStatus(message, Severity.Error);
-                Snackbar.Add(message, Severity.Error);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
         }
 
         private void SetStatus(string message, Severity severity)

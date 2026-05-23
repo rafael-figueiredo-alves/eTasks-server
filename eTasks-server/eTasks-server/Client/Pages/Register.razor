@@ -1,16 +1,16 @@
-@using Microsoft.AspNetCore.Authorization
+@* Página de Registro de usuários administradores do servidor do eTasks *@
+
 @using eTasks_server.Models.Utils
-@using MudBlazor
 
 @page "/register"
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 @layout EmptyLayout
-@inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ISnackbar Snackbar
 
-<PageTitle>Cadastro Administrativo</PageTitle>
+@inherits RegisterBase
+
+
+<PageTitle>Cadastro Administrativo | @Constants.AppTitle</PageTitle>
 
 <div class="login-wrapper">
     <div class="bg-orb bg-orb-1"></div>
@@ -243,20 +243,20 @@
         margin-bottom: 16px !important;
     }
 
-    .login-field .mud-input-outlined .mud-input-outlined-border {
-        border-color: rgba(91, 124, 250, 0.25) !important;
-        border-radius: 10px !important;
-    }
+        .login-field .mud-input-outlined .mud-input-outlined-border {
+            border-color: rgba(91, 124, 250, 0.25) !important;
+            border-radius: 10px !important;
+        }
 
-    .login-field .mud-input-outlined.mud-input-focused .mud-input-outlined-border {
-        border-color: #5b7cfa !important;
-    }
+        .login-field .mud-input-outlined.mud-input-focused .mud-input-outlined-border {
+            border-color: #5b7cfa !important;
+        }
 
-    .login-field label,
-    .login-field input,
-    .login-field .mud-input-adornment {
-        color: #a5b4d4 !important;
-    }
+        .login-field label,
+        .login-field input,
+        .login-field .mud-input-adornment {
+            color: #a5b4d4 !important;
+        }
 
     .form-options {
         display: flex;
@@ -287,42 +287,3 @@
     }
 </style>
 
-@code {
-    [SupplyParameterFromQuery] public string? Error { get; set; }
-
-    protected string _displayName = string.Empty;
-    protected string _email = string.Empty;
-    protected string _password = string.Empty;
-    protected string _adminKey = string.Empty;
-    protected bool _showPassword;
-    protected bool _showAdminKey;
-    protected bool _isLoading;
-
-    private bool _errorSnackShown;
-    private string ErrorMessage => string.IsNullOrWhiteSpace(Error) ? string.Empty : Error;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated == true)
-        {
-            NavigationManager.NavigateTo("/", replace: true);
-        }
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender || _errorSnackShown || string.IsNullOrWhiteSpace(ErrorMessage))
-        {
-            return;
-        }
-
-        _errorSnackShown = true;
-        Snackbar.Add(ErrorMessage, Severity.Error);
-    }
-
-    private void BeginSubmit()
-    {
-        _isLoading = true;
-    }
-}

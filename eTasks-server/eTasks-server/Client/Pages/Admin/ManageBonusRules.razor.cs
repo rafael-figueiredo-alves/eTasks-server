@@ -1,3 +1,4 @@
+using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Requests;
 using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Responses;
@@ -188,13 +189,12 @@ namespace eTasks_server.Client.Pages.Admin
 
         private async Task DeleteRule(BonusPointRuleDTO item)
         {
-            var confirm = await DialogService.ShowMessageBoxAsync(
-                "Remover Regra",
-                $"Deseja realmente remover a regra '{item.Name}'?",
-                yesText: "Sim, remover", cancelText: "Cancelar");
+            await DialogService.ShowConfirm($"Deseja realmente remover a regra '{item.Name}'?", "Remover RegraRemover Regra", 
+                EventCallback.Factory.Create(this, async () => await HandleRemoveRule(item)));
+        }
 
-            if (confirm != true) return;
-
+        private async Task HandleRemoveRule(BonusPointRuleDTO item)
+        {
             try
             {
                 await BonusAdminService.DeleteRuleAsync(item.Id);

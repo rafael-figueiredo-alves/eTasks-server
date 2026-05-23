@@ -1,3 +1,4 @@
+using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.Gamification.BonusAchievement.Requests;
 using eTasks_server.Models.DTOs.Gamification.BonusAchievement.Responses;
@@ -153,13 +154,12 @@ namespace eTasks_server.Client.Pages.Admin
 
         private async Task DeleteAchievement(BonusAchievementDTO item)
         {
-            var confirm = await DialogService.ShowMessageBoxAsync(
-                "Remover Conquista",
-                $"Deseja realmente remover a conquista '{item.Name}'?",
-                yesText: "Sim, remover", cancelText: "Cancelar");
+            await DialogService.ShowConfirm($"Deseja realmente remover a conquista '{item.Name}'?", "Remover Conquista", 
+                EventCallback.Factory.Create(this, async () => await HandleRemoveAchievement(item)));
+        }
 
-            if (confirm != true) return;
-
+        private async Task HandleRemoveAchievement(BonusAchievementDTO item)
+        {
             try
             {
                 await BonusAdminService.DeleteAchievementAsync(item.Id);

@@ -1,8 +1,13 @@
+@* Página de gerenciamento de usuários administradores *@
+
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inherits ManageUsersBase
 
 @page "/admin/users"
+@using eTasks_server.Models.Utils
+
+<PageTitle>Gerenciamento de Usuários | @Constants.AppTitle</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
     <AdminPageHeader Title="Gerenciamento de Usuários" />

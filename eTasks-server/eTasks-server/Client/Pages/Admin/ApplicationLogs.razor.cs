@@ -1,3 +1,4 @@
+using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.ApplicationLogs.Responses;
 using Microsoft.AspNetCore.Components;
@@ -46,17 +47,11 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task DeleteFileAsync(string fileName)
         {
-            var confirmed = await DialogService.ShowMessageBoxAsync(
-                "Apagar log",
-                $"Deseja apagar o arquivo {fileName}?",
-                yesText: "Apagar",
-                cancelText: "Cancelar");
+            await DialogService.ShowConfirm($"Deseja apagar o arquivo {fileName}?", "Apagar log", EventCallback.Factory.Create(this, async () => await HandleDeleteFileAsync(fileName)));
+        }
 
-            if (confirmed != true)
-            {
-                return;
-            }
-
+        private async Task HandleDeleteFileAsync(string fileName)
+        {
             await ExecuteBusyAsync(async () =>
             {
                 await ApplicationLogAdminService.DeleteFileAsync(fileName);

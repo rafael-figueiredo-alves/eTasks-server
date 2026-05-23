@@ -1,3 +1,5 @@
+@* Página principal do dashboard administrativo *@
+
 @using eTasks_server.Models.Utils
 @attribute [Authorize]
 
@@ -6,7 +8,7 @@
 @rendermode InteractiveServer
 @inherits HomeBase
 
-<PageTitle>Dashboard - @Constants.AppTitle</PageTitle>
+<PageTitle>@Constants.AppTitle | version @Constants.ServerVersion</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
     <MudGrid>

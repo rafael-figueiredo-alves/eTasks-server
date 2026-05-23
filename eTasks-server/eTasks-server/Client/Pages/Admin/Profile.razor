@@ -1,15 +1,6 @@
-@page "/admin/profile"
-@using Microsoft.AspNetCore.Components.Authorization
-@using eTasks_server.Client.Services
-@using eTasks_server.Client.Services.Interfaces
-@using eTasks_server.Models.DTOs.Users.Profile.Requests
-@using eTasks_server.Models.DTOs.Users.Profile.Responses
-@using System.Security.Claims
+@* Página de Perfil do Usuário Administrador *@
 
-@inject IUserProfileService ProfileService
-@inject UserState UserState
-@inject ISnackbar Snackbar
-@inject IDialogService DialogService
+@page "/admin/profile"
 
 <PageTitle>Meu Perfil | eTasks Server</PageTitle>
 

@@ -1,3 +1,4 @@
+using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.OperationAudit.Requests;
 using eTasks_server.Models.DTOs.OperationAudit.Responses;
@@ -56,17 +57,12 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ClearMongoAsync()
         {
-            var confirmed = await DialogService.ShowMessageBoxAsync(
-                "Limpar auditoria MongoDB",
-                "Deseja remover todas as entradas de auditoria operacional do MongoDB?",
-                yesText: "Limpar",
-                cancelText: "Cancelar");
+            await DialogService.ShowConfirm("Deseja remover todas as entradas de auditoria operacional do MongoDB?", "Limpar auditoria MongoDB",
+                EventCallback.Factory.Create(this, async() => await HandleRemoveMongoData()));
+        }
 
-            if (confirmed != true)
-            {
-                return;
-            }
-
+        private async Task HandleRemoveMongoData()
+        {
             await ExecuteBusyAsync(async () =>
             {
                 var deleted = await OperationAuditAdminService.ClearAsync(_adminKey);

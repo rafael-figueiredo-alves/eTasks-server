@@ -1,16 +1,15 @@
-﻿@using Microsoft.AspNetCore.Authorization
+﻿@* Página de login do aplicativo servidor *@
+
 @using eTasks_server.Models.Utils
-@using MudBlazor
 
 @page "/login"
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 @layout EmptyLayout
-@inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ISnackbar Snackbar
 
-<PageTitle>Login</PageTitle>
+@inherits LoginBase
+
+<PageTitle>Login | @Constants.AppTitle</PageTitle>
 
 <div class="login-wrapper">
     <div class="bg-orb bg-orb-1"></div>
@@ -332,59 +331,4 @@
     }
 </style>
 
-@code {
-    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
-    [SupplyParameterFromQuery] public string? Error { get; set; }
-    [SupplyParameterFromQuery] public string? Success { get; set; }
 
-    protected string _email = string.Empty;
-    protected string _password = string.Empty;
-    protected bool _rememberMe = true;
-    protected bool _showPassword;
-    protected bool _isLoading;
-
-    private bool _errorSnackShown;
-    private bool _successSnackShown;
-    private string ErrorMessage => string.IsNullOrWhiteSpace(Error) ? string.Empty : Error;
-    private string SuccessMessage => string.IsNullOrWhiteSpace(Success) ? string.Empty : Success;
-    private string LoginAction => $"/api/v2/web-auth/login?returnUrl={Uri.EscapeDataString(GetSafeReturnUrl())}";
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated == true)
-        {
-            NavigationManager.NavigateTo(GetSafeReturnUrl(), replace: true);
-        }
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender && !_errorSnackShown && !string.IsNullOrWhiteSpace(ErrorMessage))
-        {
-            _errorSnackShown = true;
-            Snackbar.Add(ErrorMessage, Severity.Error);
-        }
-
-        if (firstRender && !_successSnackShown && !string.IsNullOrWhiteSpace(SuccessMessage))
-        {
-            _successSnackShown = true;
-            Snackbar.Add(SuccessMessage, Severity.Success);
-        }
-    }
-
-    private void BeginSubmit()
-    {
-        _isLoading = true;
-    }
-
-    private string GetSafeReturnUrl()
-    {
-        if (string.IsNullOrWhiteSpace(ReturnUrl) || !Uri.IsWellFormedUriString(ReturnUrl, UriKind.Relative))
-        {
-            return "/";
-        }
-
-        return ReturnUrl;
-    }
-}

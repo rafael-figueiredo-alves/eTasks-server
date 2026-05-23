@@ -1,3 +1,5 @@
+@* Página de Auditoria Operacional com MongoDB *@
+
 @page "/admin/operation-audit"
 @attribute [Authorize]
 @using eTasks_server.Models.DTOs.OperationAudit.Responses
@@ -111,7 +113,7 @@
                     {
                         <MudChart ChartType="ChartType.Line"
                                   ChartSeries="@UsageSeries"
-                                  XAxisLabels="@UsageLabels"
+                                  ChartLabels="@UsageLabels"
                                   Width="100%"
                                   Height="280px"
                                   ChartOptions="@UsageChartOptions" />

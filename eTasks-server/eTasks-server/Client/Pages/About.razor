@@ -1,10 +1,14 @@
-﻿@using eTasks_server.Models.Utils
+﻿@* Página de informações sobre o aplicativo servidor *@
+
+@using eTasks_server.Models.Utils
 
 @page "/about"
 @attribute [Authorize]
 
 @rendermode InteractiveServer
 @inherits AboutBase
+
+<PageTitle>Sobre | @Constants.AppTitle</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
     <MudText Typo="Typo.h4" Class="mb-4" Style="font-weight:bold">@Constants.AppTitle</MudText>

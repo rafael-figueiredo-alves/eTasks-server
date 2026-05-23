@@ -1,4 +1,6 @@
+using eTasks_server.Client.Services;
 using eTasks_server.Client.Services.Extensions;
+using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.Users.Profile.Requests;
 using eTasks_server.Models.DTOs.Users.Profile.Responses;
 using Microsoft.AspNetCore.Components;
@@ -11,6 +13,11 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class Profile
     {
+        [Inject] protected IUserProfileService ProfileService { get; set; } = default!;
+        [Inject] protected UserState UserState { get; set; } = default!;
+        [Inject] protected ISnackbar Snackbar { get; set; } = default!;
+        [Inject] protected IDialogService DialogService { get; set; } = default!;
+
         [CascadingParameter]
         private Task<AuthenticationState> AuthState { get; set; } = default!;
 
@@ -149,8 +156,6 @@ namespace eTasks_server.Client.Pages.Admin
 
             await DialogService.ShowConfirm(
                 "Tem certeza que deseja remover sua foto de perfil?", "Remover Foto", EventCallback.Factory.Create(this, async () => { await RemovePhotoAsync(); }));        
-
-
         }
     }
 }

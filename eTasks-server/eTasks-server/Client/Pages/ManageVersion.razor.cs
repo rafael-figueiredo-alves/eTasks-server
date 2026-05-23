@@ -9,7 +9,6 @@ namespace eTasks_server.Client.Pages
     {
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private IVersionService VersionService { get; set; } = default!;
-        [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
         protected eTasksVersion _model = new();

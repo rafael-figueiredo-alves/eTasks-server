@@ -1,10 +1,13 @@
-﻿@using eTasks_server.Client.Services.Interfaces
+﻿@* Página de gerenciamento da versão do aplicativo *@
 
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inherits ManageVersionBase
 
 @page "/version/edit"
+@using eTasks_server.Models.Utils
+
+<PageTitle>Gerenciamento de Versão | @Constants.AppTitle</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large">
 
