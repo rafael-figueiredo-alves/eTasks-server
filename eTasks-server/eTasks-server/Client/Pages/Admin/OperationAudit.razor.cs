@@ -1,5 +1,6 @@
 using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Helpers;
 using eTasks_server.Models.DTOs.OperationAudit.Requests;
 using eTasks_server.Models.DTOs.OperationAudit.Responses;
 using Microsoft.AspNetCore.Components;
@@ -9,10 +10,13 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class OperationAuditPage : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] private IOperationAuditAdminService OperationAuditAdminService { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected OperationAuditDashboardResponse? _dashboard;
         protected OperationAuditLogPageResponse? _entries;
         protected OperationAuditLogQueryRequest _query = new();
@@ -26,7 +30,9 @@ namespace eTasks_server.Client.Pages.Admin
         protected ChartOptions UsageChartOptions { get; set; } = new();
         protected bool _canGoPrevious => _entries is not null && _entries.PageIndex > 0;
         protected bool _canGoNext => _entries is not null && _entries.PageIndex + 1 < _entries.TotalPages;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await ReloadAsync();
@@ -34,7 +40,7 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ReloadAsync()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _isLoading = true;
                 _dashboard = await OperationAuditAdminService.GetDashboardAsync();
@@ -50,7 +56,7 @@ namespace eTasks_server.Client.Pages.Admin
                     _entries = null;
                     SetStatus("Auditoria MongoDB desabilitada ou incompleta.", Severity.Warning);
                 }
-            }, "Erro ao carregar auditoria operacional.");
+            }, "Erro ao carregar auditoria operacional.", Snackbar, value => _isBusy = value, SetStatus);
 
             _isLoading = false;
         }
@@ -63,13 +69,13 @@ namespace eTasks_server.Client.Pages.Admin
 
         private async Task HandleRemoveMongoData()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 var deleted = await OperationAuditAdminService.ClearAsync(_adminKey);
                 _adminKey = string.Empty;
                 Snackbar.Add($"{deleted} entrada(s) removidas da auditoria MongoDB.", Severity.Success);
                 await ReloadAsync();
-            }, "Erro ao limpar auditoria MongoDB.");
+            }, "Erro ao limpar auditoria MongoDB.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected async Task ApplyFiltersAsync()
@@ -130,18 +136,18 @@ namespace eTasks_server.Client.Pages.Admin
 
         private async Task LoadEntriesAsync()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _entries = await OperationAuditAdminService.GetEntriesAsync(_query);
                 SetStatus($"{_entries.TotalItems} entrada(s) de auditoria encontradas.", Severity.Info);
-            }, "Erro ao carregar entradas de auditoria.");
+            }, "Erro ao carregar entradas de auditoria.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         private void BuildUsageChart()
         {
             if (_dashboard?.UsageTrend.Count > 0)
             {
-                UsageLabels = _dashboard.UsageTrend.Select(x => x.Label).ToArray();
+                UsageLabels = BuildUsageLabels(_dashboard.UsageTrend);
                 UsageSeries =
                 [
                     new ChartSeries<double>
@@ -162,23 +168,28 @@ namespace eTasks_server.Client.Pages.Admin
             UsageSeries = [];
         }
 
-        private async Task ExecuteBusyAsync(Func<Task> action, string defaultErrorMessage)
+        private static string[] BuildUsageLabels(IReadOnlyList<OperationAuditUsagePointResponse> trend)
         {
-            try
-            {
-                _isBusy = true;
-                await action();
-            }
-            catch (Exception ex)
-            {
-                var message = string.IsNullOrWhiteSpace(ex.Message) ? defaultErrorMessage : ex.Message;
-                SetStatus(message, Severity.Error);
-                Snackbar.Add(message, Severity.Error);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
+            const int labelIntervalHours = 6;
+            var lastIndex = trend.Count - 1;
+
+            return trend
+                .Select((point, index) =>
+                {
+                    var localTime = point.BucketStartUtc.ToLocalTime();
+                    var isBoundary = index == 0 || index == lastIndex;
+                    var shouldShowLabel = isBoundary || index % labelIntervalHours == 0;
+
+                    if (!shouldShowLabel)
+                    {
+                        return string.Empty;
+                    }
+
+                    return isBoundary
+                        ? localTime.ToString("dd/MM HH'h'")
+                        : localTime.ToString("HH'h'");
+                })
+                .ToArray();
         }
 
         private void SetStatus(string message, Severity severity)
@@ -186,5 +197,6 @@ namespace eTasks_server.Client.Pages.Admin
             _statusMessage = message;
             _statusSeverity = severity;
         }
+        #endregion
     }
 }

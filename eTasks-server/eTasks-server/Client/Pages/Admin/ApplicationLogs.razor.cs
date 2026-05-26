@@ -1,5 +1,6 @@
 using eTasks_server.Client.Services.Extensions;
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Helpers;
 using eTasks_server.Models.DTOs.ApplicationLogs.Responses;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -8,17 +9,22 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class ApplicationLogsPage : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] private IApplicationLogAdminService ApplicationLogAdminService { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected IReadOnlyList<LogFileSummaryResponse> _files = [];
         protected LogFileContentResponse? _selectedFile;
         protected bool _isLoading = true;
         protected bool _isBusy;
         protected string _statusMessage = string.Empty;
         protected Severity _statusSeverity = Severity.Info;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await ReloadAsync();
@@ -38,11 +44,11 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task OpenFileAsync(string fileName)
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _selectedFile = await ApplicationLogAdminService.ReadFileAsync(fileName);
                 SetStatus($"Arquivo {_selectedFile.FileName} carregado.", Severity.Success);
-            }, "Erro ao abrir arquivo de log.");
+            }, "Erro ao abrir arquivo de log.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected async Task DeleteFileAsync(string fileName)
@@ -52,7 +58,7 @@ namespace eTasks_server.Client.Pages.Admin
 
         private async Task HandleDeleteFileAsync(string fileName)
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 await ApplicationLogAdminService.DeleteFileAsync(fileName);
                 if (_selectedFile?.FileName == fileName)
@@ -62,7 +68,7 @@ namespace eTasks_server.Client.Pages.Admin
 
                 Snackbar.Add("Arquivo de log apagado.", Severity.Success);
                 await ReloadAsync();
-            }, "Erro ao apagar arquivo de log.");
+            }, "Erro ao apagar arquivo de log.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected static string GetDownloadUrl(string fileName)
@@ -83,29 +89,11 @@ namespace eTasks_server.Client.Pages.Admin
             return $"{value:0.##} {units[unit]}";
         }
 
-        private async Task ExecuteBusyAsync(Func<Task> action, string defaultErrorMessage)
-        {
-            try
-            {
-                _isBusy = true;
-                await action();
-            }
-            catch (Exception ex)
-            {
-                var message = string.IsNullOrWhiteSpace(ex.Message) ? defaultErrorMessage : ex.Message;
-                SetStatus(message, Severity.Error);
-                Snackbar.Add(message, Severity.Error);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
-        }
-
         private void SetStatus(string message, Severity severity)
         {
             _statusMessage = message;
             _statusSeverity = severity;
         }
+        #endregion
     }
 }

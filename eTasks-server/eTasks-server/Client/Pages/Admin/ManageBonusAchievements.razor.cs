@@ -9,10 +9,13 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class ManageBonusAchievements : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] private IBonusAdminService BonusAdminService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         private List<BonusAchievementDTO> _achievements = new();
         private bool _isLoading = true;
         private bool _isProcessing = false;
@@ -25,7 +28,9 @@ namespace eTasks_server.Client.Pages.Admin
         private BonusAchievementRequest _createRequest = new();
 
         private DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await LoadData();
@@ -171,5 +176,6 @@ namespace eTasks_server.Client.Pages.Admin
                 Snackbar.Add(ex.Message, Severity.Error);
             }
         }
+        #endregion
     }
 }

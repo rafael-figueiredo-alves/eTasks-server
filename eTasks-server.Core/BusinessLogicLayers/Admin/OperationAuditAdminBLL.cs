@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Core.Services.Models;
@@ -250,7 +251,9 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             IMongoCollection<OperationAuditLog> collection,
             CancellationToken cancellationToken)
         {
-            var start = DateTime.UtcNow.AddHours(-24);
+            var now = DateTime.UtcNow;
+            var currentHourUtc = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
+            var start = currentHourUtc.AddHours(-24);
             var pipeline = new[]
             {
                 new BsonDocument("$match", new BsonDocument("CreatedAtUtc", new BsonDocument("$gte", start))),
@@ -284,19 +287,41 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
 
             var documents = await collection.Aggregate<BsonDocument>(pipeline).ToListAsync(cancellationToken);
-            return documents.Select(document =>
-            {
-                var label = document["_id"].AsString;
-                _ = DateTime.TryParse(label, out var bucketStart);
-
-                return new OperationAuditUsagePointResponse
+            var countsByBucket = documents
+                .Select(document =>
                 {
-                    BucketStartUtc = DateTime.SpecifyKind(bucketStart, DateTimeKind.Utc),
-                    Label = bucketStart == default ? label : bucketStart.ToLocalTime().ToString("dd/MM HH'h'"),
-                    TotalCount = document["total"].ToInt64(),
-                    ErrorCount = document["errors"].ToInt64()
-                };
-            }).ToList();
+                    var label = document["_id"].AsString;
+                    var parsed = DateTime.TryParseExact(
+                        label,
+                        "yyyy-MM-dd HH:mm",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                        out var bucketStartUtc);
+
+                    return new
+                    {
+                        BucketStartUtc = parsed ? bucketStartUtc : DateTime.MinValue,
+                        TotalCount = document["total"].ToInt64(),
+                        ErrorCount = document["errors"].ToInt64()
+                    };
+                })
+                .Where(point => point.BucketStartUtc != DateTime.MinValue)
+                .ToDictionary(point => point.BucketStartUtc, point => point);
+
+            var trend = new List<OperationAuditUsagePointResponse>();
+            for (var bucketStartUtc = start; bucketStartUtc <= currentHourUtc; bucketStartUtc = bucketStartUtc.AddHours(1))
+            {
+                countsByBucket.TryGetValue(bucketStartUtc, out var point);
+                trend.Add(new OperationAuditUsagePointResponse
+                {
+                    BucketStartUtc = bucketStartUtc,
+                    Label = bucketStartUtc.ToLocalTime().ToString("dd/MM HH'h'"),
+                    TotalCount = point?.TotalCount ?? 0,
+                    ErrorCount = point?.ErrorCount ?? 0
+                });
+            }
+
+            return trend;
         }
 
         private static OperationAuditLogEntryResponse MapEntry(OperationAuditLog entry)

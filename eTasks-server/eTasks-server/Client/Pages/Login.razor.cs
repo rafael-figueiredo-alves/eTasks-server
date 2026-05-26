@@ -6,14 +6,19 @@ namespace eTasks_server.Client.Pages
 {
     public class LoginBase : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] protected NavigationManager? NavigationManager { get; set; }
         [Inject] protected AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
         [Inject] protected ISnackbar? Snackbar { get; set; }
+        #endregion
 
+        #region Parâmetros de Consulta
         [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
         [SupplyParameterFromQuery] public string? Error { get; set; }
         [SupplyParameterFromQuery] public string? Success { get; set; }
+        #endregion
 
+        #region Variáveis
         protected string _email = string.Empty;
         protected string _password = string.Empty;
         protected bool _rememberMe = true;
@@ -25,7 +30,9 @@ namespace eTasks_server.Client.Pages
         protected string ErrorMessage => string.IsNullOrWhiteSpace(Error) ? string.Empty : Error;
         protected string SuccessMessage => string.IsNullOrWhiteSpace(Success) ? string.Empty : Success;
         protected string LoginAction => $"/api/v2/web-auth/login?returnUrl={Uri.EscapeDataString(GetSafeReturnUrl())}";
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             var authState = await AuthenticationStateProvider!.GetAuthenticationStateAsync();
@@ -64,5 +71,6 @@ namespace eTasks_server.Client.Pages
 
             return ReturnUrl;
         }
+        #endregion
     }
 }

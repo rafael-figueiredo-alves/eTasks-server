@@ -13,20 +13,27 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class Profile
     {
+        #region Serviços Injetados
         [Inject] protected IUserProfileService ProfileService { get; set; } = default!;
         [Inject] protected UserState UserState { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService DialogService { get; set; } = default!;
+        #endregion
 
+        #region Parâmetros Cascateados
         [CascadingParameter]
         private Task<AuthenticationState> AuthState { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         private UserProfileResponse? _profile;
         private bool _loading = true;
         private bool _saving = false;
         private bool _success = false;
         private MudForm? _form;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await LoadProfile();
@@ -157,5 +164,6 @@ namespace eTasks_server.Client.Pages.Admin
             await DialogService.ShowConfirm(
                 "Tem certeza que deseja remover sua foto de perfil?", "Remover Foto", EventCallback.Factory.Create(this, async () => { await RemovePhotoAsync(); }));        
         }
+        #endregion
     }
 }

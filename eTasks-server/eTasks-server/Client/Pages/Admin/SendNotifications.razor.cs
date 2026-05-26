@@ -1,4 +1,5 @@
 using eTasks_server.Client.Services.Interfaces;
+using eTasks_server.Helpers;
 using eTasks_server.Models.DTOs.Notifications.Requests;
 using eTasks_server.Models.DTOs.Users.Admin.Responses;
 using eTasks_server.Models.Enums.Notifications;
@@ -9,10 +10,13 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class SendNotificationsPage : ComponentBase
     {
+        #region Serviços injetados
         [Inject] private IAdminNotificationService AdminNotificationService { get; set; } = default!;
         [Inject] private IUserAdminService UserAdminService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected SendAdminNotificationRequest _request = new();
         protected IReadOnlyList<AdminUserDTO> _users = [];
         protected IReadOnlyList<Guid> _selectedUserUids = [];
@@ -20,7 +24,9 @@ namespace eTasks_server.Client.Pages.Admin
         protected bool _isBusy;
         protected string _statusMessage = string.Empty;
         protected Severity _statusSeverity = Severity.Info;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await ReloadUsersAsync();
@@ -28,11 +34,11 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ReloadUsersAsync()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _users = await UserAdminService.GetUsersAsync();
                 SetStatus($"{_users.Count} usuário(s) comum(ns) disponível(is) para seleção individual.", Severity.Info);
-            }, "Erro ao carregar usuários.");
+            }, "Erro ao carregar usuários.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected void OnSelectedUsersChanged(IEnumerable<Guid> values)
@@ -81,29 +87,11 @@ namespace eTasks_server.Client.Pages.Admin
             _selectedUserUids = [];
         }
 
-        private async Task ExecuteBusyAsync(Func<Task> action, string defaultErrorMessage)
-        {
-            try
-            {
-                _isBusy = true;
-                await action();
-            }
-            catch (Exception ex)
-            {
-                var message = string.IsNullOrWhiteSpace(ex.Message) ? defaultErrorMessage : ex.Message;
-                SetStatus(message, Severity.Error);
-                Snackbar.Add(message, Severity.Error);
-            }
-            finally
-            {
-                _isBusy = false;
-            }
-        }
-
         private void SetStatus(string message, Severity severity)
         {
             _statusMessage = message;
             _statusSeverity = severity;
         }
+        #endregion
     }
 }

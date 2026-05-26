@@ -6,11 +6,16 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class ApplicationConsolePage : ComponentBase, IDisposable
     {
+        #region Serviços injetados
         [Inject] private IRealtimeLogStore RealtimeLogStore { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected List<RealtimeLogEntryResponse> _entries = [];
         private bool _disposed;
+        #endregion
 
+        #region Métodos
         protected override void OnInitialized()
         {
             _entries = RealtimeLogStore.GetSnapshot().ToList();
@@ -56,5 +61,6 @@ namespace eTasks_server.Client.Pages.Admin
             _disposed = true;
             RealtimeLogStore.EntryAdded -= OnEntryAdded;
         }
+        #endregion
     }
 }

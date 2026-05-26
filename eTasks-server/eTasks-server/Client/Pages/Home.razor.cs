@@ -2,17 +2,17 @@ using eTasks_server.Client.Services.Interfaces;
 using eTasks_server.Models.DTOs.Dashboard.Responses;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace eTasks_server.Client.Pages
 {
     public class HomeBase : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] protected IDashboardService DashboardService { get; set; } = default!;
         [Inject] protected NavigationManager Navigation { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected DashboardResponse? DashboardData { get; set; }
         protected string HealthStatus { get; set; } = "Checking...";
         protected Color HealthColor { get; set; } = Color.Default;
@@ -23,7 +23,9 @@ namespace eTasks_server.Client.Pages
         protected ChartOptions ChartOptions = new ChartOptions();
 
         private bool _dataLoaded = false;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             if (!_dataLoaded)
@@ -85,5 +87,6 @@ namespace eTasks_server.Client.Pages
         {
             Navigation.NavigateTo(path, forceLoad: ForcarRender);
         }
+        #endregion
     }
 }

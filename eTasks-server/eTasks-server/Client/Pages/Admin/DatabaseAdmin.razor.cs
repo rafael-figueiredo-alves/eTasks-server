@@ -10,10 +10,13 @@ namespace eTasks_server.Client.Pages.Admin
 {
     public partial class DatabaseAdminPage : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] private IDatabaseAdminService DatabaseAdminService { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected DatabaseOverviewResponse? _overview;
         protected string _script = string.Empty;
         protected string _adminKey = string.Empty;
@@ -22,7 +25,9 @@ namespace eTasks_server.Client.Pages.Admin
         protected bool _isBusy;
         protected string _statusMessage = string.Empty;
         protected Severity _statusSeverity = Severity.Info;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await ReloadAsync();
@@ -30,12 +35,12 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ReloadAsync()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _isLoading = true;
                 _overview = await DatabaseAdminService.GetOverviewAsync();
                 SetStatus($"Informações carregadas em {_overview.GeneratedAt:dd/MM/yyyy HH:mm:ss}.", Severity.Info);
-            }, "Erro ao carregar informações do banco.");
+            }, "Erro ao carregar informações do banco.", Snackbar, value => _isBusy = value, SetStatus);
 
             _isLoading = false;
         }
@@ -48,7 +53,7 @@ namespace eTasks_server.Client.Pages.Admin
                 return;
             }
 
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 var response = await DatabaseAdminService.ExecuteScriptAsync(new DatabaseScriptExecutionRequest
                 {
@@ -59,7 +64,7 @@ namespace eTasks_server.Client.Pages.Admin
                 Snackbar.Add(response.Message, Severity.Success);
                 _confirmScriptExecution = false;
                 await ReloadAsync();
-            }, "Erro ao executar script SQL.");
+            }, "Erro ao executar script SQL.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected void ClearScript()
@@ -106,6 +111,7 @@ namespace eTasks_server.Client.Pages.Admin
             _statusMessage = message;
             _statusSeverity = severity;
         }
+        #endregion
     }
 
     internal static class DatabaseOverviewResponseExtensions
