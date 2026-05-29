@@ -7,8 +7,11 @@ namespace eTasks_server.Client.Layout
 {
     public class UserLogsDrawerBase : ComponentBase, IDisposable
     {
+        #region Serviços Injetados
         [Inject] protected UserLogsDrawerService DrawerService { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected Anchor _anchor { get; set; }
 
         protected bool IsDrawerOpen
@@ -19,7 +22,9 @@ namespace eTasks_server.Client.Layout
 
         protected AdminUserDTO? SelectedUser => DrawerService.SelectedUser;
         protected List<UserLoginLogDTO> SelectedUserLogs => DrawerService.SelectedUserLogs;
+        #endregion
 
+        #region Métodos
         protected override void OnInitialized()
         {
             DrawerService.OnChange += OnDrawerStateChanged;
@@ -34,5 +39,6 @@ namespace eTasks_server.Client.Layout
         {
             DrawerService.OnChange -= OnDrawerStateChanged;
         }
+        #endregion
     }
 }

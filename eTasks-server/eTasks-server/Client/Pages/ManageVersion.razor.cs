@@ -7,19 +7,28 @@ namespace eTasks_server.Client.Pages
 {
     public class ManageVersionBase : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private IVersionService VersionService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected eTasksVersion _model = new();
         protected bool isLoading = true;
         protected MudForm? _form;
+        #endregion
 
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await LoadVersion();
         }
 
+        /// <summary>
+        /// Método para ler os dados da versão do app cliente
+        /// </summary>
+        /// <returns></returns>
         private async Task LoadVersion()
         {
             isLoading = true;
@@ -37,6 +46,10 @@ namespace eTasks_server.Client.Pages
             }
         }
 
+        /// <summary>
+        /// Salva alterações feitas na versão do aplicativo
+        /// </summary>
+        /// <returns></returns>
         protected async Task Save()
         {
             if (_form is null)
@@ -62,5 +75,6 @@ namespace eTasks_server.Client.Pages
         }
 
         protected void GoBack() => Navigation.NavigateTo("/version");
+        #endregion
     }
 }

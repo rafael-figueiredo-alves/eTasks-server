@@ -7,15 +7,20 @@ namespace eTasks_server.Client.Pages
 {
     public class VersionBase : ComponentBase
     {
-        protected eTasksVersion _model = new();
-        protected bool isLoading = true;
-        protected string? errorMessage;
-
+        #region Serviços Injetados
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private IDialogService DialogService { get; set; } = default!;
         [Inject] private IVersionService VersionService { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
+        protected eTasksVersion _model = new();
+        protected bool isLoading = true;
+        protected string? errorMessage;
+        #endregion
+
+        #region Métodos
         protected override async Task OnInitializedAsync()
         {
             await LoadDataAsync();
@@ -40,5 +45,6 @@ namespace eTasks_server.Client.Pages
         }
 
         protected void GoToEdit() => Navigation.NavigateTo("/version/edit");
+        #endregion
     }
 }

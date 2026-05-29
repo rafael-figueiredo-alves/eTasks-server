@@ -6,9 +6,12 @@ namespace eTasks_server.Client.Layout
 {
     public class MainLayoutBase : LayoutComponentBase
     {
+        #region Serviços Injetados
         [Inject] protected IConfiguration? Configuration { get; set; }
         [Inject] protected UserState? UserState { get; set; }
+        #endregion
 
+        #region Configurações dos temas
         protected MudTheme MyCustomTheme = new MudTheme()
         {
             PaletteLight = new PaletteLight()
@@ -28,7 +31,9 @@ namespace eTasks_server.Client.Layout
                 DrawerWidthRight = "300px"
             }
         };
+        #endregion
 
+        #region Métodos
         protected override void OnInitialized()
         {
             var culture = new System.Globalization.CultureInfo("pt-BR");
@@ -42,5 +47,6 @@ namespace eTasks_server.Client.Layout
         {
             UserState!.OnChange -= StateHasChanged;
         }
+        #endregion
     }
 }

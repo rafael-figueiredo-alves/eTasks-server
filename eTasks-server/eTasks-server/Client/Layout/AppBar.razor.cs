@@ -11,18 +11,25 @@ namespace eTasks_server.Client.Layout
 {
     public class AppBarBase : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] protected NavigationManager? Navigation { get; set; }
         [Inject] protected IDialogService? DialogService { get; set; }
         [Inject] protected IUserProfileService? ProfileService { get; set; }
         [Inject] protected IUserAdminService? UserAdminService { get; set; }
         [Inject] protected UserState? UserState { get; set; }
         [Inject] protected ISnackbar? Snackbar { get; set; }
+        #endregion
 
+        #region Parametros Cascata
         [CascadingParameter]
         protected Task<AuthenticationState> AuthState { get; set; } = default!;
+        #endregion
 
+        #region Variáveis
         protected bool _drawerOpen;
+        #endregion
 
+        #region Métodos
         protected override void OnInitialized()
         {
             UserState?.OnChange += StateHasChanged;
@@ -151,5 +158,6 @@ namespace eTasks_server.Client.Layout
         {
             Navigation?.NavigateTo("/api/v2/web-auth/logout?returnUrl=%2Flogin", forceLoad: true);
         }
+        #endregion
     }
 }

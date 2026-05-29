@@ -1,20 +1,22 @@
-﻿using eTasks_server.Models.Utils;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace eTasks_server.Client.Pages
 {
     public class RegisterBase : ComponentBase
     {
+        #region Serviços Injetados
         [Inject] protected NavigationManager? NavigationManager { get; set; }
         [Inject] protected AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
         [Inject] protected ISnackbar? Snackbar { get; set; }
+        #endregion
 
+        #region Parâmetros de URL (Query Params
         [SupplyParameterFromQuery] public string? Error { get; set; }
+        #endregion
 
+        #region Variáveis
         protected string _displayName = string.Empty;
         protected string _email = string.Empty;
         protected string _password = string.Empty;
@@ -24,6 +26,9 @@ namespace eTasks_server.Client.Pages
         protected bool _isLoading;
 
         protected bool _errorSnackShown;
+        #endregion
+
+        #region Métodos
         protected string ErrorMessage => string.IsNullOrWhiteSpace(Error) ? string.Empty : Error;
 
         protected override async Task OnInitializedAsync()
@@ -50,5 +55,6 @@ namespace eTasks_server.Client.Pages
         {
             _isLoading = true;
         }
+        #endregion
     }
 }

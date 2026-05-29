@@ -3,7 +3,8 @@
 @rendermode InteractiveServer
 @inherits UserLogsDrawerBase
 
-<MudDrawer @bind-Open="@IsDrawerOpen" Anchor="@_anchor"  Elevation="1" Variant="@DrawerVariant.Temporary" Width="400px" Height="100dvh" Overlay="true">
+<MudDrawer @bind-Open="@IsDrawerOpen" Anchor="@_anchor"  Elevation="1" Variant="@DrawerVariant.Temporary" 
+                                                            Width="400px" Height="100dvh" Overlay="true">
     <MudDrawerHeader>
         <MudText Typo="Typo.h6">Log de Logins - @SelectedUser?.Name</MudText>
     </MudDrawerHeader>
