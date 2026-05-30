@@ -1,4 +1,4 @@
-﻿@inject NavigationManager Nav
+﻿@* Página para quando houver acesso a rota desconhecida *@
 
 <div class="container-fluid body @Background">
     <div class="row" style="height: 100vh;">
@@ -264,15 +264,7 @@
                 Como você chegou aqui é um mistério. Mas para voltar basta
                 apertar o botão abaixo.
             </p>
-            <button class="btn btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/"))">VOLTAR PARA PÁGINA INICIAL</button>
+            <button class="btn btn-outline-primary" @onclick="@GoBackToHomePage">VOLTAR PARA PÁGINA INICIAL</button>
         </div>
     </div>
 </div>
-
-@code {
-
-    private string Background { get; set; } = "";
-    private string LineStroke { get; set; } = "#0E0620";
-    private string ImageFill { get; set; } = "#FFFFFF";
-    private string TextColor { get; set; } = "black";
-}

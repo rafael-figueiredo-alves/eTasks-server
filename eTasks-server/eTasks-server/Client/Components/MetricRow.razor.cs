@@ -5,10 +5,14 @@ namespace eTasks_server.Client.Components
 {
     public class MetricRowBase : ComponentBase
     {
+        #region Parâmetros
         [Parameter, EditorRequired] public OperationAuditMetricResponse Metric { get; set; } = default!;
         [Parameter] public long Total { get; set; }
+        #endregion
 
+        #region Variáveis
         protected double PercentValue => Total <= 0 ? 0 : Math.Round(Metric.Count * 100d / Total, 2);
         protected string Percent => $"{PercentValue:0.##}%";
+        #endregion
     }
 }
