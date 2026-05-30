@@ -71,14 +71,14 @@ namespace eTasks_server.Client.Pages.Admin
                 _request.UserUids = _selectedUserUids.ToList();
             }
 
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 var response = await AdminNotificationService.SendAsync(_request);
                 var message = $"Notificação enviada para {response.RecipientCount} destinatário(s). Dispositivos registrados: {response.RegisteredDeviceCount}.";
                 SetStatus(message, Severity.Success);
                 Snackbar.Add(message, Severity.Success);
                 Clear();
-            }, "Erro ao enviar notificação.");
+            }, "Erro ao enviar notificação.", Snackbar, value => _isBusy = value, SetStatus);
         }
 
         protected void Clear()

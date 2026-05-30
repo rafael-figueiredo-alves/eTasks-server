@@ -32,12 +32,12 @@ namespace eTasks_server.Client.Pages.Admin
 
         protected async Task ReloadAsync()
         {
-            await ExecuteBusyAsync(async () =>
+            await ThreadHelper.ExecuteBusyAsync(async () =>
             {
                 _isLoading = true;
                 _files = await ApplicationLogAdminService.GetFilesAsync();
                 SetStatus($"{_files.Count} arquivo(s) de log encontrado(s).", Severity.Info);
-            }, "Erro ao carregar arquivos de log.");
+            }, "Erro ao carregar arquivos de log.", Snackbar, value => _isBusy = value, SetStatus);
 
             _isLoading = false;
         }

@@ -6,37 +6,45 @@ namespace eTasks_server.Client.Services
     /// </summary>
     public class UserState
     {
+        #region Variáveis
         public string? Name { get; private set; }
         public string? PhotoBase64 { get; private set; }
         public bool IsDarkTheme { get; private set; }
 
         public event Action? OnChange;
+        #endregion
 
+        #region Métodos
         public void SetUser(string? name, string? photoBase64)
         {
             Name = name;
             PhotoBase64 = photoBase64;
+
             NotifyStateChanged();
         }
 
         public void UpdatePhoto(string? photoBase64)
         {
             PhotoBase64 = photoBase64;
+
             NotifyStateChanged();
         }
 
         public void UpdateName(string? name)
         {
             Name = name;
+
             NotifyStateChanged();
         }
 
         public void UpdateTheme(bool isDark)
         {
             IsDarkTheme = isDark;
+
             NotifyStateChanged();
         }
 
         private void NotifyStateChanged() => OnChange?.Invoke();
+        #endregion
     }
 }

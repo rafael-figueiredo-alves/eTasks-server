@@ -10,6 +10,7 @@ namespace eTasks_server.Client.Services
         {
             using var scope = scopeFactory.CreateScope();
             var dashboardBLL = scope.ServiceProvider.GetRequiredService<IDashboardBLL>();
+
             return await dashboardBLL.GetDashboardMetricsAsync();
         }
 
@@ -18,9 +19,12 @@ namespace eTasks_server.Client.Services
             try
             {
                 var baseAddress = httpClient.BaseAddress
-                    ?? throw new InvalidOperationException("BaseAddress do HttpClient LocalApi nao configurado.");
+                    ?? throw new InvalidOperationException("BaseAddress do HttpClient LocalApi não configurado.");
+
                 var healthUrl = $"{baseAddress.ToString().Replace(baseAddress.AbsolutePath, string.Empty)}/health";
+
                 var response = await httpClient.GetAsync(healthUrl);
+
                 return response.IsSuccessStatusCode ? "Saudável" : "Doente";
             }
             catch
