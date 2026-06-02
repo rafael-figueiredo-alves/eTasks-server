@@ -22,7 +22,7 @@ namespace eTasks_server.Models.Entities.Users
         /// <summary>
         /// Código de 6 digitos a ser usado para trocar/resetar senha
         /// </summary>
-        [Length(6, 6, ErrorMessage = "O codigo de verificacao deve ter exatamente 6 digitos")]
+        [Length(6, 6, ErrorMessage = "O código de verificação deve ter exatamente 6 digitos")]
         public string Code { get; set; } = string.Empty;
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace eTasks_server.Models.Entities.Users
         public DateTime ExpiresAt { get; set; }
         
         /// <summary>
-        /// Marcador se o código já foi usado para invalisar tentativa de reuso
+        /// Marcador se o código já foi usado para invalidar tentativa de reuso
         /// </summary>
         public bool IsUsed { get; set; }
 

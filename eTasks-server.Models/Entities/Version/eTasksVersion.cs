@@ -1,6 +1,5 @@
-using eTasks_server.Models.Entities;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace eTasks_server.Models.Entities.Version
 {

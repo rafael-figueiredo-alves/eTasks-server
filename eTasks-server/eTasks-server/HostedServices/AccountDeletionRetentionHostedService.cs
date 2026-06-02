@@ -2,6 +2,11 @@ using eTasks_server.Core.Services.Interfaces;
 
 namespace eTasks_server.HostedServices
 {
+    /// <summary>
+    /// Serviço hospedado responsável por aplicar a retenção de contas excluídas, removendo permanentemente aquelas que excederam o período de retenção definido.
+    /// </summary>
+    /// <param name="scopeFactory">Injeção de serviços</param>
+    /// <param name="logger">Instância do logger</param>
     public class AccountDeletionRetentionHostedService(IServiceScopeFactory scopeFactory, ILogger<AccountDeletionRetentionHostedService> logger)
         : BackgroundService
     {
@@ -25,7 +30,7 @@ namespace eTasks_server.HostedServices
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Falha ao aplicar retencao de contas excluidas.");
+                    logger.LogWarning(ex, "Falha ao aplicar retenção de contas excluidas.");
                 }
 
                 await Task.Delay(TimeSpan.FromHours(12), stoppingToken);

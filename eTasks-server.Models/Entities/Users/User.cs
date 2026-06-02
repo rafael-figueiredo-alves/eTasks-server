@@ -25,15 +25,15 @@ namespace eTasks_server.Models.Entities.Users
         /// Nome de exibição do usuário, utilizado para identificar o usuário dentro da aplicação. Este campo é obrigatório e deve conter entre 3 e 30 caracteres, garantindo que o nome seja suficientemente descritivo sem ser excessivamente longo. O nome do usuário é uma parte fundamental do perfil do usuário e é exibido em várias partes da interface do usuário, como na barra de navegação, nas mensagens e nas listas de usuários.
         /// </summary>
         [Required]
-        [MinLength(3, ErrorMessage = "O nome do usuario precisa conter pelo menos 3 caracteres.")]
-        [MaxLength(30, ErrorMessage = "O nome do usuario nao pode exceder 30 caracteres")]
+        [MinLength(3, ErrorMessage = "O nome do usuário precisa conter pelo menos 3 caracteres.")]
+        [MaxLength(30, ErrorMessage = "O nome do usuário não pode exceder 30 caracteres")]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// E-mail do usuário, utilizado para autenticação e comunicação. Este campo é obrigatório e deve ser um endereço de e-mail válido, garantindo que o sistema possa enviar notificações, códigos de redefinição de senha e outras comunicações importantes para o usuário. O e-mail também é utilizado como identificador único para login, permitindo que os usuários acessem suas contas de forma segura.
         /// </summary>
         [Required]
-        [EmailAddress(ErrorMessage = "So e aceito endereco de e-mail valido")]
+        [EmailAddress(ErrorMessage = "Somente endereços de e-mail válidos são aceitos")]
         public string Email { get; set; } = string.Empty;
 
         /// <summary>
