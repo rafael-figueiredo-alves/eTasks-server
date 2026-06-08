@@ -17,7 +17,9 @@ namespace eTasks_server.HostedServices
                 try
                 {
                     using var scope = scopeFactory.CreateScope();
+
                     var service = scope.ServiceProvider.GetRequiredService<IAccountDeletionRetentionService>();
+
                     var deleted = await service.DeleteExpiredAccountsAsync(stoppingToken);
                     if (deleted > 0)
                     {
