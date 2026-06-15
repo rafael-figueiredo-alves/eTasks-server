@@ -1,5 +1,3 @@
-using System;
-
 namespace eTasks_server.Models.Entities.Common
 {
     /// <summary>

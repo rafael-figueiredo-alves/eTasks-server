@@ -1,4 +1,3 @@
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 

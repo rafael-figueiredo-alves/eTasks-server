@@ -1,4 +1,3 @@
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -85,7 +84,14 @@ namespace eTasks_server.Models.Entities.Finances
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
+        /// <summary>
+        /// Identifica se o lancamento foi deletado (exclusao logica).
+        /// </summary>
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Identifica a data de exclusao do lancamento, caso tenha sido deletado.
+        /// </summary>
         public DateTime? DeletedAt { get; set; }
 
         /// <summary>
