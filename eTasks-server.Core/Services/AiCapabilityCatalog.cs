@@ -1,6 +1,6 @@
 using eTasks_server.Core.Services.Interfaces;
-using eTasks_server.Models.DTOs.AI.Requests;
 using eTasks_server.Models.DTOs.AI.Responses;
+using eTasks_server.Models.Enums.Ai;
 
 namespace eTasks_server.Core.Services
 {

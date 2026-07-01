@@ -2,6 +2,7 @@ using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Finances.Requests;
 using eTasks_server.Models.DTOs.Finances.Responses;
+using eTasks_server.Models.Enums.Finances;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

@@ -2,6 +2,7 @@ using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.AI.Requests;
 using eTasks_server.Models.DTOs.AI.Responses;
+using eTasks_server.Models.Enums.Ai;
 using eTasks_server.Models.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;

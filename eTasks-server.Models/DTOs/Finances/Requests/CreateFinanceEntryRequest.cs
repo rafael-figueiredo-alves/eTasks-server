@@ -7,6 +7,9 @@ namespace eTasks_server.Models.DTOs.Finances.Requests
     /// </summary>
     public class CreateFinanceEntryRequest
     {
+        /// <summary>
+        /// Identificador único gerado pelo cliente para o lançamento financeiro. Esse ID é opcional e pode ser usado para rastrear ou referenciar o lançamento financeiro de forma exclusiva, especialmente em casos onde o cliente deseja manter um controle interno sobre suas transações financeiras. Se fornecido, esse ID deve ser único para cada lançamento financeiro criado pelo cliente.
+        /// </summary>
         public Guid? ClientGeneratedId { get; set; }
 
         /// <summary>
