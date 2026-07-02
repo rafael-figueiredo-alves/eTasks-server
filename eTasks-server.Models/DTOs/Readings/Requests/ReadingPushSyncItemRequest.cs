@@ -1,3 +1,5 @@
+using eTasks_server.Models.Enums.Readings;
+
 namespace eTasks_server.Models.DTOs.Readings.Requests
 {
     public class ReadingPushSyncItemRequest

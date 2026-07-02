@@ -7,6 +7,9 @@ namespace eTasks_server.Models.DTOs.Shopping.Requests
     /// </summary>
     public class CreateShoppingListRequest
     {
+        /// <summary>
+        /// Identificador gerado pelo cliente
+        /// </summary>
         public Guid? ClientGeneratedId { get; set; }
 
         /// <summary>

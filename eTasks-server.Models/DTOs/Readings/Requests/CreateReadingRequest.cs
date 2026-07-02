@@ -7,6 +7,9 @@ namespace eTasks_server.Models.DTOs.Readings.Requests
     /// </summary>
     public class CreateReadingRequest
     {
+        /// <summary>
+        /// Identificador gerado pelo cliente para a leitura. Campo opcional.
+        /// </summary>
         public Guid? ClientGeneratedId { get; set; }
 
         /// <summary>
