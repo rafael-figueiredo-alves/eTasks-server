@@ -1,4 +1,5 @@
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Finances;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 

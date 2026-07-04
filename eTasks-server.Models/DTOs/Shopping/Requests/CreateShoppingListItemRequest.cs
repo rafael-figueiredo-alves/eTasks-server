@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Shopping;
+using eTasks_server.Models.Enums.Shopping;
 
 namespace eTasks_server.Models.DTOs.Shopping.Requests
 {

@@ -6,6 +6,8 @@ using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Requests;
 using eTasks_server.Models.DTOs.Gamification.BonusPointRule.Responses;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Users;
 using eTasks_server.Models.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

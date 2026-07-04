@@ -1,3 +1,5 @@
+using eTasks_server.Models.Enums.Tasks;
+
 namespace eTasks_server.Models.DTOs.Tasks.Responses
 {
     /// <summary>

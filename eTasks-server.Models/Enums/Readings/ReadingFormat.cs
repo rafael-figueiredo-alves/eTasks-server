@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Readings
+namespace eTasks_server.Models.Enums.Readings
 {
     /// <summary>
     /// Define o tipo de publicacao registrada na leitura.

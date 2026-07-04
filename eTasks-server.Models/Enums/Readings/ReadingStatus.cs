@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Readings
+namespace eTasks_server.Models.Enums.Readings
 {
     /// <summary>
     /// Representa o estado atual de uma leitura.

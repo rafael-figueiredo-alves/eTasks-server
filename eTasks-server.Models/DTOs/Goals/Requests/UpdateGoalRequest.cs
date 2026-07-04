@@ -1,5 +1,5 @@
-using eTasks_server.Models.Entities.Goals;
-using eTasks_server.Models.Entities.Productivity;
+using eTasks_server.Models.Enums.Goals;
+using eTasks_server.Models.Enums.Tasks;
 
 namespace eTasks_server.Models.DTOs.Goals.Requests
 {

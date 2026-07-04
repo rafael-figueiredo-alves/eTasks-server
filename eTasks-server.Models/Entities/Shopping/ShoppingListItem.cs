@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities;
+using eTasks_server.Models.Enums.Shopping;
 using Microsoft.EntityFrameworkCore;
 
 namespace eTasks_server.Models.Entities.Shopping

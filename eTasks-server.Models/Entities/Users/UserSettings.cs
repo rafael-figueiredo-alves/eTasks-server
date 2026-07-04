@@ -1,3 +1,4 @@
+using eTasks_server.Models.Enums.Users;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 

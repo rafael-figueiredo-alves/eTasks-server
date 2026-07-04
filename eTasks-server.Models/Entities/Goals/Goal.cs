@@ -1,5 +1,6 @@
-using eTasks_server.Models.Entities.Productivity;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Goals;
+using eTasks_server.Models.Enums.Tasks;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 

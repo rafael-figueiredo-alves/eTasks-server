@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Shopping
+namespace eTasks_server.Models.Enums.Shopping
 {
     /// <summary>
     /// Define a unidade usada no item de compra.

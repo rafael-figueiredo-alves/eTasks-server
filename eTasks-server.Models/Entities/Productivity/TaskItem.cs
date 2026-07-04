@@ -1,5 +1,5 @@
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Tasks;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 

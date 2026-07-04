@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Common;
+using eTasks_server.Models.Enums.Common;
 
 namespace eTasks_server.Models.DTOs.Tasks.Requests
 {

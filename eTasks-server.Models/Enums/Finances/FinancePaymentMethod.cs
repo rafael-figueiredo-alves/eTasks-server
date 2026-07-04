@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Finances
+namespace eTasks_server.Models.Enums.Finances
 {
     /// <summary>
     /// Define a forma de pagamento usada no lançamento financeiro.

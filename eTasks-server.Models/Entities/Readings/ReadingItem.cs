@@ -1,5 +1,5 @@
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Readings;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,7 +78,15 @@ namespace eTasks_server.Models.Entities.Readings
         /// Data da última atualização do registro.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Marca se foi excluído
+        /// </summary>
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Data da exclusão
+        /// </summary>
         public DateTime? DeletedAt { get; set; }
 
         /// <summary>

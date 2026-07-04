@@ -3,6 +3,8 @@ using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Shopping.Requests;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Models.Entities.Shopping;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Shopping;
 using eTasks_server.Tests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

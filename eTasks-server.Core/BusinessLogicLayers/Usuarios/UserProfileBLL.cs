@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
+using eTasks_server.Models.Enums.Users;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Usuarios
 {

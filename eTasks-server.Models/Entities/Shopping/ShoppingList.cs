@@ -1,5 +1,5 @@
-using eTasks_server.Models.Entities;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Shopping;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,7 +50,13 @@ namespace eTasks_server.Models.Entities.Shopping
         /// Data da última atualização da lista.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
+        /// <summary>
+        /// Indicador que registro está deletado
+        /// </summary>
         public bool IsDeleted { get; set; }
+        /// <summary>
+        /// Data/Hora da exclusão
+        /// </summary>
         public DateTime? DeletedAt { get; set; }
 
         /// <summary>

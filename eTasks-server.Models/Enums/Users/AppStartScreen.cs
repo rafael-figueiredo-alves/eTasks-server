@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Users
+namespace eTasks_server.Models.Enums.Users
 {
     /// <summary>
     /// Define a tela inicial preferida do aplicativo.

@@ -3,6 +3,7 @@ using eTasks_server.Endpoints.API_Resourcers;
 using eTasks_server.Extensions;
 using eTasks_server.Models.DTOs.Tasks.Requests;
 using eTasks_server.Models.DTOs.Tasks.Responses;
+using eTasks_server.Models.Enums.Tasks;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

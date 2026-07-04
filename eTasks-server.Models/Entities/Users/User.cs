@@ -86,11 +86,19 @@ namespace eTasks_server.Models.Entities.Users
         /// Relação de RefreshTokens de seções do usuário
         /// </summary>
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        /// <summary>
+        /// Logins externos
+        /// </summary>
         public ICollection<UserExternalLogin> ExternalLogins { get; set; } = new List<UserExternalLogin>();
         /// <summary>
         /// Lista de códigos para troca de senhas
         /// </summary>
         public ICollection<PasswordResetCode> PasswordResetCodes { get; set; } = new List<PasswordResetCode>();
+
+        /// <summary>
+        /// Códigos de reativação da conta
+        /// </summary>
         public ICollection<AccountReactivationCode> AccountReactivationCodes { get; set; } = new List<AccountReactivationCode>();
         /// <summary>
         /// Acesso ao log de logins do usuário
@@ -132,7 +140,14 @@ namespace eTasks_server.Models.Entities.Users
         /// Lançamentos financeiros do usuário.
         /// </summary>
         public ICollection<FinanceEntry> FinanceEntries { get; set; } = new List<FinanceEntry>();
+        /// <summary>
+        /// Registros de Push
+        /// </summary>
         public ICollection<PushDeviceRegistration> PushDeviceRegistrations { get; set; } = new List<PushDeviceRegistration>();
+
+        /// <summary>
+        /// Recepientes de notificação push
+        /// </summary>
         public ICollection<NotificationRecipient> NotificationRecipients { get; set; } = new List<NotificationRecipient>();
         #endregion
 

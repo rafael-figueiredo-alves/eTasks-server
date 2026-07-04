@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Gamification
+namespace eTasks_server.Models.Enums.Bonus
 {
     /// <summary>
     /// Define as origens possíveis para concessão de pontos ao usuário.

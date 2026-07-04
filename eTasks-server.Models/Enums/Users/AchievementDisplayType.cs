@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Users
+namespace eTasks_server.Models.Enums.Users
 {
     /// <summary>
     /// Tipo de exibição de conquista, indicando se a conquista é representada por um troféu ou uma medalha.

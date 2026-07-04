@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Productivity;
+using eTasks_server.Models.Enums.Tasks;
 
 namespace eTasks_server.Models.DTOs.Tasks.Responses
 {

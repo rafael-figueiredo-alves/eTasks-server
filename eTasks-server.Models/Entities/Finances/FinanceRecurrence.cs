@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Common;
+using eTasks_server.Models.Enums.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace eTasks_server.Models.Entities.Finances

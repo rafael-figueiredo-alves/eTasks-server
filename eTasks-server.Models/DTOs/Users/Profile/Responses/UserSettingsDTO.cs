@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Users;
 
 namespace eTasks_server.Models.DTOs.Users.Profile.Responses
 {

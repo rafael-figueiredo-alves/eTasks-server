@@ -1,7 +1,8 @@
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Goals.Requests;
-using eTasks_server.Models.Entities.Goals;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Goals;
 using eTasks_server.Tests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -51,7 +52,7 @@ namespace eTasks_server.Tests.BusinessLogic.Goals
             {
                 UserUid = user.Uid,
                 Points = 10,
-                Source = Models.Entities.Gamification.BonusPointSource.GoalCompletion,
+                Source = BonusPointSource.GoalCompletion,
                 SourceReferenceId = goal.Id
             });
             await context.SaveChangesAsync();

@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Productivity
+namespace eTasks_server.Models.Enums.Tasks
 {
     /// <summary>
     /// Define o nivel de prioridade da tarefa.

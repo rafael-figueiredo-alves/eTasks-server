@@ -1,9 +1,11 @@
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Finances.Requests;
-using eTasks_server.Models.Entities.Common;
 using eTasks_server.Models.Entities.Finances;
 using eTasks_server.Models.Entities.Gamification;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Common;
+using eTasks_server.Models.Enums.Finances;
 using eTasks_server.Tests.Support;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

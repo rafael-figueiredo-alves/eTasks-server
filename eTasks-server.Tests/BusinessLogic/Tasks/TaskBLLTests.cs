@@ -1,9 +1,10 @@
 using eTasks_server.Core.BusinessLogicLayers.API_Resources.Tasks;
 using eTasks_server.Core.BusinessLogicLayers.Interfaces;
 using eTasks_server.Models.DTOs.Tasks.Requests;
-using eTasks_server.Models.Entities.Common;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Models.Entities.Productivity;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Common;
 using eTasks_server.Tests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Gamification;
+using eTasks_server.Models.Enums.Bonus;
 using eTasks_server.Models.Utils;
 using Microsoft.EntityFrameworkCore;
 

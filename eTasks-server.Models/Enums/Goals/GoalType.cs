@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Goals
+namespace eTasks_server.Models.Enums.Goals
 {
     /// <summary>
     /// Define a categoria principal da meta.

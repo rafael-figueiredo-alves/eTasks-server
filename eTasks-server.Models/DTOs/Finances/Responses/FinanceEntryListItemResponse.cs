@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Finances;
+using eTasks_server.Models.Enums.Finances;
 
 namespace eTasks_server.Models.DTOs.Finances.Responses
 {

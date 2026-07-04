@@ -4,6 +4,8 @@ using eTasks_server.Models.DTOs.Readings.Requests;
 using eTasks_server.Models.Entities.Gamification;
 using eTasks_server.Models.Entities.Readings;
 using eTasks_server.Models.Entities.Users;
+using eTasks_server.Models.Enums.Bonus;
+using eTasks_server.Models.Enums.Readings;
 using eTasks_server.Tests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

@@ -1,4 +1,4 @@
-using eTasks_server.Models.Entities.Readings;
+using eTasks_server.Models.Enums.Readings;
 
 namespace eTasks_server.Models.DTOs.Readings.Requests
 {

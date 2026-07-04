@@ -1,4 +1,4 @@
-namespace eTasks_server.Models.Entities.Common
+namespace eTasks_server.Models.Enums.Common
 {
     /// <summary>
     /// Representa os dias da semana com suporte a combinação por flags.
