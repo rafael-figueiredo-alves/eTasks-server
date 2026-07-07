@@ -7,17 +7,32 @@ using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers
 {
+    /// <summary>
+    /// Classe base para implementação de todas as entidades de Regras de Negócio
+    /// </summary>
+    /// <typeparam name="TInterface"></typeparam>
     public abstract class BaseBLL<TInterface> where TInterface : class
     {
         protected readonly AppDbContext _context;
         protected readonly ILogger<TInterface> _logger;
 
+        /// <summary>
+        /// Construtor
+        /// </summary>
+        /// <param name="context">Contexto de banco de dados</param>
+        /// <param name="logger">Injeta serviço de log</param>
         protected BaseBLL(AppDbContext context, ILogger<TInterface> logger)
         {
             _context = context;
             _logger = logger;
         }
 
+        /// <summary>
+        /// Método base para salvar mudanças de contexto
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ApiException">Retorna erros de API</exception>
         protected async Task<int> SaveChangesContextAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -31,6 +46,14 @@ namespace eTasks_server.Core.BusinessLogicLayers
             }
         }
 
+        /// <summary>
+        /// Método para validar que uma entidade existe
+        /// </summary>
+        /// <typeparam name="T">Tipo da entidade</typeparam>
+        /// <param name="entity">entidade</param>
+        /// <param name="errorMessage">Mensagem de erro</param>
+        /// <returns></returns>
+        /// <exception cref="ApiException">Estoura exceção de API</exception>
         protected T EnsureFound<T>(T? entity, string errorMessage = "Recurso não encontrado.")
         {
             if (entity == null)
@@ -58,6 +81,12 @@ namespace eTasks_server.Core.BusinessLogicLayers
             }
         }
 
+        /// <summary>
+        /// Método para garantir acesso restrito de dados do usuário logado
+        /// </summary>
+        /// <param name="entityUserUid">UID do usuário da entidade</param>
+        /// <param name="currentUserUid">UID do usuário autenticado</param>
+        /// <exception cref="ApiException">Erro de api</exception>
         protected void EnsureOwnership(Guid entityUserUid, Guid currentUserUid)
         {
             if (entityUserUid != currentUserUid)
@@ -67,6 +96,13 @@ namespace eTasks_server.Core.BusinessLogicLayers
             }
         }
 
+        /// <summary>
+        /// Método para validar e retornar o usuário ativo via token/autenticação
+        /// </summary>
+        /// <param name="uid">UID do usuário</param>
+        /// <param name="includeFunc">Função a incluir</param>
+        /// <returns></returns>
+        /// <exception cref="ApiException"></exception>
         protected async Task<User> GetAndValidateActiveUserAsync(Guid uid, Func<IQueryable<User>, IQueryable<User>>? includeFunc = null)
         {
             var query = _context.Users.AsQueryable();
@@ -99,6 +135,11 @@ namespace eTasks_server.Core.BusinessLogicLayers
             return user;
         }
 
+        /// <summary>
+        /// Executar ação em uma transação para restrigir/proteger ãção
+        /// </summary>
+        /// <param name="action">Ação a executar em transação</param>
+        /// <returns></returns>
         protected async Task ExecuteInTransactionAsync(Func<Task> action)
         {
             var strategy = _context.Database.CreateExecutionStrategy();

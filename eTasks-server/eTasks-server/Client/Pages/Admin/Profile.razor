@@ -32,10 +32,12 @@ else if (_profile != null)
                         <MudText Typo="Typo.body2" Color="Color.Secondary">@_profile.Email</MudText>
                         
                         <div class="mt-6 d-flex gap-2">
-                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadPhoto" Accept=".jpg,.jpeg,.png,.webp">
+                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadPhoto" Accept=".jpg,.jpeg,.png,.webp" Context="ProfileImage">
+                                <CustomContent>
                                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PhotoCamera">
                                         Alterar Foto
                                     </MudButton>
+                                </CustomContent>
                             </MudFileUpload>
                             
                             @if (!string.IsNullOrEmpty(_profile.PhotoBase64))

@@ -354,19 +354,17 @@ namespace eTasks_server.Extensions
             private IServiceCollection SetupSecurity(ConfigurationManager configuration)
             {
                 //Configura os serviços de autenticação e autorização para a aplicação, incluindo políticas de acesso e registro de serviços relacionados à segurança, como autenticação JWT, autenticação por cookie e serviços de negócios relacionados à autenticação e autorização. Isso é essencial para proteger os recursos da API e garantir que apenas usuários autorizados possam acessar determinadas funcionalidades. Deve ser chamado durante a configuração dos serviços da aplicação para garantir que as políticas de segurança sejam aplicadas corretamente.
-                services.AddAuthorization(options =>
-                {
+                services.AddAuthorizationBuilder()
                     //Adiciona Política de autorização "Admin" que requer que o usuário tenha a função "Admin". Essa política pode ser aplicada a endpoints ou controladores específicos para restringir o acesso apenas a usuários com privilégios administrativos, garantindo que apenas usuários autorizados possam acessar funcionalidades sensíveis ou administrativas da aplicação.
-                    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+                    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
 
                     //Adiciona Política de autorização "WebAdmin" que requer autenticação via cookie e a função "Admin". Essa política é específica para o painel administrativo da aplicação, garantindo que apenas usuários autenticados por cookie e com privilégios administrativos possam acessar as funcionalidades administrativas do painel, proporcionando uma camada adicional de segurança para as áreas sensíveis da aplicação.
-                    options.AddPolicy("WebAdmin", policy =>
+                    .AddPolicy("WebAdmin", policy =>
                     {
                         policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
                         policy.RequireAuthenticatedUser();
                         policy.RequireRole("Admin");
                     });
-                });
 
                 //Adiciona controladores para a aplicação, permitindo que os endpoints da API sejam definidos usando controladores MVC, o que é essencial para a construção de uma API RESTful e para a organização do código relacionado aos endpoints da API.
                 services.AddControllers();

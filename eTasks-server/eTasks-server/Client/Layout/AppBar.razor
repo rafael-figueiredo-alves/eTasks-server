@@ -27,11 +27,13 @@
         Sobre
     </MudButton>
 
-    <MudIconButton Icon="@(UserState!.IsDarkTheme ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                   Color="Color.Inherit"
-                   OnClick="ToggleTheme"
-                   Class="mx-2"
-                   Title="@(UserState!.IsDarkTheme ? "Mudar para modo claro" : "Mudar para modo escuro")" />
+    <MudTooltip Text="@(UserState!.IsDarkTheme ? "Mudar para modo claro" : "Mudar para modo escuro")">
+        <MudIconButton Icon="@(UserState!.IsDarkTheme ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit"
+                       OnClick="ToggleTheme"
+                       Class="mx-2"                   
+                       />
+    </MudTooltip>
 
     <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true" Class="ml-4">
         <ActivatorContent>

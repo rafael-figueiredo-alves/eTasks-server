@@ -23,7 +23,7 @@ namespace eTasks_server.Core.Data
         {
         }
 
-        #region DbSets
+        #region DbSets para as tabelas do sistema
         public DbSet<eTasksVersion> DbVersion { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -54,6 +54,7 @@ namespace eTasks_server.Core.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            #region Configurando entidades para o banco de dados
             eTasksVersion.Configure(modelBuilder);
             User.Configure(modelBuilder);
             RefreshToken.Configure(modelBuilder);
@@ -81,10 +82,15 @@ namespace eTasks_server.Core.Data
             NotificationMessage.Configure(modelBuilder);
             NotificationRecipient.Configure(modelBuilder);
             ConfigureGuidColumns(modelBuilder);
+            #endregion
 
             base.OnModelCreating(modelBuilder);
         }
 
+        /// <summary>
+        /// Método que configura o GUID no sistema
+        /// </summary>
+        /// <param name="modelBuilder"></param>
         private static void ConfigureGuidColumns(ModelBuilder modelBuilder)
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
