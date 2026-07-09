@@ -1,5 +1,6 @@
 using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.DTOs.Auth.Responses;
+using eTasks_server.Models.DTOs.GoogleAuth;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
 {
@@ -23,12 +24,44 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <returns>Retorna o LoginResponse com Token e RefreshToken</returns>
         Task<LoginResponse> RegisterAsync(RegisterRequest request);
 
+        /// <summary>
+        /// Inicia o login com Google
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="requestBaseUri"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<GoogleAuthStartResponse> StartGoogleLoginAsync(GoogleAuthStartRequest request, Uri requestBaseUri, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Obtem o status do login com google
+        /// </summary>
+        /// <param name="sessionCode"></param>
+        /// <param name="userAgent"></param>
+        /// <param name="clientInstanceId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<GoogleAuthStatusResponse> GetGoogleLoginStatusAsync(Guid sessionCode, string userAgent, string clientInstanceId, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Consome o login com Google
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<LoginResponse> ConsumeGoogleLoginAsync(GoogleAuthConsumeRequest request, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Completa o login com google
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="state"></param>
+        /// <param name="error"></param>
+        /// <param name="errorDescription"></param>
+        /// <param name="ipAddress"></param>
+        /// <param name="requestBaseUri"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<GoogleAuthCallbackResult> CompleteGoogleLoginAsync(string? code, string? state, string? error, string? errorDescription, string? ipAddress, Uri requestBaseUri, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -67,6 +100,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// <returns>Verdadeiro se a confirmação puder ser concluída</returns>
         Task<bool> ConfirmEmailAsync(string token);
 
+        /// <summary>
+        /// Recupera conta marcada para exclusão
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<AccountRecoveryResult> RecoverDeletedAccountAsync(string code, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -74,14 +113,5 @@ namespace eTasks_server.Core.BusinessLogicLayers.Interfaces
         /// </summary>
         /// <param name="refreshToken">Refresh token a ser revogado</param>
         Task RevokeRefreshTokenAsync(string? refreshToken);
-    }
-
-    public class GoogleAuthCallbackResult
-    {
-        public bool Success { get; set; }
-        public Guid? SessionCode { get; set; }
-        public string UserAgent { get; set; } = string.Empty;
-        public string? RedirectUrl { get; set; }
-        public string Message { get; set; } = string.Empty;
     }
 }
