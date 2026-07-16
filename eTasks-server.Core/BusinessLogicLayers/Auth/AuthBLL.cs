@@ -4,6 +4,7 @@ using eTasks_server.Core.Helpers;
 using eTasks_server.Core.Services.Interfaces;
 using eTasks_server.Models.DTOs.Auth.Requests;
 using eTasks_server.Models.DTOs.Auth.Responses;
+using eTasks_server.Models.DTOs.GoogleAuth;
 using eTasks_server.Models.Entities.Users;
 using eTasks_server.Models.Exceptions;
 using eTasks_server.Models.Utils;
@@ -22,6 +23,9 @@ using System.Text.Json.Serialization;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Auth
 {
+    /// <summary>
+    /// Classe de negócio responsável por gerenciar a autenticação e autorização da aplicação
+    /// </summary>
     public class AuthBLL : BaseBLL<IAuthBLL>, IAuthBLL
     {
         private readonly IConfiguration _configuration;
@@ -31,6 +35,17 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
         private readonly IAccountDeletionRetentionService _accountDeletionRetentionService;
         private readonly IHttpClientFactory _httpClientFactory;
 
+        /// <summary>
+        /// Método construtor
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        /// <param name="emailService"></param>
+        /// <param name="secretProtector"></param>
+        /// <param name="serverSettingsProvider"></param>
+        /// <param name="accountDeletionRetentionService"></param>
+        /// <param name="httpClientFactory"></param>
+        /// <param name="logger"></param>
         public AuthBLL(
             AppDbContext context,
             IConfiguration configuration,
@@ -49,27 +64,39 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
             _httpClientFactory = httpClientFactory;
         }
 
+        /// <summary>
+        /// Método responsável por registrar uma nova conta de usuário ao sistema
+        /// </summary>
+        /// <param name="request">Dados do usuário paar registr</param>
+        /// <returns></returns>
+        /// <exception cref="ValidationException"></exception>
         public async Task<LoginResponse> RegisterAsync(RegisterRequest request)
         {
+            // Informa etapa de registro no log
             _logger.LogInformation("Iniciando processo de registro para o e-mail: {Email}", request.Email);
 
+            // Validando se e-mail ou senha estão vazios ou em branco
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException("Geral", "E-mail e senha sao obrigatorios.");
+                throw new ValidationException("Geral", "E-mail e senha são obrigatórios.");
 
+            // Valida se o UserAgent veio preenchido
             if (string.IsNullOrWhiteSpace(request.UserAgent))
-                throw new ValidationException("UserAgent", "O UserAgent e obrigatorio.");
+                throw new ValidationException("UserAgent", "O UserAgent é obrigatório.");
 
+            // Valida se já existe conta com o e-mail informado
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                _logger.LogWarning("Tentativa de registro falhou. O e-mail {Email} ja esta em uso.", request.Email);
-                throw new ValidationException("Email", "O e-mail informado ja esta cadastrado.");
+                _logger.LogWarning("Tentativa de registro falhou. O e-mail {Email} já está em uso.", request.Email);
+                throw new ValidationException("Email", "O e-mail informado já está cadastrado.");
             }
 
+            // Inicia gravação da imagem de perfil se enviada
             string? photoPath = null;
             if (!string.IsNullOrWhiteSpace(request.PhotoBase64))
             {
                 try
                 {
+                    // Salva foto de perfil
                     photoPath = await UserPhotoStorage.SaveAsync(request.PhotoBase64, null);
                 }
                 catch
@@ -77,6 +104,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 }
             }
 
+            // Cria entidade de usuário
             var user = new User
             {
                 Name = request.Name,
@@ -86,80 +114,112 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
                 IsAdmin = false
             };
 
+            // Adiciona a conta ao pipeline de criação do EF
             await _context.Users.AddAsync(user);
-            await _context.UserSettings.AddAsync(new UserSettings { UserUid = user.Uid });
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Novo usuario criado no banco de dados. Uid: {Uid}, E-mail: {Email}", user.Uid, user.Email);
 
+            // Adiciona os dados padrões das configurações
+            await _context.UserSettings.AddAsync(new UserSettings { UserUid = user.Uid });
+
+            // Salva tudo no banco
+            await _context.SaveChangesAsync();
+
+            // Informa no log
+            _logger.LogInformation("Novo usuário criado no banco de dados. Uid: {Uid}, E-mail: {Email}", user.Uid, user.Email);
+
+            // Gerador de Token JWT do novo usuário para confirmar conta via e-mail
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration[Constants.JwtKeyConfig] ?? "defaultSecretKey_1234567890_min32chars!");
+            
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[] { new Claim("ConfirmEmail", user.Uid.ToString()) }),
                 Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
+
+            // Grava token de confirmação de e-mail
             var confirmationToken = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
 
+            // Gera link para confirmação de e-amil
             var baseUrl = _configuration[Constants.ApiBaseUrl] ?? "http://localhost:5033";
             var confirmationLink = $"{(baseUrl + _configuration[Constants.ApiV2Path]).TrimEnd('/')}/auth/confirm-email?token={confirmationToken}";
 
-#pragma warning disable CS4014
+            // Envia e-mail sem aguardar retorno (sem await)
+            #pragma warning disable CS4014
             _emailService.SendAccountConfirmationEmailAsync(user.Email, confirmationLink);
-#pragma warning restore CS4014
+            #pragma warning restore CS4014
 
+            // Gera resposta com dados da conta e token JWT e Refresh Token para autenticação e autorização
             return await GenerateAuthResponseAsync(user, request.UserAgent);
         }
 
+        /// <summary>
+        /// Efetua login numa conta de usuário
+        /// </summary>
+        /// <param name="request">Dados para efetuar login</param>
+        /// <param name="ipAddress">Endereço de IP</param>
+        /// <returns></returns>
+        /// <exception cref="ValidationException"></exception>
+        /// <exception cref="ApiException"></exception>
         public async Task<LoginResponse> LoginAsync(LoginRequest request, string? ipAddress)
         {
-            _logger.LogInformation("Iniciando tentativa de login para o usuario: {Email}", request.Email);
+            // Informa tentativa de login no log
+            _logger.LogInformation("Iniciando tentativa de login para o usuário: {Email}", request.Email);
 
+            // Valida se foi passado usuário e senha
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException("Geral", "Forneca o e-mail e a senha para continuar.");
+                throw new ValidationException("Geral", "Forneçaa o e-mail e a senha para continuar.");
 
+            // Valida se foi informado UserAgent
             if (string.IsNullOrWhiteSpace(request.UserAgent))
-                throw new ValidationException("UserAgent", "O UserAgent e obrigatorio.");
+                throw new ValidationException("UserAgent", "O UserAgent é obrigatório.");
 
+            // Tenta obter usuário informado
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+            // Valida e retorna se usuário não existir no banco de dados
             if (user == null)
             {
-                _logger.LogWarning("Falha de autenticacao. E-mail nao encontrado: {Email}", request.Email);
+                _logger.LogWarning("Falha de autenticação. E-mail não encontrado: {Email}", request.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = null, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
-                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Nao encontramos uma conta com esse e-mail.");
+                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Não encontramos uma conta com esse e-mail.");
             }
 
+            // Valida se o usuário encontrado foi removido (soft delete)
             if (user.IsDeleted)
             {
-                _logger.LogWarning("Usuario {Uid} ({Email}) tentou logar, mas a conta foi removida.", user.Uid, user.Email);
+                _logger.LogWarning("Usuário {Uid} ({Email}) tentou logar, mas a conta foi removida.", user.Uid, user.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Blocked", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
-                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi removida e nao pode mais ser utilizada.");
+                throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi removida e não pode mais ser utilizada.");
             }
 
+            // Valida a senha informada
             if (!BCrypt.Net.BCrypt.Verify(request.Password, _secretProtector.Unprotect(user.PasswordHash)))
             {
-                _logger.LogWarning("Falha de autenticacao. Senha incorreta para o usuario: {Uid}", user.Uid);
+                _logger.LogWarning("Falha de autenticação. Senha incorreta para o usuário: {Uid}", user.Uid);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Failed", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Senha incorreta. Verifique e tente novamente.");
             }
 
+            // Valida se usuário se encontra bloqueado para acessar o sistema
             if (user.IsBlocked)
             {
-                _logger.LogWarning("Usuario {Uid} ({Email}) tentou logar, mas encontra-se bloqueado.", user.Uid, user.Email);
+                _logger.LogWarning("Usuário {Uid} ({Email}) tentou logar, mas encontra-se bloqueado.", user.Uid, user.Email);
                 await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Blocked", IpAddress = ipAddress, UserAgent = request.UserAgent });
                 await _context.SaveChangesAsync();
                 throw new ApiException(System.Net.HttpStatusCode.Forbidden, "Sua conta foi suspensa temporariamente. Entre em contato com o suporte.");
             }
 
-            _logger.LogInformation("Usuario {Uid} autenticado com sucesso.", user.Uid);
+            // Notifica login bem sucedido
+            _logger.LogInformation("Usuário {Uid} autenticado com sucesso.", user.Uid);
 
             await _context.LoginLogs.AddAsync(new LoginLog { UserUid = user.Uid, Status = "Success", IpAddress = ipAddress, UserAgent = request.UserAgent });
             user.LastAccessAt = SaoPauloDateTime.Now();
 
+            // Retorna dados de autenticação e autorização (Token e refresh token)
             return await GenerateAuthResponseAsync(user, request.UserAgent);
         }
 
