@@ -10,6 +10,9 @@ using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para administracao de usuarios no painel.
+    /// </summary>
     public class UserAdminBLL : BaseBLL<IUserAdminBLL>, IUserAdminBLL
     {
         private readonly IEmailService _emailService;
@@ -21,6 +24,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             _secretProtector = secretProtector;
         }
 
+        /// <summary>
+        /// Retorna a lista de usuarios nao administrativos ativos.
+        /// </summary>
+        /// <returns>Lista de usuarios para o painel.</returns>
         public async Task<List<AdminUserDTO>> GetUsersAsync()
         {
             return await _context.Users
@@ -41,6 +48,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Alterna o bloqueio de um usuario.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
+        /// <returns>True quando a operacao for concluida.</returns>
         public async Task<bool> ToggleBlockAsync(Guid uid)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
@@ -63,6 +75,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return true;
         }
 
+        /// <summary>
+        /// Define uma nova senha para o usuario.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
+        /// <param name="newPassword">Nova senha.</param>
+        /// <returns>True quando a operacao for concluida.</returns>
         public async Task<bool> SetPasswordAsync(Guid uid, string newPassword)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
@@ -81,6 +99,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return true;
         }
 
+        /// <summary>
+        /// Marca a conta do usuario como confirmada.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
+        /// <returns>True quando a operacao for concluida.</returns>
         public async Task<bool> ConfirmAccountAsync(Guid uid)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
@@ -91,6 +114,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return true;
         }
 
+        /// <summary>
+        /// Gera e envia um e-mail de redefinicao de senha.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
+        /// <returns>True quando a operacao for concluida.</returns>
         public async Task<bool> SendPasswordResetEmailAsync(Guid uid)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid && !u.IsDeleted);
@@ -113,6 +141,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return true;
         }
 
+        /// <summary>
+        /// Retorna os ultimos logs de login de um usuario.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
+        /// <returns>Lista dos ultimos logs de login.</returns>
         public async Task<List<UserLoginLogDTO>> GetLoginLogsAsync(Guid uid)
         {
             return await _context.LoginLogs
@@ -130,6 +163,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Remove permanentemente uma conta de usuario.
+        /// </summary>
+        /// <param name="uid">Identificador do usuario.</param>
         public async Task DeletePermanentlyAsync(Guid uid)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Uid == uid);
@@ -142,6 +179,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Remove em lote usuarios marcados como excluidos.
+        /// </summary>
+        /// <returns>Quantidade de usuarios removidos.</returns>
         public async Task<int> PurgeDeletedUsersAsync()
         {
             var deletedUsers = await _context.Users

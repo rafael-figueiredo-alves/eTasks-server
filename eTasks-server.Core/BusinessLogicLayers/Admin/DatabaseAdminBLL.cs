@@ -16,6 +16,9 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para operacoes administrativas sobre o banco de dados.
+    /// </summary>
     public partial class DatabaseAdminBLL : BaseBLL<IDatabaseAdminBLL>, IDatabaseAdminBLL
     {
         private const int MaxScriptLength = 200_000;
@@ -27,6 +30,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             _configuration = configuration;
         }
 
+        /// <summary>
+        /// Retorna um panorama do banco de dados atual.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resumo das tabelas e do banco.</returns>
         public async Task<DatabaseOverviewResponse> GetOverviewAsync(CancellationToken cancellationToken = default)
         {
             var connection = _context.Database.GetDbConnection();
@@ -59,6 +67,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Gera um arquivo de backup SQL da base atual.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Arquivo de backup gerado.</returns>
         public async Task<DatabaseBackupFileResponse> GenerateBackupAsync(CancellationToken cancellationToken = default)
         {
             var connection = _context.Database.GetDbConnection();
@@ -109,6 +122,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Executa um script SQL informado pelo administrador.
+        /// </summary>
+        /// <param name="request">Conteudo do script SQL.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resultado da execucao do script.</returns>
         public async Task<DatabaseScriptExecutionResponse> ExecuteScriptAsync(DatabaseScriptExecutionRequest request, CancellationToken cancellationToken = default)
         {
             ValidateScript(request.Script);
@@ -124,6 +143,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Limpa a base de dados preservando contas administrativas.
+        /// </summary>
+        /// <param name="adminKey">Chave administrativa de validacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resultado da limpeza da base.</returns>
         public async Task<DatabaseScriptExecutionResponse> ClearDatabaseAsync(string adminKey, CancellationToken cancellationToken = default)
         {
             ValidateAdminKey(adminKey);
@@ -177,6 +202,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Carrega o resumo das tabelas do banco.
+        /// </summary>
+        /// <param name="connection">Conexao aberta com o banco.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de tabelas com metadados.</returns>
         private static async Task<List<DatabaseTableSummaryResponse>> LoadTableSummariesAsync(DbConnection connection, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -204,6 +235,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
 
             await reader.CloseAsync();
 
+            // Busca a contagem real de linhas depois da leitura dos metadados.
             foreach (var table in tables)
             {
                 table.Rows = Convert.ToInt64(
@@ -214,6 +246,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return tables;
         }
 
+        /// <summary>
+        /// Obtém o comando CREATE TABLE de uma tabela.
+        /// </summary>
+        /// <param name="connection">Conexao aberta com o banco.</param>
+        /// <param name="tableName">Nome da tabela.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>SQL do CREATE TABLE.</returns>
         private static async Task<string> GetCreateTableStatementAsync(DbConnection connection, string tableName, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -228,6 +267,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             throw new InvalidOperationException($"Nao foi possivel gerar o CREATE TABLE para {tableName}.");
         }
 
+        /// <summary>
+        /// Acrescenta ao script os INSERTs de uma tabela.
+        /// </summary>
+        /// <param name="connection">Conexao aberta com o banco.</param>
+        /// <param name="tableName">Nome da tabela.</param>
+        /// <param name="script">Builder do script SQL.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private static async Task AppendTableRowsAsync(DbConnection connection, string tableName, StringBuilder script, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -262,6 +308,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Executa um comando escalar no banco.
+        /// </summary>
+        /// <param name="connection">Conexao aberta com o banco.</param>
+        /// <param name="sql">SQL a executar.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Valor escalar retornado.</returns>
         private static async Task<object?> ExecuteScalarAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -269,6 +322,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await command.ExecuteScalarAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Executa um comando sem retorno de linhas.
+        /// </summary>
+        /// <param name="connection">Conexao aberta com o banco.</param>
+        /// <param name="sql">SQL a executar.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Quantidade de linhas afetadas.</returns>
         private static async Task<int> ExecuteNonQueryAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
         {
             await using var command = connection.CreateCommand();
@@ -276,6 +336,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Abre a conexao apenas quando necessario.
+        /// </summary>
+        /// <param name="connection">Conexao com o banco.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>True quando a funcao abriu a conexao.</returns>
         private static async Task<bool> OpenIfNeededAsync(DbConnection connection, CancellationToken cancellationToken)
         {
             if (connection.State == ConnectionState.Open)
@@ -287,6 +353,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return true;
         }
 
+        /// <summary>
+        /// Valida se o script SQL pode ser executado pela tela administrativa.
+        /// </summary>
+        /// <param name="script">Script SQL informado.</param>
         private static void ValidateScript(string script)
         {
             if (string.IsNullOrWhiteSpace(script))
@@ -294,11 +364,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 throw new ValidationException(nameof(script), "Informe o script SQL.");
             }
 
+            // Limite de tamanho para evitar scripts abusivos na interface.
             if (script.Length > MaxScriptLength)
             {
                 throw new ValidationException(nameof(script), $"O script deve ter no maximo {MaxScriptLength} caracteres.");
             }
 
+            // Remove comentarios e literais antes de procurar comandos bloqueados.
             var normalized = StripAllowedForeignKeyActions(StripSqlStringLiterals(StripSqlComments(script)));
             if (BlockedCommandRegex().IsMatch(normalized))
             {
@@ -306,6 +378,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Remove comentarios de SQL do script informado.
+        /// </summary>
+        /// <param name="script">Script SQL.</param>
+        /// <returns>Script sem comentarios.</returns>
         private static string StripSqlComments(string script)
         {
             var withoutBlockComments = Regex.Replace(script, @"/\*.*?\*/", " ", RegexOptions.Singleline);
@@ -313,15 +390,35 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return withoutLineComments;
         }
 
+        /// <summary>
+        /// Remove literais de string para evitar falsos positivos na validacao do script.
+        /// </summary>
+        /// <param name="script">Script SQL.</param>
+        /// <returns>Script sem literais.</returns>
         private static string StripSqlStringLiterals(string script)
             => Regex.Replace(script, @"'(''|\\.|[^'])*'", "''", RegexOptions.Singleline);
 
+        /// <summary>
+        /// Mantem apenas as acoes de FK permitidas durante a validacao do script.
+        /// </summary>
+        /// <param name="script">Script SQL.</param>
+        /// <returns>Script filtrado para validacao.</returns>
         private static string StripAllowedForeignKeyActions(string script)
             => Regex.Replace(script, @"\bON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT|NO\s+ACTION)\b", " ", RegexOptions.IgnoreCase);
 
+        /// <summary>
+        /// Coloca um identificador SQL entre crases.
+        /// </summary>
+        /// <param name="identifier">Identificador da tabela ou coluna.</param>
+        /// <returns>Identificador quoted.</returns>
         private static string QuoteIdentifier(string identifier)
             => $"`{identifier.Replace("`", "``", StringComparison.Ordinal)}`";
 
+        /// <summary>
+        /// Converte um valor CLR para literal SQL.
+        /// </summary>
+        /// <param name="value">Valor de entrada.</param>
+        /// <returns>Literal SQL seguro.</returns>
         private static string ToSqlLiteral(object value)
         {
             if (value is null || value == DBNull.Value)
@@ -344,11 +441,21 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Escapa caracteres especiais de uma string SQL.
+        /// </summary>
+        /// <param name="value">Texto original.</param>
+        /// <returns>Texto escapado.</returns>
         private static string EscapeSqlString(string value)
             => value.Replace("\\", "\\\\", StringComparison.Ordinal)
                 .Replace("'", "''", StringComparison.Ordinal)
                 .Replace("\0", "\\0", StringComparison.Ordinal);
 
+        /// <summary>
+        /// Normaliza um nome de arquivo removendo caracteres invalidos.
+        /// </summary>
+        /// <param name="value">Nome original.</param>
+        /// <returns>Nome sanitizado.</returns>
         private static string SanitizeFileName(string value)
         {
             var invalidChars = Path.GetInvalidFileNameChars();
@@ -362,6 +469,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return builder.Length == 0 ? "database" : builder.ToString();
         }
 
+        /// <summary>
+        /// Valida a chave administrativa configurada para operacoes destrutivas.
+        /// </summary>
+        /// <param name="adminKey">Chave informada.</param>
         private void ValidateAdminKey(string adminKey)
         {
             var configuredAdminKey = _configuration[Constants.AdminApiKeyConfig];
@@ -370,6 +481,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN nao configurada.");
             }
 
+            // Comparacao em tempo constante para reduzir risco de oracle por timing.
             if (string.IsNullOrWhiteSpace(adminKey)
                 || !FixedTimeEquals(adminKey.Trim(), configuredAdminKey.Trim()))
             {
@@ -377,6 +489,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Compara duas strings com tempo constante.
+        /// </summary>
+        /// <param name="value">Valor informado.</param>
+        /// <param name="expected">Valor esperado.</param>
+        /// <returns>True quando os valores forem iguais.</returns>
         private static bool FixedTimeEquals(string value, string expected)
         {
             var valueBytes = Encoding.UTF8.GetBytes(value);

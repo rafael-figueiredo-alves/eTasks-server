@@ -15,10 +15,17 @@ using System.Net;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para conquistas e regras de pontos de bonus do painel administrativo.
+    /// </summary>
     public class BonusAdminBLL(AppDbContext context, ILogger<IBonusAdminBLL> logger) : BaseBLL<IBonusAdminBLL>(context, logger), IBonusAdminBLL
     {
         #region Bonus Achievements
 
+        /// <summary>
+        /// Retorna a lista de conquistas cadastradas.
+        /// </summary>
+        /// <returns>Lista de conquistas de bonus.</returns>
         public async Task<List<BonusAchievementDTO>> GetAchievementsAsync()
         {
             return await _context.BonusAchievements
@@ -37,6 +44,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Retorna uma conquista de bonus pelo identificador.
+        /// </summary>
+        /// <param name="id">Identificador da conquista.</param>
+        /// <returns>Dados da conquista de bonus.</returns>
         public async Task<BonusAchievementDTO> GetAchievementAsync(Guid id)
         {
             var a = EnsureFound(await _context.BonusAchievements.FirstOrDefaultAsync(x => x.Id == id));
@@ -53,6 +65,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Cria uma nova conquista de bonus.
+        /// </summary>
+        /// <param name="request">Dados da conquista.</param>
+        /// <returns>Conquista criada.</returns>
         public async Task<BonusAchievementDTO> CreateAchievementAsync(BonusAchievementRequest request)
         {
             EnsureUnique(await _context.BonusAchievements.AnyAsync(x => x.Code == request.Code), "Code", $"Já existe uma conquista com o código '{request.Code}'.");
@@ -73,6 +90,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await GetAchievementAsync(achievement.Id);
         }
 
+        /// <summary>
+        /// Atualiza uma conquista de bonus existente.
+        /// </summary>
+        /// <param name="id">Identificador da conquista.</param>
+        /// <param name="request">Novos dados da conquista.</param>
+        /// <returns>Conquista atualizada.</returns>
         public async Task<BonusAchievementDTO> UpdateAchievementAsync(Guid id, BonusAchievementRequest request)
         {
             var achievement = EnsureFound(await _context.BonusAchievements.FirstOrDefaultAsync(x => x.Id == id));
@@ -91,6 +114,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await GetAchievementAsync(achievement.Id);
         }
 
+        /// <summary>
+        /// Remove uma conquista de bonus.
+        /// </summary>
+        /// <param name="id">Identificador da conquista.</param>
         public async Task DeleteAchievementAsync(Guid id)
         {
             var achievement = EnsureFound(await _context.BonusAchievements.FirstOrDefaultAsync(x => x.Id == id));
@@ -110,6 +137,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
 
         #region Bonus Point Rules
 
+        /// <summary>
+        /// Retorna a lista de regras de pontuacao de bonus.
+        /// </summary>
+        /// <returns>Lista de regras de bonus.</returns>
         public async Task<List<BonusPointRuleDTO>> GetRulesAsync()
         {
             return await _context.BonusPointRules
@@ -129,6 +160,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Retorna uma regra de pontuacao de bonus pelo identificador.
+        /// </summary>
+        /// <param name="id">Identificador da regra.</param>
+        /// <returns>Dados da regra de bonus.</returns>
         public async Task<BonusPointRuleDTO> GetRuleAsync(Guid id)
         {
             var r = EnsureFound(await _context.BonusPointRules.FirstOrDefaultAsync(x => x.Id == id));
@@ -146,6 +182,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Cria uma nova regra de pontuacao de bonus.
+        /// </summary>
+        /// <param name="request">Dados da regra.</param>
+        /// <returns>Regra criada.</returns>
         public async Task<BonusPointRuleDTO> CreateRuleAsync(BonusPointRuleCreateRequest request)
         {
             EnsureUnique(await _context.BonusPointRules.AnyAsync(x => (int)x.Source == request.Source), "Source", "Já existe uma regra para esta origem de pontos.");
@@ -166,6 +207,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await GetRuleAsync(rule.Id);
         }
 
+        /// <summary>
+        /// Atualiza uma regra de pontuacao de bonus existente.
+        /// </summary>
+        /// <param name="id">Identificador da regra.</param>
+        /// <param name="request">Novos dados da regra.</param>
+        /// <returns>Regra atualizada.</returns>
         public async Task<BonusPointRuleDTO> UpdateRuleAsync(Guid id, BonusPointRuleUpdateRequest request)
         {
             var rule = EnsureFound(await _context.BonusPointRules.FirstOrDefaultAsync(x => x.Id == id));
@@ -182,6 +229,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return await GetRuleAsync(rule.Id);
         }
 
+        /// <summary>
+        /// Remove uma regra de pontuacao de bonus.
+        /// </summary>
+        /// <param name="id">Identificador da regra.</param>
         public async Task DeleteRuleAsync(Guid id)
         {
             var rule = EnsureFound(await _context.BonusPointRules.FirstOrDefaultAsync(x => x.Id == id));

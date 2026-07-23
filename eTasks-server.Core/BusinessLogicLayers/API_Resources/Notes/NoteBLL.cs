@@ -10,8 +10,18 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
 {
+    /// <summary>
+    /// Regras de negocio para anotacoes da API.
+    /// </summary>
     public class NoteBLL(AppDbContext context, ILogger<INoteBLL> logger) : BaseBLL<INoteBLL>(context, logger), INoteBLL
     {
+        /// <summary>
+        /// Lista as anotacoes do usuario com filtros opcionais.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de filtro.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de anotacoes.</returns>
         public async Task<List<NoteListItemResponse>> ListAsync(Guid userUid, ListNotesRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -62,6 +72,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
                 .ToListAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Retorna uma anotacao pelo identificador.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="noteId">Identificador da anotacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da anotacao.</returns>
         public async Task<NoteDetailsResponse> GetByIdAsync(Guid userUid, Guid noteId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -76,6 +93,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             return MapDetails(note);
         }
 
+        /// <summary>
+        /// Cria uma nova anotacao.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Dados da anotacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da anotacao criada.</returns>
         public async Task<NoteDetailsResponse> CreateAsync(Guid userUid, CreateNoteRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -98,6 +122,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             return await GetByIdAsync(userUid, note.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Atualiza uma anotacao existente.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="noteId">Identificador da anotacao.</param>
+        /// <param name="request">Novos dados da anotacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da anotacao atualizada.</returns>
         public async Task<NoteDetailsResponse> UpdateAsync(Guid userUid, Guid noteId, UpdateNoteRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -118,6 +150,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             return await GetByIdAsync(userUid, note.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Remove logicamente uma anotacao.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="noteId">Identificador da anotacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         public async Task DeleteAsync(Guid userUid, Guid noteId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -136,6 +174,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             await SaveChangesContextAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Sincroniza anotacoes alteradas desde uma data base.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de sincronizacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resposta de sincronizacao com upserts e deletados.</returns>
         public async Task<NoteSyncResponse> SyncAsync(Guid userUid, SyncNotesRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -180,11 +225,19 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             };
         }
 
+        /// <summary>
+        /// Normaliza os filtros textuais da listagem.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void NormalizeListRequest(ListNotesRequest request)
         {
             request.SearchTerm = string.IsNullOrWhiteSpace(request.SearchTerm) ? null : request.SearchTerm.Trim();
         }
 
+        /// <summary>
+        /// Valida os filtros de listagem de anotacoes.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void ValidateListRequest(ListNotesRequest request)
         {
             if (!string.IsNullOrWhiteSpace(request.SearchTerm) && request.SearchTerm.Trim().Length > 200)
@@ -192,10 +245,17 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
                 throw new ValidationException("SearchTerm", "O termo de pesquisa deve ter no maximo 200 caracteres.");
             }
 
+            // Cada intervalo e validado separadamente para manter o erro apontando o campo certo.
             ValidateDateRange(request.CreatedFrom, request.CreatedTo, "CreatedTo");
             ValidateDateRange(request.UpdatedFrom, request.UpdatedTo, "UpdatedTo");
         }
 
+        /// <summary>
+        /// Valida se o intervalo de datas esta em ordem crescente.
+        /// </summary>
+        /// <param name="from">Data inicial.</param>
+        /// <param name="to">Data final.</param>
+        /// <param name="fieldName">Nome do campo de destino do erro.</param>
         private static void ValidateDateRange(DateTime? from, DateTime? to, string fieldName)
         {
             if (from.HasValue && to.HasValue && from.Value > to.Value)
@@ -204,6 +264,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             }
         }
 
+        /// <summary>
+        /// Valida o payload de criacao ou atualizacao de anotacao.
+        /// </summary>
+        /// <param name="subject">Assunto da anotacao.</param>
+        /// <param name="content">Conteudo da anotacao.</param>
         private static void ValidatePayload(string subject, string content)
         {
             if (string.IsNullOrWhiteSpace(subject))
@@ -227,6 +292,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             }
         }
 
+        /// <summary>
+        /// Garante que o identificador informado pelo cliente ainda nao exista.
+        /// </summary>
+        /// <param name="clientGeneratedId">Identificador opcional informado pelo cliente.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private async Task ValidateClientGeneratedIdAsync(Guid? clientGeneratedId, CancellationToken cancellationToken)
         {
             if (!clientGeneratedId.HasValue)
@@ -241,8 +311,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             }
         }
 
+        /// <summary>
+        /// Gera uma previsualizacao curta do conteudo da anotacao.
+        /// </summary>
+        /// <param name="content">Conteudo original.</param>
+        /// <returns>Trecho reduzido do conteudo.</returns>
         private static string BuildPreview(string content)
         {
+            // Remove quebras de linha antes de cortar o texto.
             var normalized = string.Join(' ', content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
             if (normalized.Length <= 180)
             {
@@ -252,6 +328,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Notes
             return $"{normalized[..177]}...";
         }
 
+        /// <summary>
+        /// Mapeia a entidade de anotacao para a resposta detalhada.
+        /// </summary>
+        /// <param name="note">Entidade carregada do banco.</param>
+        /// <returns>Resposta de detalhes da anotacao.</returns>
         private static NoteDetailsResponse MapDetails(NoteItem note)
         {
             return new NoteDetailsResponse

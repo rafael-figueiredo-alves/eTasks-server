@@ -9,6 +9,9 @@ using Microsoft.Extensions.Options;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para consulta, leitura, download e exclusao de arquivos de log do painel administrativo.
+    /// </summary>
     public class ApplicationLogAdminBLL(
         IOptions<ApplicationLogAdminOptions> options,
         IApplicationLogRetentionService retentionService,
@@ -17,6 +20,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         private const int MaxReadBytes = 2 * 1024 * 1024;
         private readonly string _logsDirectoryPath = options.Value.LogsDirectoryPath;
 
+        /// <summary>
+        /// Retorna o resumo dos arquivos de log disponiveis.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista resumida de arquivos de log.</returns>
         public async Task<IReadOnlyList<LogFileSummaryResponse>> GetFilesAsync(CancellationToken cancellationToken = default)
         {
             await retentionService.ApplyRetentionAsync(cancellationToken);
@@ -36,6 +44,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return files;
         }
 
+        /// <summary>
+        /// Lera o conteudo de um arquivo de log.
+        /// </summary>
+        /// <param name="fileName">Nome do arquivo de log.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Conteudo textual do arquivo.</returns>
         public async Task<LogFileContentResponse> ReadFileAsync(string fileName, CancellationToken cancellationToken = default)
         {
             var path = ResolveLogFilePath(fileName, mustExist: true);
@@ -56,6 +70,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Faz o download binario de um arquivo de log.
+        /// </summary>
+        /// <param name="fileName">Nome do arquivo de log.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Arquivo para download.</returns>
         public async Task<LogFileDownloadResponse> DownloadFileAsync(string fileName, CancellationToken cancellationToken = default)
         {
             var path = ResolveLogFilePath(fileName, mustExist: true);
@@ -68,6 +88,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Remove um arquivo de log.
+        /// </summary>
+        /// <param name="fileName">Nome do arquivo de log.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         public Task DeleteFileAsync(string fileName, CancellationToken cancellationToken = default)
         {
             var path = ResolveLogFilePath(fileName, mustExist: true);
@@ -76,6 +101,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Garante que o diretorio de logs exista e retorna seu caminho absoluto.
+        /// </summary>
+        /// <returns>Caminho absoluto do diretorio de logs.</returns>
         private string EnsureLogsDirectory()
         {
             if (string.IsNullOrWhiteSpace(_logsDirectoryPath))
@@ -87,6 +116,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return Path.GetFullPath(_logsDirectoryPath);
         }
 
+        /// <summary>
+        /// Resolve e valida o caminho completo de um arquivo de log.
+        /// </summary>
+        /// <param name="fileName">Nome do arquivo de log.</param>
+        /// <param name="mustExist">Indica se o arquivo deve existir.</param>
+        /// <returns>Caminho absoluto do arquivo de log.</returns>
         private string ResolveLogFilePath(string fileName, bool mustExist)
         {
             if (string.IsNullOrWhiteSpace(fileName) || fileName != Path.GetFileName(fileName))
@@ -110,6 +145,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return path;
         }
 
+        /// <summary>
+        /// Formata a quantidade de bytes em uma unidade legivel.
+        /// </summary>
+        /// <param name="bytes">Quantidade de bytes.</param>
+        /// <returns>Texto formatado com unidade.</returns>
         private static string FormatBytes(long bytes)
         {
             string[] units = ["B", "KB", "MB", "GB", "TB"];

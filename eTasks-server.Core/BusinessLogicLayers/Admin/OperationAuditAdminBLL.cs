@@ -15,12 +15,20 @@ using System.Text.Json;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para consulta e manutencao da auditoria de operacoes em MongoDB.
+    /// </summary>
     public class OperationAuditAdminBLL(
         IServerSettingsProvider settingsProvider,
         IConfiguration configuration) : IOperationAuditAdminBLL
     {
         private const int MaxPageSize = 200;
 
+        /// <summary>
+        /// Retorna um panorama da auditoria de operacoes.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resumo agregado da auditoria.</returns>
         public async Task<OperationAuditDashboardResponse> GetDashboardAsync(CancellationToken cancellationToken = default)
         {
             var context = await CreateMongoContextAsync(cancellationToken);
@@ -64,6 +72,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return response;
         }
 
+        /// <summary>
+        /// Retorna uma pagina de entradas da auditoria de operacoes.
+        /// </summary>
+        /// <param name="request">Parametros de consulta.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Pagina com entradas filtradas.</returns>
         public async Task<OperationAuditLogPageResponse> GetEntriesAsync(OperationAuditLogQueryRequest request, CancellationToken cancellationToken = default)
         {
             var context = await CreateMongoContextAsync(cancellationToken);
@@ -94,6 +108,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return response;
         }
 
+        /// <summary>
+        /// Gera um arquivo de backup com as entradas da auditoria.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Arquivo NDJSON com as entradas.</returns>
         public async Task<OperationAuditBackupFileResponse> GenerateBackupAsync(CancellationToken cancellationToken = default)
         {
             var context = await CreateMongoContextAsync(cancellationToken);
@@ -120,6 +139,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Remove todas as entradas da auditoria de operacoes.
+        /// </summary>
+        /// <param name="adminKey">Chave administrativa de validacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Quantidade de registros removidos.</returns>
         public async Task<long> ClearAsync(string adminKey, CancellationToken cancellationToken = default)
         {
             ValidateAdminKey(adminKey);
@@ -134,6 +159,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return result.DeletedCount;
         }
 
+        /// <summary>
+        /// Monta o contexto da auditoria Mongo a partir das configuracoes atuais.
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Contexto com ou sem acesso ao Mongo.</returns>
         private async Task<MongoAuditContext> CreateMongoContextAsync(CancellationToken cancellationToken)
         {
             var settings = await settingsProvider.GetCurrentAsync(cancellationToken);
@@ -142,6 +172,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 && !string.IsNullOrWhiteSpace(settings.MongoAuditDatabaseName)
                 && !string.IsNullOrWhiteSpace(settings.MongoAuditCollectionName);
 
+            // Se estiver desabilitado ou incompleto, devolve um contexto sem collection.
             if (!enabled || !isConfigured)
             {
                 return new MongoAuditContext(
@@ -165,6 +196,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 collection);
         }
 
+        /// <summary>
+        /// Monta o filtro de consulta da auditoria.
+        /// </summary>
+        /// <param name="request">Parametros de pesquisa.</param>
+        /// <returns>Filtro MongoDB composto.</returns>
         private static FilterDefinition<OperationAuditLog> BuildFilter(OperationAuditLogQueryRequest request)
         {
             var builder = Builders<OperationAuditLog>.Filter;
@@ -202,6 +238,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return filters.Count == 0 ? builder.Empty : builder.And(filters);
         }
 
+        /// <summary>
+        /// Calcula a duracao media dos eventos da auditoria.
+        /// </summary>
+        /// <param name="collection">Collection Mongo de auditoria.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Duracao media em milissegundos.</returns>
         private static async Task<double> GetAverageDurationAsync(IMongoCollection<OperationAuditLog> collection, CancellationToken cancellationToken)
         {
             var result = await collection.Aggregate()
@@ -220,6 +262,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return average.ToDouble();
         }
 
+        /// <summary>
+        /// Retorna as principais metricas agrupadas por um campo.
+        /// </summary>
+        /// <param name="collection">Collection Mongo de auditoria.</param>
+        /// <param name="fieldName">Nome do campo a agrupar.</param>
+        /// <param name="limit">Limite de itens.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de metricas agregadas.</returns>
         private static async Task<IReadOnlyList<OperationAuditMetricResponse>> GetTopMetricsAsync(
             IMongoCollection<OperationAuditLog> collection,
             string fieldName,
@@ -247,6 +297,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToList();
         }
 
+        /// <summary>
+        /// Monta a serie temporal de uso da auditoria.
+        /// </summary>
+        /// <param name="collection">Collection Mongo de auditoria.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Serie com total e erros por hora.</returns>
         private static async Task<IReadOnlyList<OperationAuditUsagePointResponse>> GetUsageTrendAsync(
             IMongoCollection<OperationAuditLog> collection,
             CancellationToken cancellationToken)
@@ -324,6 +380,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             return trend;
         }
 
+        /// <summary>
+        /// Mapeia um documento da auditoria para resposta da API.
+        /// </summary>
+        /// <param name="entry">Documento da auditoria.</param>
+        /// <returns>Resposta mapeada.</returns>
         private static OperationAuditLogEntryResponse MapEntry(OperationAuditLog entry)
             => new()
             {
@@ -344,9 +405,18 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 ErrorMessage = entry.ErrorMessage
             };
 
+        /// <summary>
+        /// Escapa caracteres especiais para uso em regex do Mongo.
+        /// </summary>
+        /// <param name="value">Texto original.</param>
+        /// <returns>Texto escapado.</returns>
         private static string RegexEscape(string value)
             => System.Text.RegularExpressions.Regex.Escape(value);
 
+        /// <summary>
+        /// Valida a chave administrativa usada em operacoes destrutivas.
+        /// </summary>
+        /// <param name="adminKey">Chave informada.</param>
         private void ValidateAdminKey(string adminKey)
         {
             var configuredAdminKey = configuration[Constants.AdminApiKeyConfig];
@@ -355,6 +425,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN nao configurada.");
             }
 
+            // Comparacao em tempo constante para reduzir risco de oracle por timing.
             if (string.IsNullOrWhiteSpace(adminKey)
                 || !FixedTimeEquals(adminKey.Trim(), configuredAdminKey.Trim()))
             {
@@ -362,6 +433,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             }
         }
 
+        /// <summary>
+        /// Compara duas strings em tempo constante.
+        /// </summary>
+        /// <param name="value">Valor informado.</param>
+        /// <param name="expected">Valor esperado.</param>
+        /// <returns>True quando os valores coincidem.</returns>
         private static bool FixedTimeEquals(string value, string expected)
         {
             var valueBytes = Encoding.UTF8.GetBytes(value);
@@ -370,6 +447,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 && CryptographicOperations.FixedTimeEquals(valueBytes, expectedBytes);
         }
 
+        /// <summary>
+        /// Sanitiza nome de arquivo para uso em backup.
+        /// </summary>
+        /// <param name="value">Nome original.</param>
+        /// <returns>Nome de arquivo seguro.</returns>
         private static string SanitizeFileName(string value)
         {
             var invalidChars = Path.GetInvalidFileNameChars();

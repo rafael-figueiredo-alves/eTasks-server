@@ -13,8 +13,18 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
 {
+    /// <summary>
+    /// Regras de negocio para lancamentos financeiros da API.
+    /// </summary>
     public class FinanceBLL(AppDbContext context, ILogger<IFinanceBLL> logger) : BaseBLL<IFinanceBLL>(context, logger), IFinanceBLL
     {
+        /// <summary>
+        /// Lista os lancamentos financeiros do usuario com filtros opcionais.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de filtro.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de lancamentos financeiros.</returns>
         public async Task<List<FinanceEntryListItemResponse>> ListAsync(Guid userUid, ListFinanceEntriesRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -101,6 +111,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
                 .ToListAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Retorna um lancamento financeiro pelo identificador.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="financeEntryId">Identificador do lancamento.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes do lancamento financeiro.</returns>
         public async Task<FinanceEntryDetailsResponse> GetByIdAsync(Guid userUid, Guid financeEntryId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -116,6 +133,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             return MapDetails(entry);
         }
 
+        /// <summary>
+        /// Cria um novo lancamento financeiro.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Dados do lancamento.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes do lancamento criado.</returns>
         public async Task<FinanceEntryDetailsResponse> CreateAsync(Guid userUid, CreateFinanceEntryRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -148,6 +172,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             return await GetByIdAsync(userUid, entry.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Atualiza um lancamento financeiro existente.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="financeEntryId">Identificador do lancamento.</param>
+        /// <param name="request">Novos dados do lancamento.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes do lancamento atualizado.</returns>
         public async Task<FinanceEntryDetailsResponse> UpdateAsync(Guid userUid, Guid financeEntryId, UpdateFinanceEntryRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -178,6 +210,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             return await GetByIdAsync(userUid, entry.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Remove logicamente um lancamento financeiro.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="financeEntryId">Identificador do lancamento.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         public async Task DeleteAsync(Guid userUid, Guid financeEntryId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -194,6 +232,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             await SaveChangesContextAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Retorna o resumo mensal dos lancamentos financeiros.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="year">Ano de referencia.</param>
+        /// <param name="month">Mes de referencia.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resumo financeiro do mes.</returns>
         public async Task<FinanceMonthSummaryResponse> GetMonthSummaryAsync(Guid userUid, int year, int month, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -231,6 +277,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             };
         }
 
+        /// <summary>
+        /// Sincroniza os lancamentos financeiros alterados desde uma data base.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de sincronizacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resposta de sincronizacao com upserts e deletados.</returns>
         public async Task<FinanceEntrySyncResponse> SyncAsync(Guid userUid, SyncFinanceEntriesRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -257,12 +310,20 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             };
         }
 
+        /// <summary>
+        /// Normaliza campos textuais do filtro antes da consulta.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void NormalizeListRequest(ListFinanceEntriesRequest request)
         {
             request.Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim();
             request.SearchTerm = string.IsNullOrWhiteSpace(request.SearchTerm) ? null : request.SearchTerm.Trim();
         }
 
+        /// <summary>
+        /// Valida os filtros de listagem para evitar consultas inconsistentes.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void ValidateListRequest(ListFinanceEntriesRequest request)
         {
             if (request.Year.HasValue && (request.Year.Value < 2000 || request.Year.Value > 9999))
@@ -291,6 +352,21 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             }
         }
 
+        /// <summary>
+        /// Valida o payload de lancamento financeiro.
+        /// </summary>
+        /// <param name="title">Titulo do lancamento.</param>
+        /// <param name="description">Descricao opcional.</param>
+        /// <param name="category">Categoria opcional.</param>
+        /// <param name="counterparty">Contraparte opcional.</param>
+        /// <param name="entryType">Tipo de lancamento.</param>
+        /// <param name="paymentMethod">Forma de pagamento.</param>
+        /// <param name="amount">Valor do lancamento.</param>
+        /// <param name="occursOn">Data de ocorrencia.</param>
+        /// <param name="isPaid">Indica se esta pago.</param>
+        /// <param name="paidAt">Data de pagamento.</param>
+        /// <param name="isRecurring">Indica se e recorrente.</param>
+        /// <param name="recurrence">Dados de recorrencia.</param>
         private static void ValidatePayload(string title, string? description, string? category, string? counterparty, FinanceEntryType entryType, FinancePaymentMethod paymentMethod, decimal amount, DateTime occursOn, bool isPaid, DateTime? paidAt, bool isRecurring, FinanceRecurrenceRequest? recurrence)
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -348,9 +424,15 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
                 throw new ValidationException("PaidAt", "A data de pagamento informada e invalida.");
             }
 
+            // A recorrencia e validada em bloco separado para manter a regra isolada.
             ValidateRecurrence(isRecurring, recurrence);
         }
 
+        /// <summary>
+        /// Valida as regras especificas de recorrencia.
+        /// </summary>
+        /// <param name="isRecurring">Indica se a entrada e recorrente.</param>
+        /// <param name="recurrence">Dados de recorrencia.</param>
         private static void ValidateRecurrence(bool isRecurring, FinanceRecurrenceRequest? recurrence)
         {
             if (!isRecurring)
@@ -384,6 +466,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             }
         }
 
+        /// <summary>
+        /// Garante que o identificador informado pelo cliente ainda nao exista.
+        /// </summary>
+        /// <param name="clientGeneratedId">Identificador opcional informado pelo cliente.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private async Task ValidateClientGeneratedIdAsync(Guid? clientGeneratedId, CancellationToken cancellationToken)
         {
             if (!clientGeneratedId.HasValue)
@@ -398,12 +485,18 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             }
         }
 
+        /// <summary>
+        /// Aplica ou remove a recorrencia do lancamento conforme o payload.
+        /// </summary>
+        /// <param name="entry">Entidade de lancamento.</param>
+        /// <param name="recurrence">Dados de recorrencia.</param>
         private void ApplyRecurrence(FinanceEntry entry, FinanceRecurrenceRequest? recurrence)
         {
             if (!entry.IsRecurring || recurrence is null)
             {
                 if (entry.Recurrence is not null)
                 {
+                    // Remove a recorrencia antiga quando a entrada deixa de ser recorrente.
                     _context.FinanceRecurrences.Remove(entry.Recurrence);
                 }
 
@@ -423,8 +516,18 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Finances
             entry.Recurrence.EndsOn = recurrence.RecurrenceEndsOn;
         }
 
+        /// <summary>
+        /// Normaliza um texto opcional para null quando vazio.
+        /// </summary>
+        /// <param name="value">Texto original.</param>
+        /// <returns>Texto normalizado ou null.</returns>
         private static string? NormalizeText(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+        /// <summary>
+        /// Mapeia a entidade de lancamento para a resposta detalhada.
+        /// </summary>
+        /// <param name="entry">Entidade carregada do banco.</param>
+        /// <returns>Resposta com todos os detalhes do lancamento.</returns>
         private static FinanceEntryDetailsResponse MapDetails(FinanceEntry entry)
         {
             return new FinanceEntryDetailsResponse

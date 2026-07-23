@@ -7,8 +7,15 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para consolidacao dos indicadores do painel administrativo.
+    /// </summary>
     public class DashboardBLL(AppDbContext context, ILogger<IDashboardBLL> logger) : BaseBLL<IDashboardBLL>(context, logger), IDashboardBLL
     {
+        /// <summary>
+        /// Retorna os principais indicadores do dashboard administrativo.
+        /// </summary>
+        /// <returns>Resumo com metricas de usuarios e logins.</returns>
         public async Task<DashboardResponse> GetDashboardMetricsAsync()
         {
             var now = SaoPauloDateTime.Now();

@@ -11,9 +11,19 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.Admin
 {
+    /// <summary>
+    /// Regras de negocio para envio de notificacoes administrativas aos usuarios do sistema.
+    /// </summary>
     public class AdminNotificationBLL(AppDbContext context, ILogger<IAdminNotificationBLL> logger)
         : BaseBLL<IAdminNotificationBLL>(context, logger), IAdminNotificationBLL
     {
+        /// <summary>
+        /// Envia uma notificacao administrativa para o publico alvo informado.
+        /// </summary>
+        /// <param name="adminUserUid">Identificador do administrador remetente.</param>
+        /// <param name="request">Dados da notificacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resumo do envio realizado.</returns>
         public async Task<SendAdminNotificationResponse> SendAsync(Guid adminUserUid, SendAdminNotificationRequest request, CancellationToken cancellationToken = default)
         {
             ValidateRequest(request);
@@ -64,12 +74,19 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             };
         }
 
+        /// <summary>
+        /// Resolve a lista de usuarios destinatarios da notificacao.
+        /// </summary>
+        /// <param name="request">Parametros de selecao dos destinatarios.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de identificadores de usuarios destinatarios.</returns>
         private async Task<List<Guid>> ResolveRecipientsAsync(SendAdminNotificationRequest request, CancellationToken cancellationToken)
         {
             var query = _context.Users
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted && !x.IsBlocked && x.IsConfirmed);
 
+            // Aplica o filtro do publico alvo antes de coletar os Uids.
             query = request.TargetType switch
             {
                 NotificationTargetType.Admins => query.Where(x => x.IsAdmin),
@@ -84,6 +101,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 .ToListAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Valida o payload de envio da notificacao.
+        /// </summary>
+        /// <param name="request">Dados da notificacao.</param>
         private static void ValidateRequest(SendAdminNotificationRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Title))

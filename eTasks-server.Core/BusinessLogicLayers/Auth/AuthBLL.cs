@@ -239,7 +239,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Auth
 
             // Envia e-mail sem aguardar retorno (sem await)
             #pragma warning disable CS4014
-            _emailService.SendAccountConfirmationEmailAsync(user.Email, GetConfirmationLink(user.Uid.ToString());
+            _emailService.SendAccountConfirmationEmailAsync(user.Email, GetConfirmationLink(user.Uid.ToString()));
             #pragma warning restore CS4014
 
             // Gera resposta com dados da conta e token JWT e Refresh Token para autenticação e autorização

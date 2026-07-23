@@ -14,8 +14,18 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
 {
+    /// <summary>
+    /// Regras de negocio para metas da API.
+    /// </summary>
     public class GoalBLL(AppDbContext context, ILogger<IGoalBLL> logger) : BaseBLL<IGoalBLL>(context, logger), IGoalBLL
     {
+        /// <summary>
+        /// Lista as metas do usuario com filtros opcionais.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de filtro.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Lista de metas.</returns>
         public async Task<List<GoalListItemResponse>> ListAsync(Guid userUid, ListGoalsRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -75,6 +85,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 .ToListAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Retorna uma meta pelo identificador.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="goalId">Identificador da meta.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da meta.</returns>
         public async Task<GoalDetailsResponse> GetByIdAsync(Guid userUid, Guid goalId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -89,6 +106,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             return MapDetails(goal);
         }
 
+        /// <summary>
+        /// Cria uma nova meta.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Dados da meta.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da meta criada.</returns>
         public async Task<GoalDetailsResponse> CreateAsync(Guid userUid, CreateGoalRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -124,6 +148,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             return await GetByIdAsync(userUid, goal.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Atualiza uma meta existente.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="goalId">Identificador da meta.</param>
+        /// <param name="request">Novos dados da meta.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Detalhes da meta atualizada.</returns>
         public async Task<GoalDetailsResponse> UpdateAsync(Guid userUid, Guid goalId, UpdateGoalRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -162,6 +194,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             return await GetByIdAsync(userUid, goal.Id, cancellationToken);
         }
 
+        /// <summary>
+        /// Remove logicamente uma meta.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="goalId">Identificador da meta.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         public async Task DeleteAsync(Guid userUid, Guid goalId, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -185,6 +223,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             });
         }
 
+        /// <summary>
+        /// Sincroniza metas alteradas desde uma data base.
+        /// </summary>
+        /// <param name="userUid">Identificador do usuario.</param>
+        /// <param name="request">Parametros de sincronizacao.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
+        /// <returns>Resposta de sincronizacao com upserts e deletados.</returns>
         public async Task<GoalSyncResponse> SyncAsync(Guid userUid, SyncGoalsRequest request, CancellationToken cancellationToken = default)
         {
             await GetAndValidateActiveUserAsync(userUid);
@@ -229,11 +274,19 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             };
         }
 
+        /// <summary>
+        /// Normaliza campos de filtro antes da consulta.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void NormalizeListRequest(ListGoalsRequest request)
         {
             request.SearchTerm = string.IsNullOrWhiteSpace(request.SearchTerm) ? null : request.SearchTerm.Trim();
         }
 
+        /// <summary>
+        /// Valida os filtros aplicados na listagem de metas.
+        /// </summary>
+        /// <param name="request">Parametros de listagem.</param>
         private static void ValidateListRequest(ListGoalsRequest request)
         {
             if (request.Status.HasValue && !Enum.IsDefined(request.Status.Value))
@@ -257,6 +310,15 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             }
         }
 
+        /// <summary>
+        /// Valida o payload de criacao ou atualizacao de meta.
+        /// </summary>
+        /// <param name="summary">Resumo da meta.</param>
+        /// <param name="description">Descricao opcional.</param>
+        /// <param name="type">Tipo da meta.</param>
+        /// <param name="priority">Prioridade da meta.</param>
+        /// <param name="rewardPoints">Pontuacao opcional.</param>
+        /// <param name="status">Status da meta.</param>
         private static void ValidatePayload(string summary, string? description, GoalType type, TaskPriority priority, int? rewardPoints, GoalStatus status)
         {
             if (string.IsNullOrWhiteSpace(summary))
@@ -295,6 +357,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             }
         }
 
+        /// <summary>
+        /// Garante que o identificador informado pelo cliente ainda nao exista.
+        /// </summary>
+        /// <param name="clientGeneratedId">Identificador opcional informado pelo cliente.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private async Task ValidateClientGeneratedIdAsync(Guid? clientGeneratedId, CancellationToken cancellationToken)
         {
             if (!clientGeneratedId.HasValue)
@@ -309,6 +376,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             }
         }
 
+        /// <summary>
+        /// Adiciona pontos de bonus quando a meta e concluida.
+        /// </summary>
+        /// <param name="goal">Meta alvo.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private async Task AwardCompletionPointsAsync(Goal goal, CancellationToken cancellationToken)
         {
             var alreadyExists = await _context.UserBonusPoints
@@ -323,6 +395,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 return;
             }
 
+            // Usa a pontuacao customizada da meta ou a regra padrao ativa.
             var points = goal.RewardPoints;
 
             if (!points.HasValue || points.Value <= 0)
@@ -355,6 +428,11 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             }, cancellationToken);
         }
 
+        /// <summary>
+        /// Remove os pontos de bonus associados a uma meta concluida.
+        /// </summary>
+        /// <param name="goal">Meta alvo.</param>
+        /// <param name="cancellationToken">Token de cancelamento.</param>
         private async Task RevertCompletionPointsAsync(Goal goal, CancellationToken cancellationToken)
         {
             var entries = await _context.UserBonusPoints
@@ -372,21 +450,41 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             _context.UserBonusPoints.RemoveRange(entries);
         }
 
+        /// <summary>
+        /// Verifica se o status representa uma meta concluida.
+        /// </summary>
+        /// <param name="status">Status da meta.</param>
+        /// <returns>True quando o status for Completed.</returns>
         private static bool IsCompleted(GoalStatus status)
         {
             return status == GoalStatus.Completed;
         }
 
+        /// <summary>
+        /// Normaliza a pontuacao customizada da meta.
+        /// </summary>
+        /// <param name="rewardPoints">Pontuacao enviada.</param>
+        /// <returns>Pontuacao validada ou null.</returns>
         private static int? NormalizeRewardPoints(int? rewardPoints)
         {
             return rewardPoints.HasValue && rewardPoints.Value <= 0 ? null : rewardPoints;
         }
 
+        /// <summary>
+        /// Normaliza uma descricao opcional.
+        /// </summary>
+        /// <param name="description">Descricao original.</param>
+        /// <returns>Descricao trimada ou null.</returns>
         private static string? NormalizeDescription(string? description)
         {
             return string.IsNullOrWhiteSpace(description) ? null : description.Trim();
         }
 
+        /// <summary>
+        /// Mapeia a entidade de meta para a resposta detalhada.
+        /// </summary>
+        /// <param name="goal">Entidade carregada do banco.</param>
+        /// <returns>Resposta de detalhes da meta.</returns>
         private static GoalDetailsResponse MapDetails(Goal goal)
         {
             return new GoalDetailsResponse
