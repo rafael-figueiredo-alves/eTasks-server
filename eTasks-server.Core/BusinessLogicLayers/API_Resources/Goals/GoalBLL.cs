@@ -19,6 +19,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
     /// </summary>
     public class GoalBLL(AppDbContext context, ILogger<IGoalBLL> logger) : BaseBLL<IGoalBLL>(context, logger), IGoalBLL
     {
+        #region Funções principais
         /// <summary>
         /// Lista as metas do usuario com filtros opcionais.
         /// </summary>
@@ -28,29 +29,41 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <returns>Lista de metas.</returns>
         public async Task<List<GoalListItemResponse>> ListAsync(Guid userUid, ListGoalsRequest request, CancellationToken cancellationToken = default)
         {
+            // Valida e obtem usuário
             await GetAndValidateActiveUserAsync(userUid);
+
+            // Normaliza filtros
             NormalizeListRequest(request);
+
+            // Valida filtros
             ValidateListRequest(request);
 
+            // Obtem lista de metas não removidas
             var query = _context.Goals
                 .AsNoTracking()
                 .Where(x => x.UserUid == userUid && !x.IsDeleted);
 
+            // Aplica filtros
+
+            // Se tiver filtro de status, aplica
             if (request.Status.HasValue)
             {
                 query = query.Where(x => x.Status == request.Status.Value);
             }
 
+            // Se tiver filtro de tipo
             if (request.Type.HasValue)
             {
                 query = query.Where(x => x.Type == request.Type.Value);
             }
 
+            // Filtro por prioridade
             if (request.Priority.HasValue)
             {
                 query = query.Where(x => x.Priority == request.Priority.Value);
             }
 
+            // Por recompensa
             if (request.OnlyRewarded.HasValue)
             {
                 query = request.OnlyRewarded.Value
@@ -58,6 +71,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                     : query.Where(x => !x.RewardPoints.HasValue || x.RewardPoints.Value <= 0);
             }
 
+            // Por termo buscado
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.Trim();
@@ -66,6 +80,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                     (x.Description != null && x.Description.Contains(searchTerm)));
             }
 
+            // Retorna lista
             return await query
                 .OrderBy(x => x.Status)
                 .ThenByDescending(x => x.Priority)
@@ -94,15 +109,21 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <returns>Detalhes da meta.</returns>
         public async Task<GoalDetailsResponse> GetByIdAsync(Guid userUid, Guid goalId, CancellationToken cancellationToken = default)
         {
+            // Obtem e valida usuário
             await GetAndValidateActiveUserAsync(userUid);
 
+            // Pega Meta do id informado
             var goal = await _context.Goals
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == goalId && !x.IsDeleted, cancellationToken);
 
-            goal = EnsureFound(goal, "Meta nao encontrada.");
+            // Verifica se objetivo existe
+            goal = EnsureFound(goal, "Meta não encontrada.");
+
+            // Valida propriedade da meta
             EnsureOwnership(goal.UserUid, userUid);
 
+            // Retorna Meta
             return MapDetails(goal);
         }
 
@@ -115,10 +136,16 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <returns>Detalhes da meta criada.</returns>
         public async Task<GoalDetailsResponse> CreateAsync(Guid userUid, CreateGoalRequest request, CancellationToken cancellationToken = default)
         {
+            // Valida e obtem usuário
             await GetAndValidateActiveUserAsync(userUid);
+
+            // VAlida corpo de dados
             ValidatePayload(request.Summary, request.Description, request.Type, request.Priority, request.RewardPoints, request.Status);
+
+            // Valida Id gerado pelo cliente offline
             await ValidateClientGeneratedIdAsync(request.ClientGeneratedId, cancellationToken);
 
+            // Gera entidade a criar
             var goal = new Goal
             {
                 Id = request.ClientGeneratedId ?? Guid.CreateVersion7(),
@@ -133,11 +160,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 UpdatedAt = null
             };
 
+            // Executa gravação em transaction
             await ExecuteInTransactionAsync(async () =>
             {
+                // Adiciona entidade ao contexo e salva dados
                 await _context.Goals.AddAsync(goal, cancellationToken);
                 await SaveChangesContextAsync(cancellationToken);
 
+                // Se meta cumprida, atribui pontos
                 if (IsCompleted(goal.Status))
                 {
                     await AwardCompletionPointsAsync(goal, cancellationToken);
@@ -145,6 +175,8 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 }
             });
 
+
+            // Retorna meta
             return await GetByIdAsync(userUid, goal.Id, cancellationToken);
         }
 
@@ -158,17 +190,26 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <returns>Detalhes da meta atualizada.</returns>
         public async Task<GoalDetailsResponse> UpdateAsync(Guid userUid, Guid goalId, UpdateGoalRequest request, CancellationToken cancellationToken = default)
         {
+            // Obtem e valida usuário
             await GetAndValidateActiveUserAsync(userUid);
+
+            // Valida corpo de dados de edição
             ValidatePayload(request.Summary, request.Description, request.Type, request.Priority, request.RewardPoints, request.Status);
 
+            // Obtem meta
             var goal = await _context.Goals
                 .FirstOrDefaultAsync(x => x.Id == goalId && !x.IsDeleted, cancellationToken);
 
-            goal = EnsureFound(goal, "Meta nao encontrada.");
+            // Valida que a mesma exista
+            goal = EnsureFound(goal, "Meta não encontrada.");
+
+            // Valida se usuário possui a meta
             EnsureOwnership(goal.UserUid, userUid);
 
+            // Guarda status anterior
             var wasCompleted = IsCompleted(goal.Status);
 
+            // Edita dados da meta
             goal.Summary = request.Summary.Trim();
             goal.Description = NormalizeDescription(request.Description);
             goal.Type = request.Type;
@@ -177,20 +218,26 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             goal.Status = request.Status;
             goal.UpdatedAt = SaoPauloDateTime.Now();
 
+            // Executa operações em transação
             await ExecuteInTransactionAsync(async () =>
             {
+                // Se tarefa foi concluída agora
                 if (!wasCompleted && IsCompleted(goal.Status))
                 {
+                    // Atribui pontos
                     await AwardCompletionPointsAsync(goal, cancellationToken);
                 }
                 else if (wasCompleted && !IsCompleted(goal.Status))
                 {
+                    // Caso contrário, revoga pontos atribuídos antes
                     await RevertCompletionPointsAsync(goal, cancellationToken);
                 }
 
+                // Salva tudo
                 await SaveChangesContextAsync(cancellationToken);
             });
 
+            // Retorna meta
             return await GetByIdAsync(userUid, goal.Id, cancellationToken);
         }
 
@@ -202,23 +249,32 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <param name="cancellationToken">Token de cancelamento.</param>
         public async Task DeleteAsync(Guid userUid, Guid goalId, CancellationToken cancellationToken = default)
         {
+            // Obtem e valida usuário
             await GetAndValidateActiveUserAsync(userUid);
 
+            // Obtem meta pelo id informado
             var goal = await _context.Goals
                 .FirstOrDefaultAsync(x => x.Id == goalId && !x.IsDeleted, cancellationToken);
 
-            goal = EnsureFound(goal, "Meta nao encontrada.");
+            // Garante que meta existe
+            goal = EnsureFound(goal, "Meta não encontrada.");
+
+            // Garante que é do usuário
             EnsureOwnership(goal.UserUid, userUid);
 
+            // Executa em transação
             await ExecuteInTransactionAsync(async () =>
             {
+                // Revoga pontos
                 await RevertCompletionPointsAsync(goal, cancellationToken);
 
+                // Marca remoção
                 var deletedAt = SaoPauloDateTime.Now();
                 goal.IsDeleted = true;
                 goal.DeletedAt = deletedAt;
                 goal.UpdatedAt = deletedAt;
 
+                // Salva
                 await SaveChangesContextAsync(cancellationToken);
             });
         }
@@ -232,30 +288,39 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         /// <returns>Resposta de sincronizacao com upserts e deletados.</returns>
         public async Task<GoalSyncResponse> SyncAsync(Guid userUid, SyncGoalsRequest request, CancellationToken cancellationToken = default)
         {
+            // Obtem e salva usuário
             await GetAndValidateActiveUserAsync(userUid);
 
+            // Pega data de inicio da sincronização
             var since = request.Since;
+
+            // Pega data/hora do servidor
             var serverTime = SaoPauloDateTime.Now();
 
+            // Pega inserções/edições
             var upsertsQuery = _context.Goals
                 .AsNoTracking()
                 .Where(x => x.UserUid == userUid && !x.IsDeleted);
 
+            // Pega remoções
             var deletedQuery = _context.Goals
                 .AsNoTracking()
                 .Where(x => x.UserUid == userUid && x.IsDeleted && x.DeletedAt.HasValue);
 
+            // Valida se é para buscar tudo a partir de data informada
             if (since.HasValue)
             {
                 upsertsQuery = upsertsQuery.Where(x => (x.UpdatedAt ?? x.CreatedAt) > since.Value);
                 deletedQuery = deletedQuery.Where(x => x.DeletedAt!.Value > since.Value);
             }
 
+            // Retorna lista de edições/inserções
             var upserts = await upsertsQuery
                 .OrderBy(x => x.Status)
                 .ThenBy(x => x.Id)
                 .ToListAsync(cancellationToken);
 
+            // Retorna remoções
             var deleted = await deletedQuery
                 .OrderBy(x => x.DeletedAt)
                 .ThenBy(x => x.Id)
@@ -266,6 +331,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 })
                 .ToListAsync(cancellationToken);
 
+            // Retorna lista de operações de sincronização a realizar
             return new GoalSyncResponse
             {
                 ServerTime = serverTime,
@@ -273,7 +339,9 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 Deleted = deleted
             };
         }
+        #endregion
 
+        #region Funções Auxiliares
         /// <summary>
         /// Normaliza campos de filtro antes da consulta.
         /// </summary>
@@ -291,22 +359,22 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         {
             if (request.Status.HasValue && !Enum.IsDefined(request.Status.Value))
             {
-                throw new ValidationException("Status", "Status da meta invalido.");
+                throw new ValidationException("Status", "Status da meta inválido.");
             }
 
             if (request.Type.HasValue && !Enum.IsDefined(request.Type.Value))
             {
-                throw new ValidationException("Type", "Tipo da meta invalido.");
+                throw new ValidationException("Type", "Tipo da meta inválido.");
             }
 
             if (request.Priority.HasValue && !Enum.IsDefined(request.Priority.Value))
             {
-                throw new ValidationException("Priority", "Prioridade invalida.");
+                throw new ValidationException("Priority", "Prioridade inválida.");
             }
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm) && request.SearchTerm.Trim().Length > 200)
             {
-                throw new ValidationException("SearchTerm", "O termo de pesquisa deve ter no maximo 200 caracteres.");
+                throw new ValidationException("SearchTerm", "O termo de pesquisa deve ter no máximo 200 caracteres.");
             }
         }
 
@@ -323,37 +391,37 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
         {
             if (string.IsNullOrWhiteSpace(summary))
             {
-                throw new ValidationException("Summary", "O resumo da meta e obrigatorio.");
+                throw new ValidationException("Summary", "O resumo da meta é obrigatório.");
             }
 
             if (summary.Trim().Length > 200)
             {
-                throw new ValidationException("Summary", "O resumo da meta deve ter no maximo 200 caracteres.");
+                throw new ValidationException("Summary", "O resumo da meta deve ter no máximo 200 caracteres.");
             }
 
             if (!string.IsNullOrWhiteSpace(description) && description.Trim().Length > 4000)
             {
-                throw new ValidationException("Description", "A descricao da meta deve ter no maximo 4000 caracteres.");
+                throw new ValidationException("Description", "A descrição da meta deve ter no máximo 4000 caracteres.");
             }
 
             if (!Enum.IsDefined(type))
             {
-                throw new ValidationException("Type", "Tipo da meta invalido.");
+                throw new ValidationException("Type", "Tipo da meta inválido.");
             }
 
             if (!Enum.IsDefined(priority))
             {
-                throw new ValidationException("Priority", "Prioridade invalida.");
+                throw new ValidationException("Priority", "Prioridade inválida.");
             }
 
             if (!Enum.IsDefined(status))
             {
-                throw new ValidationException("Status", "Status da meta invalido.");
+                throw new ValidationException("Status", "Status da meta inválido.");
             }
 
             if (rewardPoints.HasValue && rewardPoints.Value < 0)
             {
-                throw new ValidationException("RewardPoints", "A pontuacao da meta nao pode ser negativa.");
+                throw new ValidationException("RewardPoints", "A pontuação da meta não pode ser negativa.");
             }
         }
 
@@ -372,7 +440,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
             var alreadyExists = await _context.Goals.AnyAsync(x => x.Id == clientGeneratedId.Value, cancellationToken);
             if (alreadyExists)
             {
-                throw new ValidationException("ClientGeneratedId", "Ja existe uma meta com o identificador informado pelo cliente.");
+                throw new ValidationException("ClientGeneratedId", "Já existe uma meta com o identificador informado pelo cliente.");
             }
         }
 
@@ -406,7 +474,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
 
                 if (rule is null)
                 {
-                    _logger.LogInformation("Nenhuma recompensa fixa nem regra ativa de bonus para GoalCompletion foi encontrada. Meta {GoalId}.", goal.Id);
+                    _logger.LogInformation("Nenhuma recompensa fixa nem regra ativa de bônus para GoalCompletion foi encontrada. Meta {GoalId}.", goal.Id);
                     return;
                 }
 
@@ -424,7 +492,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 Points = points.Value,
                 Source = BonusPointSource.GoalCompletion,
                 SourceReferenceId = goal.Id,
-                Description = $"Conclusao da meta '{goal.Summary}'."
+                Description = $"Conclusão da meta '{goal.Summary}'."
             }, cancellationToken);
         }
 
@@ -501,5 +569,6 @@ namespace eTasks_server.Core.BusinessLogicLayers.API_Resources.Goals
                 UpdatedAt = goal.UpdatedAt
             };
         }
+        #endregion
     }
 }
