@@ -109,7 +109,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         {
             if (string.IsNullOrWhiteSpace(_logsDirectoryPath))
             {
-                throw new InvalidOperationException("Diretorio de logs nao configurado.");
+                throw new InvalidOperationException("Diretório de logs não configurado.");
             }
 
             Directory.CreateDirectory(_logsDirectoryPath);
@@ -126,7 +126,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         {
             if (string.IsNullOrWhiteSpace(fileName) || fileName != Path.GetFileName(fileName))
             {
-                throw new ValidationException(nameof(fileName), "Nome de arquivo de log invalido.");
+                throw new ValidationException(nameof(fileName), "Nome de arquivo de log inválido.");
             }
 
             var directory = EnsureLogsDirectory();

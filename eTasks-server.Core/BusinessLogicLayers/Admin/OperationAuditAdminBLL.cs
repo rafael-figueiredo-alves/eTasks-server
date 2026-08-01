@@ -31,7 +31,10 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         /// <returns>Resumo agregado da auditoria.</returns>
         public async Task<OperationAuditDashboardResponse> GetDashboardAsync(CancellationToken cancellationToken = default)
         {
+            // Monta o contexto da auditoria Mongo a partir das configuracoes atuais.
             var context = await CreateMongoContextAsync(cancellationToken);
+
+            // Preenche o resumo com informacoes basicas, mesmo que a auditoria esteja desabilitada ou incompleta.
             var response = new OperationAuditDashboardResponse
             {
                 MongoAuditEnabled = context.Enabled,
@@ -40,11 +43,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 CollectionName = context.CollectionName
             };
 
+            // Se a auditoria estiver desabilitada ou incompleta, devolve o resumo com apenas as informacoes basicas.
             if (context.Collection is null)
             {
                 return response;
             }
 
+            // Monta filtros para as consultas agregadas.
             var filter = Builders<OperationAuditLog>.Filter.Empty;
             var last24Filter = Builders<OperationAuditLog>.Filter.Gte(x => x.CreatedAtUtc, DateTime.UtcNow.AddHours(-24));
             var errorFilter = Builders<OperationAuditLog>.Filter.Or(
@@ -422,14 +427,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             var configuredAdminKey = configuration[Constants.AdminApiKeyConfig];
             if (string.IsNullOrWhiteSpace(configuredAdminKey))
             {
-                throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN nao configurada.");
+                throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN não configurada.");
             }
 
             // Comparacao em tempo constante para reduzir risco de oracle por timing.
             if (string.IsNullOrWhiteSpace(adminKey)
                 || !FixedTimeEquals(adminKey.Trim(), configuredAdminKey.Trim()))
             {
-                throw new ValidationException(nameof(adminKey), "Chave administrativa invalida.");
+                throw new ValidationException(nameof(adminKey), "Chave administrativa inválida.");
             }
         }
 

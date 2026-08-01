@@ -174,7 +174,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             // Verifica se porta está configurada com valor entre 1 e 65535
             if (request.SmtpPort is < 1 or > 65535)
             {
-                throw new ValidationException(nameof(request.SmtpPort), "Informe uma porta SMTP valida.");
+                throw new ValidationException(nameof(request.SmtpPort), "Informe uma porta SMTP válida.");
             }
 
             // Valida se endereço de e-mail de retorno está vazio
@@ -224,7 +224,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             // Valida se a quantidade máxima de tokens está fora dos limites entre 1 e 32000
             if (request.OpenRouterMaxTokens is < 1 or > 32000)
             {
-                throw new ValidationException(nameof(request.OpenRouterMaxTokens), "Informe um limite de tokens valido.");
+                throw new ValidationException(nameof(request.OpenRouterMaxTokens), "Informe um limite de tokens válido.");
             }
         }
 
@@ -256,7 +256,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin.ServerSettings
             // Valida se o campo coleção está vazio
             if (string.IsNullOrWhiteSpace(request.MongoAuditCollectionName))
             {
-                throw new ValidationException(nameof(request.MongoAuditCollectionName), "Informe o nome da colecao MongoDB.");
+                throw new ValidationException(nameof(request.MongoAuditCollectionName), "Informe o nome da coleção MongoDB.");
             }
         }
 

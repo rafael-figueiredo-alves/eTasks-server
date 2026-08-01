@@ -24,6 +24,12 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         private const int MaxScriptLength = 200_000;
         private readonly IConfiguration _configuration;
 
+        /// <summary>
+        /// Inicializa uma nova instancia do DatabaseAdminBLL.
+        /// </summary>
+        /// <param name="context">Contexto de dados</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="configuration">Configuracao</param>
         public DatabaseAdminBLL(AppDbContext context, ILogger<IDatabaseAdminBLL> logger, IConfiguration configuration)
             : base(context, logger)
         {
@@ -178,13 +184,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 affectedRows += await ExecuteNonQueryAsync(connection, "DELETE FROM `users` WHERE `IsAdmin` = 0;", cancellationToken);
                 await ExecuteNonQueryAsync(connection, "SET FOREIGN_KEY_CHECKS=1;", cancellationToken);
 
-                _logger.LogWarning("Base MySQL limpa pelo painel administrativo. Usuarios administradores foram preservados.");
+                _logger.LogWarning("Base MySQL limpa pelo painel administrativo. Usuários administradores foram preservados.");
 
                 return new DatabaseScriptExecutionResponse
                 {
                     Success = true,
                     AffectedRows = affectedRows,
-                    Message = $"Base limpa com sucesso. Linhas removidas: {affectedRows}. Usuarios administradores preservados.",
+                    Message = $"Base limpa com sucesso. Linhas removidas: {affectedRows}. Usuários administradores preservados.",
                     ExecutedAt = SaoPauloDateTime.Now()
                 };
             }
@@ -264,7 +270,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
                 return reader.GetString(1);
             }
 
-            throw new InvalidOperationException($"Nao foi possivel gerar o CREATE TABLE para {tableName}.");
+            throw new InvalidOperationException($"Não foi possível gerar o CREATE TABLE para {tableName}.");
         }
 
         /// <summary>
@@ -367,14 +373,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             // Limite de tamanho para evitar scripts abusivos na interface.
             if (script.Length > MaxScriptLength)
             {
-                throw new ValidationException(nameof(script), $"O script deve ter no maximo {MaxScriptLength} caracteres.");
+                throw new ValidationException(nameof(script), $"O script deve ter no máximo {MaxScriptLength} caracteres.");
             }
 
             // Remove comentarios e literais antes de procurar comandos bloqueados.
             var normalized = StripAllowedForeignKeyActions(StripSqlStringLiterals(StripSqlComments(script)));
             if (BlockedCommandRegex().IsMatch(normalized))
             {
-                throw new ValidationException(nameof(script), "Comandos destrutivos ou administrativos nao sao permitidos nesta tela.");
+                throw new ValidationException(nameof(script), "Comandos destrutivos ou administrativos não são permitidos nesta tela.");
             }
         }
 
@@ -478,14 +484,14 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             var configuredAdminKey = _configuration[Constants.AdminApiKeyConfig];
             if (string.IsNullOrWhiteSpace(configuredAdminKey))
             {
-                throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN nao configurada.");
+                throw new ValidationException(nameof(adminKey), "APIKEY_ADMIN não configurada.");
             }
 
             // Comparacao em tempo constante para reduzir risco de oracle por timing.
             if (string.IsNullOrWhiteSpace(adminKey)
                 || !FixedTimeEquals(adminKey.Trim(), configuredAdminKey.Trim()))
             {
-                throw new ValidationException(nameof(adminKey), "Chave administrativa invalida.");
+                throw new ValidationException(nameof(adminKey), "Chave administrativa inválida.");
             }
         }
 

@@ -31,13 +31,13 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             var admin = await GetAndValidateActiveUserAsync(adminUserUid);
             if (!admin.IsAdmin)
             {
-                throw new ValidationException(nameof(adminUserUid), "Somente administradores podem enviar notificacoes.");
+                throw new ValidationException(nameof(adminUserUid), "Somente administradores podem enviar notificações.");
             }
 
             var recipients = await ResolveRecipientsAsync(request, cancellationToken);
             if (recipients.Count == 0)
             {
-                throw new ValidationException(nameof(request.TargetType), "Nenhum destinatario encontrado para o envio.");
+                throw new ValidationException(nameof(request.TargetType), "Nenhum destinatário encontrado para o envio.");
             }
 
             var now = SaoPauloDateTime.Now();
@@ -63,7 +63,7 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
             var deviceCount = await _context.PushDeviceRegistrations
                 .CountAsync(x => recipients.Contains(x.UserUid) && x.IsActive, cancellationToken);
 
-            _logger.LogInformation("Notificacao {NotificationId} criada para {RecipientCount} destinatario(s), com {DeviceCount} dispositivo(s) registrado(s).", message.Id, recipients.Count, deviceCount);
+            _logger.LogInformation("Notificação {NotificationId} criada para {RecipientCount} destinatário(s), com {DeviceCount} dispositivo(s) registrado(s).", message.Id, recipients.Count, deviceCount);
 
             return new SendAdminNotificationResponse
             {
@@ -109,27 +109,27 @@ namespace eTasks_server.Core.BusinessLogicLayers.Admin
         {
             if (string.IsNullOrWhiteSpace(request.Title))
             {
-                throw new ValidationException(nameof(request.Title), "Informe o titulo da notificacao.");
+                throw new ValidationException(nameof(request.Title), "Informe o título da notificação.");
             }
 
             if (request.Title.Length > 120)
             {
-                throw new ValidationException(nameof(request.Title), "O titulo deve ter no maximo 120 caracteres.");
+                throw new ValidationException(nameof(request.Title), "O título deve ter no máximo 120 caracteres.");
             }
 
             if (string.IsNullOrWhiteSpace(request.Body))
             {
-                throw new ValidationException(nameof(request.Body), "Informe a mensagem da notificacao.");
+                throw new ValidationException(nameof(request.Body), "Informe a mensagem da notificação.");
             }
 
             if (request.Body.Length > 500)
             {
-                throw new ValidationException(nameof(request.Body), "A mensagem deve ter no maximo 500 caracteres.");
+                throw new ValidationException(nameof(request.Body), "A mensagem deve ter no máximo 500 caracteres.");
             }
 
             if (request.TargetType == NotificationTargetType.SelectedUsers && request.UserUids.Count == 0)
             {
-                throw new ValidationException(nameof(request.UserUids), "Selecione pelo menos um usuario.");
+                throw new ValidationException(nameof(request.UserUids), "Selecione pelo menos um usuário.");
             }
         }
     }
