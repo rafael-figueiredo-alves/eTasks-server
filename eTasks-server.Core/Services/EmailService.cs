@@ -7,8 +7,14 @@ using Microsoft.Extensions.Logging;
 
 namespace eTasks_server.Core.Services
 {
+    /// <summary>
+    /// Classe do serviço de envio de e-mails, responsável por enviar e-mails de recuperação de senha, confirmação de conta e reativação de conta.
+    /// </summary>
     public class EmailService : IEmailService
     {
+        /// <summary>
+        /// Enumeração que representa os modelos de e-mail disponíveis.
+        /// </summary>
         private enum EmailTemplate
         {
             PasswordReset,
@@ -20,6 +26,12 @@ namespace eTasks_server.Core.Services
         private readonly IServerSettingsProvider _settingsProvider;
         private readonly ILogger<EmailService> _logger;
 
+        /// <summary>
+        /// Construtor da classe EmailService.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="settingsProvider"></param>
+        /// <param name="logger"></param>
         public EmailService(
             IConfiguration configuration,
             IServerSettingsProvider settingsProvider,
@@ -30,6 +42,12 @@ namespace eTasks_server.Core.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Método responsável por enviar um e-mail de recuperação de senha para o endereço de e-mail especificado, utilizando o código de redefinição fornecido.
+        /// </summary>
+        /// <param name="toEmail"></param>
+        /// <param name="resetCode"></param>
+        /// <returns></returns>
         public async Task SendPasswordResetEmailAsync(string toEmail, string resetCode)
         {
             var settings = await _settingsProvider.GetCurrentAsync();
@@ -52,16 +70,22 @@ namespace eTasks_server.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Falha critica ao tentar enviar e-mail de recuperacao para {Email}", toEmail);
+                _logger.LogError(ex, "Falha crítica ao tentar enviar e-mail de recuperação para {Email}", toEmail);
             }
         }
 
+        /// <summary>
+        /// Método responsável por enviar um e-mail de confirmação de conta para o endereço de e-mail especificado, utilizando o link de confirmação fornecido.
+        /// </summary>
+        /// <param name="toEmail"></param>
+        /// <param name="confirmationLink"></param>
+        /// <returns></returns>
         public async Task SendAccountConfirmationEmailAsync(string toEmail, string confirmationLink)
         {
             var settings = await _settingsProvider.GetCurrentAsync();
             if (!settings.SmtpEnabled)
             {
-                _logger.LogInformation("Servico de e-mail desativado. Evitando envio de confirmacao para {Email}", toEmail);
+                _logger.LogInformation("Serviço de e-mail desativado. Evitando envio de confirmação para {Email}", toEmail);
                 return;
             }
 
@@ -72,22 +96,29 @@ namespace eTasks_server.Core.Services
                 using var mailMessage = await GetTemplateMailMessage(EmailTemplate.AccountConfirmation, confirmationLink, emailConfig);
                 mailMessage.To.Add(toEmail);
 
-                _logger.LogInformation("Efetuando envio de e-mail de confirmacao para {Email}", toEmail);
+                _logger.LogInformation("Efetuando envio de e-mail de confirmação para {Email}", toEmail);
                 await smtpClient.SendMailAsync(mailMessage);
-                _logger.LogInformation("E-mail de confirmacao para {Email} disparado com sucesso.", toEmail);
+                _logger.LogInformation("E-mail de confirmação para {Email} disparado com sucesso.", toEmail);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Falha critica ao tentar enviar e-mail de confirmacao para {Email}", toEmail);
+                _logger.LogError(ex, "Falha crítica ao tentar enviar e-mail de confirmação para {Email}", toEmail);
             }
         }
 
+        /// <summary>
+        /// Método responsável por enviar um e-mail de reativação de conta para o endereço de e-mail especificado, utilizando o link de reativação fornecido e a data de expiração do código.
+        /// </summary>
+        /// <param name="toEmail"></param>
+        /// <param name="reactivationLink"></param>
+        /// <param name="expiresAt"></param>
+        /// <returns></returns>
         public async Task SendAccountReactivationEmailAsync(string toEmail, string reactivationLink, DateTime expiresAt)
         {
             var settings = await _settingsProvider.GetCurrentAsync();
             if (!settings.SmtpEnabled)
             {
-                _logger.LogInformation("Servico de e-mail desativado. Evitando envio de reativacao de conta para {Email}", toEmail);
+                _logger.LogInformation("Serviço de e-mail desativado. Evitando envio de reativação de conta para {Email}", toEmail);
                 return;
             }
 
@@ -105,16 +136,21 @@ namespace eTasks_server.Core.Services
                     emailConfig);
                 mailMessage.To.Add(toEmail);
 
-                _logger.LogInformation("Efetuando envio de e-mail de reativacao de conta para {Email}", toEmail);
+                _logger.LogInformation("Efetuando envio de e-mail de reativação de conta para {Email}", toEmail);
                 await smtpClient.SendMailAsync(mailMessage);
-                _logger.LogInformation("E-mail de reativacao de conta para {Email} disparado com sucesso.", toEmail);
+                _logger.LogInformation("E-mail de reativação de conta para {Email} disparado com sucesso.", toEmail);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Falha critica ao tentar enviar e-mail de reativacao de conta para {Email}", toEmail);
+                _logger.LogError(ex, "Falha crítica ao tentar enviar e-mail de reativação de conta para {Email}", toEmail);
             }
         }
 
+        /// <summary>
+        /// Mapeia as configurações do servidor para a configuração de e-mail.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
         private static EmailConfiguration MapEmailConfiguration(eTasks_server.Models.Entities.Settings.ServerSettings settings)
         {
             return new EmailConfiguration
@@ -129,6 +165,11 @@ namespace eTasks_server.Core.Services
             };
         }
 
+        /// <summary>
+        /// Cria um cliente SMTP com base na configuração de e-mail fornecida.
+        /// </summary>
+        /// <param name="emailConfig"></param>
+        /// <returns></returns>
         private static SmtpClient CreateSmtpClient(EmailConfiguration emailConfig)
         {
             return new SmtpClient(emailConfig.host, emailConfig.port)
@@ -138,6 +179,14 @@ namespace eTasks_server.Core.Services
             };
         }
 
+        /// <summary>
+        /// Obtém a mensagem de e-mail com base no modelo de e-mail especificado, substituindo o conteúdo
+        /// </summary>
+        /// <param name="emailTemplate"></param>
+        /// <param name="content"></param>
+        /// <param name="emailConfiguration"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, string content, EmailConfiguration emailConfiguration)
         {
             string fieldToReplace;
@@ -160,6 +209,14 @@ namespace eTasks_server.Core.Services
                 emailConfiguration);
         }
 
+        /// <summary>
+        /// Obtém o template de e-mail com base no modelo de e-mail especificado, substituindo os campos fornecidos no dicionário de substituições.
+        /// </summary>
+        /// <param name="emailTemplate"></param>
+        /// <param name="replacements"></param>
+        /// <param name="emailConfiguration"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         private async Task<MailMessage> GetTemplateMailMessage(EmailTemplate emailTemplate, IReadOnlyDictionary<string, string> replacements, EmailConfiguration emailConfiguration)
         {
             string templateFilename;
@@ -169,7 +226,7 @@ namespace eTasks_server.Core.Services
             {
                 case EmailTemplate.PasswordReset:
                     templateFilename = "password-reset.html";
-                    emailSubject = "Seu codigo de recuperacao chegou! (eTasks)";
+                    emailSubject = "Seu código de recuperação chegou! (eTasks)";
                     break;
                 case EmailTemplate.AccountConfirmation:
                     templateFilename = "account-confirmation.html";
@@ -177,7 +234,7 @@ namespace eTasks_server.Core.Services
                     break;
                 case EmailTemplate.AccountReactivation:
                     templateFilename = "account-reactivation.html";
-                    emailSubject = "Recebemos sua solicitacao de exclusao no eTasks";
+                    emailSubject = "Recebemos sua solicitação de exclusão no eTasks";
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(emailTemplate));
