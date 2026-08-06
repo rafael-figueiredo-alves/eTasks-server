@@ -4,47 +4,60 @@ using eTasks_server.Models.Enums.Ai;
 
 namespace eTasks_server.Core.Services
 {
+    /// <summary>
+    /// Classe responsável por compor prompts para interações com a IA, considerando o tipo de recurso e a intenção do usuário.
+    /// </summary>
     public class AiPromptComposer : IAiPromptComposer
     {
+        /// <summary>
+        /// Constrói o prompt do sistema com base no tipo de recurso e na intenção do usuário.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public string BuildSystemPrompt(AiAssistRequest request)
         {
             var resourceGuidance = request.Resource switch
             {
-                AiResourceType.Tasks => "Voce esta ajudando um usuario de produtividade pessoal a transformar tarefas em execucao real. Prefira acao clara, prioridade explicita, proximo passo concreto e decomposicao apenas quando ela reduzir friccao.",
-                AiResourceType.Goals => "Voce esta ajudando um usuario a sair de metas abstratas para metas executaveis. Estruture metas com criterio de sucesso, marcos intermediarios, riscos e proximos passos realistas.",
-                AiResourceType.Notes => "Voce esta ajudando um usuario a transformar anotacoes em algo mais util. Seu foco e resumir, limpar, reorganizar e extrair acao sem inventar informacao.",
-                AiResourceType.Readings => "Voce esta ajudando um usuario a extrair valor de leituras. Priorize resumo, entendimento, reflexao, aprendizados e proximos passos com base apenas no material informado.",
-                AiResourceType.Shopping => "Voce esta ajudando um usuario a planejar compras com praticidade. Agrupe itens, identifique possiveis duplicidades, faltas provaveis e oportunidades de organizacao ou economia sem fingir saber precos reais.",
-                AiResourceType.Finances => "Voce esta ajudando um usuario a entender melhor seu comportamento financeiro. Explique padroes, categorias e concentracoes de gasto com prudencia. Ofereca educacao financeira basica, nao consultoria financeira definitiva.",
-                AiResourceType.UserProfile => "Voce esta ajudando um usuario a interpretar configuracoes, historico de uso e sinais do proprio sistema para melhorar organizacao pessoal.",
-                _ => "Voce esta ajudando um usuario dentro de um sistema de produtividade pessoal. O objetivo e transformar contexto salvo no app em orientacao pratica."
+                AiResourceType.Tasks => "Você está ajudando um usuário de produtividade pessoal a transformar tarefas em execução real. Prefira ação clara, prioridade explícita, próximo passo concreto e decomposição apenas quando ela reduzir fricção.",
+                AiResourceType.Goals => "Você está ajudando um usuário a sair de metas abstratas para metas executáveis. Estruture metas com critério de sucesso, marcos intermediários, riscos e próximos passos realistas.",
+                AiResourceType.Notes => "Você está ajudando um usuário a transformar anotações em algo mais útil. Seu foco é resumir, limpar, reorganizar e extrair ação sem inventar informação.",
+                AiResourceType.Readings => "Você está ajudando um usuário a extrair valor de leituras. Priorize resumo, entendimento, reflexão, aprendizados e próximos passos com base apenas no material informado.",
+                AiResourceType.Shopping => "Você está ajudando um usuário a planejar compras com praticidade. Agrupe itens, identifique possíveis duplicidades, faltas prováveis e oportunidades de organização ou economia sem fingir saber preços reais.",
+                AiResourceType.Finances => "Você está ajudando um usuário a entender melhor seu comportamento financeiro. Explique padrões, categorias e concentrações de gasto com prudência. Ofereça educação financeira básica, não consultoria financeira definitiva.",
+                AiResourceType.UserProfile => "Você está ajudando um usuário a interpretar configurações, histórico de uso e sinais do próprio sistema para melhorar organização pessoal.",
+                _ => "Você está ajudando um usuário dentro de um sistema de produtividade pessoal. O objetivo é transformar contexto salvo no app em orientação prática."
             };
 
             var intentGuidance = request.Intent switch
             {
-                AiInteractionIntent.Summarize => "Responda com sintese util, direta e orientada ao que importa agora.",
+                AiInteractionIntent.Summarize => "Responda com síntese útil, direta e orientada ao que importa agora.",
                 AiInteractionIntent.Rewrite => "Reescreva para aumentar clareza, utilidade e objetividade, sem alterar o sentido do contexto.",
-                AiInteractionIntent.SuggestNextSteps => "Sugira proximos passos concretos, curtos e executaveis no mundo real.",
-                AiInteractionIntent.Analyze => "Aponte padroes, riscos, gargalos, desperdicios ou oportunidades relevantes no contexto recebido.",
-                AiInteractionIntent.Plan => "Monte um plano pratico em ordem logica, com foco em execucao progressiva e baixa friccao.",
-                _ => "Seja util, claro, pratico e objetivo."
+                AiInteractionIntent.SuggestNextSteps => "Sugira próximos passos concretos, curtos e executáveis no mundo real.",
+                AiInteractionIntent.Analyze => "Aponte padrões, riscos, gargalos, desperdícios ou oportunidades relevantes no contexto recebido.",
+                AiInteractionIntent.Plan => "Monte um plano prático em ordem lógica, com foco em execução progressiva e baixa fricção.",
+                _ => "Seja útil, claro, prático e objetivo."
             };
 
-            return $"{resourceGuidance} {intentGuidance} Nao invente fatos ausentes. Se o contexto for insuficiente, diga exatamente o que falta. Evite texto motivacional genérico. Prefira apoiar decisao, clareza, planejamento e organizacao. Em financas, deixe claro que a resposta e apoio educacional e organizacional.";
+            return $"{resourceGuidance} {intentGuidance} Não invente fatos ausentes. Se o contexto for insuficiente, diga exatamente o que falta. Evite texto motivacional genérico. Prefira apoiar decisão, clareza, planejamento e organização. Em finanças, deixe claro que a resposta é apoio educacional e organizacional.";
         }
 
+        /// <summary>
+        /// Constrói o prompt do usuário combinando título, conteúdo, contexto adicional e a solicitação do usuário.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public string BuildUserPrompt(AiAssistRequest request)
         {
             var parts = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(request.ResourceTitle))
             {
-                parts.Add($"Titulo do recurso: {request.ResourceTitle.Trim()}");
+                parts.Add($"Título do recurso: {request.ResourceTitle.Trim()}");
             }
 
             if (!string.IsNullOrWhiteSpace(request.ResourceContent))
             {
-                parts.Add($"Conteudo do recurso:\n{request.ResourceContent.Trim()}");
+                parts.Add($"Conteúdo do recurso:\n{request.ResourceContent.Trim()}");
             }
 
             if (!string.IsNullOrWhiteSpace(request.AdditionalContext))
@@ -52,7 +65,7 @@ namespace eTasks_server.Core.Services
                 parts.Add($"Contexto adicional:\n{request.AdditionalContext.Trim()}");
             }
 
-            parts.Add($"Solicitacao do usuario:\n{request.UserPrompt.Trim()}");
+            parts.Add($"Solicitação do usuário:\n{request.UserPrompt.Trim()}");
 
             return string.Join("\n\n", parts);
         }
