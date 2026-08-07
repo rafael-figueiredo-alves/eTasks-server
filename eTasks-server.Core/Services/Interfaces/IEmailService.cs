@@ -21,6 +21,13 @@ namespace eTasks_server.Core.Services.Interfaces
         /// <returns>Nada</returns>
         Task SendAccountConfirmationEmailAsync(string toEmail, string confirmationLink);
 
+        /// <summary>
+        /// Envia um e-mail de reativação de conta para o usuário, contendo um link para reativar a conta e a data de expiração do link.
+        /// </summary>
+        /// <param name="toEmail">Endereço para enviar email de reativação de conta</param>
+        /// <param name="reactivationLink">Link para reativar conta</param>
+        /// <param name="expiresAt">Data de expiração do link</param>
+        /// <returns>Nada</returns>
         Task SendAccountReactivationEmailAsync(string toEmail, string reactivationLink, DateTime expiresAt);
     }
 }

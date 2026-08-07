@@ -6,8 +6,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.Services
 {
+    /// <summary>
+    /// Classe de testes unitários para a classe SecretProtector.
+    /// </summary>
     public class SecretProtectorTests
     {
+        /// <summary>
+        /// Cria uma instância de ISecretProtector para uso nos testes.
+        /// </summary>
+        /// <returns></returns>
         private static ISecretProtector CreateSut()
         {
             var configuration = new ConfigurationBuilder()
@@ -20,6 +27,9 @@ namespace eTasks_server.Tests.Services
             return new SecretProtector(configuration);
         }
 
+        /// <summary>
+        /// Testa se o método Protect e Unprotect funcionam corretamente em conjunto, garantindo que o valor original seja recuperado após a proteção e desproteção.
+        /// </summary>
         [Fact]
         public void Protect_AndUnprotect_RoundTripOriginalValue()
         {
@@ -32,6 +42,9 @@ namespace eTasks_server.Tests.Services
             Assert.Equal("sensitive-value", plainValue);
         }
 
+        /// <summary>
+        /// Testa se o método Protect retorna o mesmo payload quando o valor já está protegido, garantindo que não haja alterações desnecessárias.
+        /// </summary>
         [Fact]
         public void Protect_WhenValueAlreadyProtected_ReturnsSamePayload()
         {
@@ -43,6 +56,9 @@ namespace eTasks_server.Tests.Services
             Assert.Equal(protectedValue, protectedAgain);
         }
 
+        /// <summary>
+        /// Testa se o método Unprotect retorna o valor original quando o valor fornecido é texto simples, garantindo que não haja alterações desnecessárias.
+        /// </summary>
         [Fact]
         public void Unprotect_WhenValueIsPlainText_ReturnsOriginalValue()
         {

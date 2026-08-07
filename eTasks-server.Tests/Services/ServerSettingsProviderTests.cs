@@ -8,8 +8,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.Services
 {
+    /// <summary>
+    /// Classe de testes para o ServerSettingsProvider, responsável por fornecer configurações do servidor.
+    /// </summary>
     public class ServerSettingsProviderTests
     {
+        /// <summary>
+        /// Cria uma instância de ISecretProtector para uso nos testes.
+        /// </summary>
+        /// <returns></returns>
         private static ISecretProtector CreateProtector()
         {
             var configuration = new ConfigurationBuilder()
@@ -22,6 +29,10 @@ namespace eTasks_server.Tests.Services
             return new SecretProtector(configuration);
         }
 
+        /// <summary>
+        /// Testa se o método GetCurrentAsync descriptografa corretamente os campos sensíveis do ServerSettings.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task GetCurrentAsync_DecryptsSensitiveFields()
         {

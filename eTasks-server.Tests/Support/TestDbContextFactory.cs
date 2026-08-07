@@ -6,8 +6,16 @@ using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace eTasks_server.Tests.Support
 {
+    /// <summary>
+    /// Fábrica de contextos de base de datos para provas unitárias.
+    /// </summary>
     internal static class TestDbContextFactory
     {
+        /// <summary>
+        /// Cria o contexto de banco de dados em memória para testes unitários.
+        /// </summary>
+        /// <param name="databaseName"></param>
+        /// <returns></returns>
         public static AppDbContext Create(string databaseName)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -21,6 +29,10 @@ namespace eTasks_server.Tests.Support
             return context;
         }
 
+        /// <summary>
+        /// Cria o contexto de banco de dados relacional para testes unitários.
+        /// </summary>
+        /// <returns></returns>
         public static AppDbContext CreateRelationalModelContext()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -33,6 +45,11 @@ namespace eTasks_server.Tests.Support
             return new AppDbContext(options);
         }
 
+        /// <summary>
+        /// Cria um usuário ativo para testes unitários.
+        /// </summary>
+        /// <param name="uid"></param>
+        /// <returns></returns>
         public static User CreateActiveUser(Guid? uid = null)
         {
             return new User
