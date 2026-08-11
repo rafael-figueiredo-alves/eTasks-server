@@ -1,3 +1,6 @@
+Versão 1.0.1 - 10/08/2026 (API v2 - 2.0.0)
+=> Ajuste no método de teste das configurações de SMTP para garantir que as configurações de e-mail estejam corretas antes de enviar notificações.
+
 Versão 1.0.0 - 15/05/2026 (API v2 - 2.0.0)
 => Desenvolvido painel administrativo para gerenciamento de tarefas, usuários e configurações do sistema.
 => Implementado sistema de autenticação e autorização para garantir a segurança do acesso ao painel administrativo.

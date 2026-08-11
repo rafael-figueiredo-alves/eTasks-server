@@ -13,8 +13,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Finances
 {
+    /// <summary>
+    /// Testas unitárias para a camada de lógica de negócios de finanças (FinanceBLL).
+    /// </summary>
     public class FinanceBLLTests
     {
+        /// <summary>
+        /// Teste para verificar se o método GetMonthSummaryAsync retorna corretamente o resumo do mês com saldo positivo e se está elegível para pontos de bônus.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task GetMonthSummaryAsync_PositiveBalanceWithRule_IsEligibleForBonus()
         {
@@ -62,6 +69,10 @@ namespace eTasks_server.Tests.BusinessLogic.Finances
             Assert.True(summary.EligibleForBonusPoints);
         }
 
+        /// <summary>
+        /// Teste para verificar se o método SyncAsync retorna corretamente uma entrada de finanças excluída como um tombstone.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task SyncAsync_DeletedEntry_ReturnsTombstone()
         {
@@ -93,6 +104,10 @@ namespace eTasks_server.Tests.BusinessLogic.Finances
             Assert.Contains(sync.Deleted, x => x.Id == entry.Id);
         }
 
+        /// <summary>
+        /// Teste para verificar se o método CreateAsync persiste corretamente uma entrada de finanças recorrente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task CreateAsync_WithRecurrence_PersistsFinanceRecurrence()
         {
@@ -129,6 +144,10 @@ namespace eTasks_server.Tests.BusinessLogic.Finances
             Assert.Equal(15, recurrence.DayOfMonth);
         }
 
+        /// <summary>
+        /// Teste para verificar se o método UpdateAsync remove corretamente a recorrência de finanças ao desativar a recorrência.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task UpdateAsync_DisablingRecurrence_RemovesFinanceRecurrence()
         {

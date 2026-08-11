@@ -12,8 +12,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Auth
 {
+    /// <summary>
+    /// Realiza testes unitários para a camada de lógica de negócios de autenticação (AuthBLL).
+    /// </summary>
     public class AuthBLLTests
     {
+        /// <summary>
+        /// Cria uma configuração de teste com valores simulados para as chaves de criptografia, JWT e URL base da API.
+        /// </summary>
+        /// <returns></returns>
         private static IConfiguration CreateConfiguration()
         {
             return new ConfigurationBuilder()
@@ -28,8 +35,21 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
                 .Build();
         }
 
+        /// <summary>
+        /// Cria uma instância de ISecretProtector usando a configuração fornecida.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         private static ISecretProtector CreateProtector(IConfiguration configuration) => new SecretProtector(configuration);
 
+        /// <summary>
+        /// Cria uma instância de IAuthBLL (AuthBLL) para testes, injetando dependências simuladas e reais.
+        /// </summary>
+        /// <param name="context">Contexto de banco de dados para testes</param>
+        /// <param name="configuration">Configuração de teste</param>
+        /// <param name="emailService">Serviço de email simulado</param>
+        /// <param name="protector">Protector de segredos</param>
+        /// <returns></returns>
         private static IAuthBLL CreateSut(Core.Data.AppDbContext context, IConfiguration configuration, IEmailService emailService, ISecretProtector protector)
         {
             var services = new ServiceCollection().AddHttpClient().BuildServiceProvider();
@@ -44,6 +64,10 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
                 NullLogger<IAuthBLL>.Instance);
         }
 
+        /// <summary>
+        /// Testa se o método RegisterAsync armazena corretamente o hash de senha protegido e cria um token de atualização (refresh token) ao registrar um novo usuário.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task RegisterAsync_StoresProtectedPasswordHash_AndCreatesRefreshToken()
         {
@@ -70,6 +94,10 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             Assert.False(string.IsNullOrWhiteSpace(response.RefreshToken));
         }
 
+        /// <summary>
+        /// Testa se o método LoginAsync retorna um novo token de atualização (refresh token) ao fazer login com uma senha protegida corretamente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task LoginAsync_WithProtectedPasswordHash_ReturnsNewRefreshToken()
         {
@@ -97,6 +125,10 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             Assert.Contains(context.LoginLogs, x => x.UserUid == user.Uid && x.Status == "Success");
         }
 
+        /// <summary>
+        /// Testa se o método ChangePasswordAsync atualiza corretamente o hash de senha protegido e revoga os tokens de atualização (refresh tokens) ativos do usuário.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task ChangePasswordAsync_UpdatesProtectedHash_AndRevokesActiveTokens()
         {

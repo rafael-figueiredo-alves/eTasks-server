@@ -11,8 +11,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Admin
 {
+    /// <summary>
+    /// Realiza testes unitários para a classe UserAdminBLL, que é responsável por gerenciar operações administrativas relacionadas a usuários, como redefinição de senha, bloqueio de usuários e envio de e-mails de redefinição de senha.
+    /// </summary>
     public class UserAdminBLLTests
     {
+        /// <summary>
+        /// Cria uma instância de ISecretProtector para uso nos testes, utilizando uma chave de criptografia de teste definida na configuração em memória.
+        /// </summary>
+        /// <returns></returns>
         private static ISecretProtector CreateProtector()
         {
             var configuration = new ConfigurationBuilder()
@@ -25,6 +32,10 @@ namespace eTasks_server.Tests.BusinessLogic.Admin
             return new SecretProtector(configuration);
         }
 
+        /// <summary>
+        /// Testa o método SetPasswordAsync da classe UserAdminBLL, verificando se a senha do usuário é criptografada corretamente e se os tokens de atualização ativos são revogados após a alteração da senha.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task SetPasswordAsync_EncryptsHash_AndRevokesActiveTokens()
         {
@@ -54,6 +65,10 @@ namespace eTasks_server.Tests.BusinessLogic.Admin
             Assert.All(context.RefreshTokens, x => Assert.True(x.IsRevoked));
         }
 
+        /// <summary>
+        /// Testa o método ToggleBlockAsync da classe UserAdminBLL, verificando se o usuário é bloqueado corretamente e se os tokens de atualização ativos são revogados após o bloqueio do usuário.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task ToggleBlockAsync_BlocksUser_AndRevokesActiveTokens()
         {
@@ -79,6 +94,10 @@ namespace eTasks_server.Tests.BusinessLogic.Admin
             Assert.All(context.RefreshTokens, x => Assert.True(x.IsRevoked));
         }
 
+        /// <summary>
+        /// Testa o método SendPasswordResetEmailAsync da classe UserAdminBLL, verificando se um código de redefinição de senha é criado corretamente e se o e-mail de redefinição de senha é enviado para o usuário.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task SendPasswordResetEmailAsync_CreatesResetCode_AndDispatchesEmail()
         {

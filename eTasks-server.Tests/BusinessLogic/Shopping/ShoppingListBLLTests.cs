@@ -11,8 +11,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Shopping
 {
+    /// <summary>
+    /// Testes unitários para a classe <see cref="ShoppingListBLL"/>.
+    /// </summary>
     public class ShoppingListBLLTests
     {
+        /// <summary>
+        /// Testa se o método UpdateAsync recalcula corretamente os totais e concede pontos de bônus ao finalizar uma lista de compras.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task UpdateAsync_FinalizingList_RecalculatesTotals_AndAwardsPoints()
         {

@@ -7,8 +7,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Notes
 {
+    /// <summary>
+    /// Testa a camada de lógica de negócios (BLL) para operações relacionadas a notas, incluindo criação, atualização e exclusão de notas.
+    /// </summary>
     public class NoteBLLTests
     {
+        /// <summary>
+        /// Testa se a criação e atualização de uma nota persiste o conteúdo corretamente, removendo espaços em branco desnecessários.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task CreateAsync_ThenUpdateAsync_PersistsTrimmedContent()
         {
@@ -35,6 +42,10 @@ namespace eTasks_server.Tests.BusinessLogic.Notes
             Assert.Equal("Conteudo alterado", updated.Content);
         }
 
+        /// <summary>
+        /// Testa se a exclusão de uma nota cria um "tombstone" (registro de exclusão) que é visível na sincronização subsequente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task DeleteAsync_CreatesTombstoneVisibleInSync()
         {

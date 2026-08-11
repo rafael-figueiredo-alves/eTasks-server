@@ -9,8 +9,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Goals
 {
+    /// <summary>
+    /// Testa a classe GoalBLL, que é responsável por gerenciar as metas dos usuários.
+    /// </summary>
     public class GoalBLLTests
     {
+        /// <summary>
+        /// Testa se ao criar uma meta com status "Completed", os pontos de recompensa configurados são concedidos ao usuário.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task CreateAsync_WithCompletedStatus_AwardsConfiguredRewardPoints()
         {
@@ -33,6 +40,10 @@ namespace eTasks_server.Tests.BusinessLogic.Goals
             Assert.Equal(17, context.UserBonusPoints.Single().Points);
         }
 
+        /// <summary>
+        /// Testa se ao atualizar uma meta de "Completed" para "Active", os pontos de recompensa concedidos anteriormente são revertidos.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task UpdateAsync_ReopeningCompletedGoal_RevertsPoints()
         {

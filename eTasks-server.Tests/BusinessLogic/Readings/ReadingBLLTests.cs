@@ -12,8 +12,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Readings
 {
+    /// <summary>
+    /// Realiza testes unitários para a camada de lógica de negócios relacionada a leituras (ReadingBLL).
+    /// </summary>
     public class ReadingBLLTests
     {
+        /// <summary>
+        /// Testa a criação de uma leitura concluída, verificando se os pontos de bônus são concedidos e se o ID gerado pelo cliente é utilizado corretamente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task CreateAsync_CompletedReading_AwardsPoints_AndUsesClientGeneratedId()
         {
@@ -48,6 +55,10 @@ namespace eTasks_server.Tests.BusinessLogic.Readings
             Assert.Equal(clientId, context.UserBonusPoints.Single().SourceReferenceId);
         }
 
+        /// <summary>
+        /// Testa a exclusão de uma leitura concluída, verificando se um "tombstone" é criado e se os pontos de bônus são revertidos corretamente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task DeleteAsync_CompletedReading_CreatesTombstone_AndRevertsPoints()
         {

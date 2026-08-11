@@ -11,8 +11,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Tasks
 {
+    /// <summary>
+    /// Testes unitários para a classe <see cref="TaskBLL"/>.
+    /// </summary>
     public class TaskBLLTests
     {
+        /// <summary>
+        /// Cria uma tarefa com recorrência e verifica se a recorrência foi persistida corretamente no banco de dados.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task CreateAsync_WithRecurrence_PersistsTaskRecurrence()
         {
@@ -42,6 +49,10 @@ namespace eTasks_server.Tests.BusinessLogic.Tasks
             Assert.Equal(RecurrenceType.Weekly, context.TaskRecurrences.Single().RecurrenceType);
         }
 
+        /// <summary>
+        /// Gera lista de tarefas incluindo tarefas recorrentes e verifica se a tarefa gerada foi materializada corretamente no banco de dados.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task ListAsync_WithIncludeRecurring_MaterializesGeneratedTask()
         {
@@ -79,6 +90,10 @@ namespace eTasks_server.Tests.BusinessLogic.Tasks
             Assert.Equal(2, context.TaskItems.Count());
         }
 
+        /// <summary>
+        /// Testa a funcionalidade de marcar uma tarefa como concluída e verifica se os pontos de conclusão são concedidos e revertidos corretamente.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task SetCompletionAsync_AwardsAndRevertsCompletionPoints()
         {

@@ -12,8 +12,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Admin
 {
+    /// <summary>
+    /// Realiza testes unitários para a classe ServerSettingsAdminBLL, que é responsável por gerenciar operações administrativas relacionadas às configurações do servidor.
+    /// </summary>
     public class ServerSettingsAdminBLLTests
     {
+        /// <summary>
+        /// Cria uma instância de ISecretProtector para uso nos testes, utilizando uma chave de criptografia de teste.
+        /// </summary>
+        /// <returns></returns>
         private static ISecretProtector CreateProtector()
         {
             var configuration = new ConfigurationBuilder()
@@ -26,6 +33,10 @@ namespace eTasks_server.Tests.BusinessLogic.Admin
             return new SecretProtector(configuration);
         }
 
+        /// <summary>
+        /// Testa o método UpdateAsync da classe ServerSettingsAdminBLL, verificando se os campos sensíveis são criptografados corretamente e se o payload retornado contém os valores descriptografados.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task UpdateAsync_EncryptsSensitiveFields_AndReturnsDecryptedPayload()
         {
@@ -57,6 +68,10 @@ namespace eTasks_server.Tests.BusinessLogic.Admin
             Assert.StartsWith("enc::", entity.MongoAuditConnectionString);
         }
 
+        /// <summary>
+        /// Testa o método UpdateAsync da classe ServerSettingsAdminBLL, verificando se uma exceção de validação é lançada quando a opção OpenRouterEnabled está ativada, mas a chave de API do OpenRouter não é fornecida.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task UpdateAsync_WhenOpenRouterEnabledWithoutKey_ThrowsValidationException()
         {

@@ -15,8 +15,15 @@ using Xunit;
 
 namespace eTasks_server.Tests.BusinessLogic.Auth
 {
+    /// <summary>
+    /// Realiza testes unitários para a classe WebAuthBLL, que é responsável por gerenciar a autenticação de usuários na aplicação.
+    /// </summary>
     public class WebAuthBLLTests
     {
+        /// <summary>
+        /// Cria uma instância de IConfiguration com configurações de teste em memória, incluindo a chave de criptografia de dados e a chave de API do administrador.
+        /// </summary>
+        /// <returns></returns>
         private static IConfiguration CreateConfiguration()
         {
             return new ConfigurationBuilder()
@@ -28,8 +35,17 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
                 .Build();
         }
 
+        /// <summary>
+        /// Cria uma instância de ISecretProtector usando a configuração fornecida. O ISecretProtector é responsável por proteger e desproteger dados sensíveis, como senhas.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         private static ISecretProtector CreateProtector(IConfiguration configuration) => new SecretProtector(configuration);
 
+        /// <summary>
+        /// Teste para verificar se o método RegisterAdminAsync armazena corretamente o hash da senha protegido.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task RegisterAdminAsync_StoresProtectedPasswordHash()
         {
@@ -52,6 +68,10 @@ namespace eTasks_server.Tests.BusinessLogic.Auth
             Assert.True(BCrypt.Net.BCrypt.Verify("123456", protector.Unprotect(user.PasswordHash)));
         }
 
+        /// <summary>
+        /// Teste para verificar se o método LoginAsync autentica corretamente um usuário com hash de senha protegido e registra um log de sucesso.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task LoginAsync_WithProtectedPasswordHash_SignsInAndWritesSuccessLog()
         {
