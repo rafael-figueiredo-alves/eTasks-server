@@ -1,3 +1,6 @@
+Versão 1.0.2 - 11/08/2026 (API v2 - 2.0.0)
+=> Adicionado DataAnnotation para resolver problema com a serialização de objetos Mongo.
+
 Versão 1.0.1 - 10/08/2026 (API v2 - 2.0.0)
 => Ajuste no método de teste das configurações de SMTP para garantir que as configurações de e-mail estejam corretas antes de enviar notificações.
 

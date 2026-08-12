@@ -193,7 +193,7 @@ namespace eTasks_server.Models.Utils
         /// <summary>
         /// Versão do servidor eTasks, usada para controle de versão e comunicação com os clientes sobre a versão atual da API e funcionalidades disponíveis.
         /// </summary>
-        public const string ServerVersion = "1.0.1";
+        public const string ServerVersion = "1.0.2";
         #endregion
     }
 }

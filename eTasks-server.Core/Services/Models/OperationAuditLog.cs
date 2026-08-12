@@ -1,3 +1,6 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace eTasks_server.Core.Services.Models
 {
     /// <summary>
@@ -8,6 +11,8 @@ namespace eTasks_server.Core.Services.Models
         /// <summary>
         /// Obtém ou define o identificador único do registro de auditoria.
         /// </summary>
+        [BsonId]
+        [BsonGuidRepresentation(GuidRepresentation.Standard)]
         public Guid Id { get; set; } = Guid.CreateVersion7();
 
         /// <summary>
